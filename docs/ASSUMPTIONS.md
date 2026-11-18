@@ -3,6 +3,17 @@
 Assumptions made when the owner has not answered yet, plus verification notes.
 Update when the owner replies or when APIs change.
 
+## Phase 2 notes (2026-11-18)
+
+| Item | Assumption |
+|---|---|
+| Branch base | Phase 2 rebased onto **main after PR #3 merge** (1b) |
+| Embeddings in tests | **FakeEmbedder only** — CI never downloads ONNX |
+| UI embedder | `FastEmbedder` (lite/multilingual/quality presets); first use may download model |
+| Thai PDF | Loader supports PDF; fixture uses Helvetica Latin. Thai knowledge covered by `.md`/`.txt` |
+| Search-lab / knowledge-health / prompt inspector | Included in Phase 2 sidebar / reply expanders (§16-style tooling) |
+| score | `1 - cosine distance` with Chroma `hnsw:space=cosine` |
+
 ## Phase 1b notes (2026-11-18)
 
 | Item | Assumption |

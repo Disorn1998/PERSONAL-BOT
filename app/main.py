@@ -1,10 +1,10 @@
-"""Streamlit chat shell for persona-bot (Phase 1b)."""
+"""Streamlit chat shell for persona-bot (Phase 1b + Phase 2 RAG)."""
 
 from __future__ import annotations
 
 import uuid
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import streamlit as st
 
@@ -16,6 +16,11 @@ from app.i18n import t
 from app.llm import LlmClient, StreamResult
 from app.logging_setup import setup_logging
 from app.prompt import build_messages, not_found_reply_th, strip_context_from_content
+from app.rag.citations import format_sources_markdown, validate_citations
+from app.rag.prompt_inspector import inspect_messages
+from app.rag.retrieve import retrieve
+from app.rag.runtime import build_embedder, get_or_build_store
+from app.rag.search_lab import run_search_lab
 from app.security import password_ok
 from app.services import chat_db_path, load_available_personas, usage_path
 from app.ui.errors import error_from_exception, format_error_card
@@ -147,6 +152,57 @@ def _sidebar(personas: list) -> None:
         unsafe_allow_html=True,
     )
 
+    if persona is not None:
+        with st.sidebar.expander(t("label.knowledge"), expanded=False):
+            try:
+                cache_key = f"rag::{persona.id}::{persona.config.embedding_preset}"
+                if cache_key not in st.session_state:
+                    embedder = build_embedder(settings, persona=persona, fake=False)
+                    st.session_state[cache_key] = {
+                        "embedder": embedder,
+                        "bundle": get_or_build_store(
+                            settings=settings,
+                            persona=persona,
+                            embedder=embedder,
+                            force=False,
+                        ),
+                    }
+                embedder = st.session_state[cache_key]["embedder"]
+                vstore, manifest, kdir, health = st.session_state[cache_key]["bundle"]
+                st.caption(f"{t('label.knowledge_health')}: {health.file_count} files")
+                st.caption(
+                    t("status.index_ready")
+                    if not health.needs_rebuild
+                    else ", ".join(health.notes) or t("label.rebuild_index")
+                )
+                st.caption(f"chunks={manifest.chunk_count}")
+                st.caption(str(kdir))
+                if st.button(t("label.rebuild_index"), key="rebuild_idx"):
+                    st.session_state[cache_key]["bundle"] = get_or_build_store(
+                        settings=settings,
+                        persona=persona,
+                        embedder=embedder,
+                        force=True,
+                    )
+                    st.success(t("status.index_rebuilt"))
+                    st.rerun()
+                q = st.text_input(t("label.search_query"), key="search_lab_q")
+                if st.button(t("action.run_search"), key="search_lab_go") and q.strip():
+                    hits = run_search_lab(
+                        vstore,
+                        persona_id=persona.id,
+                        query=q.strip(),
+                        top_k=persona.config.resolved_top_k(),
+                        min_score=0.0,
+                    )
+                    for hit in hits:
+                        st.write(
+                            f"{float(hit['score']):.3f} · {hit.get('source')} — "
+                            f"{str(hit.get('text', ''))[:120]}"
+                        )
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
+
     with st.sidebar.expander(t("label.advanced")):
         key_val = st.text_input(
             t("label.api_key"),
@@ -216,15 +272,48 @@ def _handle_user_message(user_text: str, personas: list) -> None:
     with st.chat_message("user"):
         st.markdown(user_text)
 
-    # Phase 1b: no RAG yet — empty context. Strict personas short-circuit cleanly.
+    context_chunks: list[dict[str, Any]] = []
+    try:
+        cache_key = f"rag::{persona.id}::{persona.config.embedding_preset}"
+        if cache_key not in st.session_state:
+            embedder = build_embedder(settings, persona=persona, fake=False)
+            st.session_state[cache_key] = {
+                "embedder": embedder,
+                "bundle": get_or_build_store(
+                    settings=settings,
+                    persona=persona,
+                    embedder=embedder,
+                    force=False,
+                ),
+            }
+        vstore = st.session_state[cache_key]["bundle"][0]
+        context_chunks = retrieve(
+            vstore,
+            persona_id=persona.id,
+            latest=user_text,
+            history=history,
+            top_k=persona.config.resolved_top_k(),
+            min_score=persona.config.resolved_min_score(),
+        )
+    except AppError as exc:
+        with st.chat_message("assistant"):
+            _render_error(exc)
+        return
+    except Exception as exc:  # noqa: BLE001
+        with st.chat_message("assistant"):
+            _render_error(exc)
+        return
+
     try:
         messages = build_messages(
             persona,
             history=history,
             user_text=user_text,
-            context_chunks=[],
+            context_chunks=context_chunks,
+            min_score=persona.config.resolved_min_score(),
         )
     except KnowledgeNotFoundError as exc:
+        # Strict + no passing chunks → no LLM call (DoD 2).
         reply = not_found_reply_th()
         store.add_message(thread_id=thread_id, role="assistant", content=reply)
         with st.chat_message("assistant"):
@@ -233,6 +322,7 @@ def _handle_user_message(user_text: str, personas: list) -> None:
         return
 
     messages = fit_prompt(messages)
+    inspector = inspect_messages(messages)
     assistant_id = str(uuid.uuid4())
     store.add_message(
         thread_id=thread_id,
@@ -265,6 +355,7 @@ def _handle_user_message(user_text: str, personas: list) -> None:
                 # Persist partials so Stop/rerun never loses text (F9).
                 store.update_message(assistant_id, content=text, partial=True)
             final_text = "".join(parts) or result.text
+            cite = validate_citations(final_text, context_chunks)
             store.update_message(
                 assistant_id,
                 content=final_text,
@@ -273,10 +364,22 @@ def _handle_user_message(user_text: str, personas: list) -> None:
                     "model": result.model,
                     "used_fallback": result.used_fallback,
                     "tokens": result.usage.total_tokens,
+                    "sources": [
+                        {"source": c.get("source"), "score": c.get("score")} for c in context_chunks
+                    ],
+                    "citations": cite,
+                    "prompt_inspector": inspector,
                 },
             )
             placeholder.markdown(final_text)
             _render_meta(result)
+            if context_chunks:
+                with st.expander(t("label.sources")):
+                    st.markdown(format_sources_markdown(context_chunks))
+            if not cite["ok"]:
+                st.warning(t("status.citations_invalid"))
+            with st.expander(t("label.prompt_inspector")):
+                st.json(inspector)
         usage.record(result)
     except AppError as exc:
         store.update_message(

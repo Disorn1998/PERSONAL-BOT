@@ -10,6 +10,8 @@ config:
   max_tokens: 1200
   answer_mode: strict
   embedding_preset: multilingual
-knowledge_files: []
+knowledge_files:
+  - knowledge/http-basics.md
+  - knowledge/rag-overview.txt
 avatar: null
 version: 1
