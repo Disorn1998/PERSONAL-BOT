@@ -16,13 +16,14 @@ and chat in Thai UI.
 - [uv](https://docs.astral.sh/uv/)
 - Groq API key (owner-provided; never commit)
 
-## ติดตั้งแบบย่อ / Quick install (later phases)
+## ติดตั้งแบบย่อ / Quick start
 
 ```bash
 uv sync --extra dev
 cp .env.example .env
-# put GROQ_API_KEY in .env locally — never paste keys into chat
+# put GROQ_API_KEY + GROQ_MODEL_* in .env locally — never paste keys into chat
 uv run persona-bot
+# or: uv run streamlit run app/main.py
 ```
 
 โควตา/ลิมิตของ Groq ดูจากเอกสารทางการเท่านั้น — ห้ามใส่ตัวเลขโควตาตายตัวใน README  

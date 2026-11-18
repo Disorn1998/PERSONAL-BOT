@@ -3,6 +3,16 @@
 Assumptions made when the owner has not answered yet, plus verification notes.
 Update when the owner replies or when APIs change.
 
+## Phase 1b notes (2026-11-18)
+
+| Item | Assumption |
+|---|---|
+| Token budget | Heuristic `chars/3` in `app/budget.py` — **TODO(verify)** vs Groq tokenizer |
+| Stop button | Streamlit rerun interrupts stream; partials flushed to sqlite each chunk (F9) |
+| RAG context | Empty in 1b; strict personas short-circuit to not-found without LLM |
+| Privacy ack | Flag file `data/privacy_ack` (F19) |
+| No external fonts/scripts | Theme CSS uses system/sans-serif from Streamlit config only |
+
 ## Phase 1a defaults (owner unanswered; 2026-11-18)
 
 | Item | Assumption | Status |

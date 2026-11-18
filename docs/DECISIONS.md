@@ -3,6 +3,21 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Phase 1b (2026-11-18)
+
+### Chat UX shell — **DONE**
+
+- Welcome card when no API key (F15); advanced key controls in sidebar.
+- New chat vs clear chat (F16); threads in sqlite `data/chat.sqlite3`.
+- Thai error cards via `strings.py` only; CSS bubbles/theme in `app/ui/theme.py`.
+- Partial assistant text persisted during stream (F9).
+- Usage in `data/usage.json`; model badge + token chips under replies.
+- study-buddy default; knowledge/RAG deferred to Phase 2.
+
+### Privacy notice (F19) — **DECISION**
+
+- First-run ack button; persist `data/privacy_ack`.
+
 ## Phase 1a (2026-11-18)
 
 ### F10 — Phase 1 split — **ASSUMED**
