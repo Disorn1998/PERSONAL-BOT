@@ -69,11 +69,15 @@ uv sync --extra dev
 uv run ruff check .
 uv run ruff format .
 uv run mypy
-uv run pytest
+uv run pytest -m "not slow" --cov=app --cov-fail-under=0
 ```
 
-Owner-only live smoke (not CI): `uv run python scripts/smoke_test.py`
+Owner-only live smoke (not CI): `uv run python scripts/smoke_test.py`  
+Weekly canary (maintainer): `GET /models` only — see `.github/workflows/canary.yml`
+
+Docs: [FAQ](docs/FAQ.md) · [Gallery](docs/GALLERY.md) · [First run](docs/FIRST_RUN.md) ·
+[Design/a11y](docs/DESIGN.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 ## ใบอนุญาต / License
 
-MIT — see `LICENSE`.
+MIT — see `LICENSE`. Third-party / model notices: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

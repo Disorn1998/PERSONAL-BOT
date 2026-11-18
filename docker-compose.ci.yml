@@ -1,0 +1,36 @@
+# CI overlay — fake Groq sidecar; no host .env secrets required.
+services:
+  fake-groq:
+    image: python:3.11.11-slim-bookworm
+    working_dir: /src
+    volumes:
+      - ./scripts/fake_groq_server.py:/src/fake_groq_server.py:ro
+    command: ["python", "/src/fake_groq_server.py", "--host", "0.0.0.0", "--port", "8080"]
+    expose:
+      - "8080"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  persona-bot:
+    env_file:
+      - .env.ci
+    environment:
+      GROQ_API_KEY: fake-ci-key
+      GROQ_BASE_URL: http://fake-groq:8080/v1
+      GROQ_MODEL_PRIMARY: openai/gpt-oss-120b
+      GROQ_MODEL_FALLBACK: openai/gpt-oss-20b
+      DATA_DIR: /data
+      PERSONAS_DIR: /data/personas
+      EXAMPLES_DIR: /app/personas/examples
+    depends_on:
+      fake-groq:
+        condition: service_healthy

@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Groq status / deprecations
+    url: https://console.groq.com/docs/deprecations
+    about: Model ID changes belong upstream — update .env.example after verifying.
