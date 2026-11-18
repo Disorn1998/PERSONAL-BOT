@@ -1,0 +1,57 @@
+# Secrets / local env
+.env
+.env.*
+!.env.example
+
+# Runtime data (never commit)
+data/
+data/personas/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+wheels/
+*.egg-info/
+.eggs/
+*.egg
+
+# Virtual envs
+.venv/
+venv/
+ENV/
+
+# uv / packaging caches
+.uv/
+uv.lock.bak
+.cache/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Test / local artifacts
+*.log
+tmp/
+temp/
+.hypothesis/
+
+# Model / embedding caches (local)
+.fastembed/
+.cache/huggingface/
