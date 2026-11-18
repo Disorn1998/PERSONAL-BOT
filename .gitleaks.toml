@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Synthetic secret values used by security tests"
+paths = ['''tests/test_security_logging\.py''']
