@@ -3,6 +3,20 @@
 Assumptions made when the owner has not answered yet, plus verification notes.
 Update when the owner replies or when APIs change.
 
+## Phase 4 notes (2026-11-18)
+
+| Item | Assumption | Status |
+|---|---|---|
+| Eval in-scope hit@top_k | **≥ 0.70** per example persona (provisional) | **ASK owner to lock/revise** |
+| Eval out-of-scope / not-found | **≥ 0.80** correctly below `min_score` for strict | **ASK owner to lock/revise** |
+| Offline suite | FakeEmbedder + fixture expectations; controlled fixtures also use score_gate | Assumed |
+| Live embedder eval | `@pytest.mark.slow` + `PERSONA_BOT_EVAL_LIVE=1` only; never CI | Assumed |
+| Zip whitelist | `persona.yaml`, `knowledge/*.{txt,md,pdf,docx}`, `avatar.*` image/svg | Assumed |
+| Zip bomb guards | 80 MiB uncompressed / 40 MiB member / 200 members / ratio ≤ 100 | Assumed |
+| Bilingual UI | Thai default; English full table in `strings.py`; sidebar toggle | Assumed |
+| Regenerate button | **Out of scope** (§19 deferred) | Assumed |
+| Baseline path | `tests/eval/baseline.json` (`provisional: true`) | Assumed |
+
 ## Phase 3 notes (2026-11-18)
 
 | Item | Assumption |

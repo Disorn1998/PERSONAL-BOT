@@ -3,6 +3,34 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Phase 4 (2026-11-18)
+
+### Eval thresholds (DoD 7) — **PROVISIONAL / ASK**
+
+- Commit baseline in `tests/eval/baseline.json`.
+- Numbers: in-scope hit@top_k **0.70**; out-of-scope not-found **0.80**.
+- Owner must **lock or revise** before treating DoD 7 as final.
+
+### Persona zip I/O — **DECISION**
+
+- Safe import: reject path traversal, symlinks, non-whitelist members, zip bombs.
+- Duplicate id policies: reject (default) / rename / overwrite; UI always previews first.
+- Export never includes secrets (`assert_no_secret_in_mapping` when api_key known).
+
+### Data tools — **DECISION**
+
+- Sidebar: export/import, delete user persona, backup/restore, delete-all (with confirm).
+- Backup skips `.env` / api_key-looking paths; restore uses same zip guards.
+
+### Bilingual UI — **DECISION**
+
+- `strings.py` has complete `th` + `en`; `i18n.set_locale` + sidebar language select.
+- Missing EN key falls back to TH then the raw key.
+
+### F20 relevance thresholds — **DECISION**
+
+- Remain in embedding preset table + persona overrides; calibrated via eval baseline.
+
 ## Phase 3 (2026-11-18)
 
 ### Distribution — **DONE**
@@ -128,4 +156,5 @@ before locking. Format: date · status · decision.
 2. Rename package `app` → `persona_bot`? (currently keeping `app`)
 3. Supply original **§16.8** and **§18.9**
 4. Confirm answer_mode triad (`strict`/`balanced`/`open`) vs Complete Edition wording
-5. After 1a merge: 「ไปต่อ」 for Phase **1b**
+5. **Lock or revise Phase 4 eval numbers** (0.70 hit@top_k / 0.80 OOS not-found)?
+6. After Phase 4 merge: 「ไปต่อ」 for Phase **5** (CI matrix + canary / DoD 6)

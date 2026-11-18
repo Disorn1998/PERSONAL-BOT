@@ -1,0 +1,17 @@
+id: eval-strict
+name: Eval Strict
+description: Strict offline eval persona for out-of-scope short-circuit checks
+system_prompt: |
+  You answer only from the knowledge pack. If missing, say not found.
+config:
+  temperature: 0.0
+  max_tokens: 256
+  answer_mode: strict
+  embedding_preset: lite
+  top_k: 4
+  min_score: 0.40
+  chunk_chars: 500
+knowledge_files:
+  - knowledge/core.md
+avatar: null
+version: 1
