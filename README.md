@@ -24,6 +24,16 @@ uv sync
 uv run persona-bot
 ```
 
+**Windows troubleshooting / แก้ปัญหา Windows**
+
+| Issue | Fix |
+|---|---|
+| `uv` not found in a new terminal | `start.bat` patches PATH for that session (`%USERPROFILE%\.local\bin`). Open a **new** PowerShell or add that folder to User PATH permanently. |
+| SmartScreen blocks `start.bat` | More info → Run anyway (unsigned local script). Or run the PowerShell steps above. |
+| Path too long / extract errors | Enable **Win32 long paths**, or clone/extract closer to drive root (e.g. `C:\dev\PERSONAL-BOT`). |
+
+รายละเอียดเพิ่ม: [docs/FIRST_RUN.md](docs/FIRST_RUN.md) · [docs/FAQ.md](docs/FAQ.md)
+
 ### 2) macOS / Linux (`uv`)
 
 ```bash

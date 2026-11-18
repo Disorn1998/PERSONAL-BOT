@@ -221,7 +221,7 @@ before locking. Format: date · status · decision.
 
 ### F12 — DAILY_TOKEN_LIMIT — **DECISION**
 
-- Display-only; documented in `.env.example`.
+- Display-only; documented in `.env.example`; shown in usage sidebar as `tokens / limit`.
 
 ### Type checker — **DECISION**
 
@@ -236,4 +236,4 @@ before locking. Format: date · status · decision.
 5. ~~Lock or revise Phase 4 eval numbers?~~ → **LOCKED** 2026-11-18 (0.70 / 0.80)
 6. Add maintainer secret `GROQ_API_KEY` for weekly canary (optional but recommended)
 7. Verify embedding model licences on Hugging Face cards (clear TODO(verify) in THIRD_PARTY_NOTICES)
-8. When to add split core-coverage CI gate (≥80%)?
+8. When to add split core-coverage CI gate (≥80%)? — still open (overall ~67–70%; `main.py` UI drag)

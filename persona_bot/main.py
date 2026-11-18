@@ -66,7 +66,12 @@ from persona_bot.services import (
 )
 from persona_bot.ui.errors import error_from_exception, format_error_card
 from persona_bot.ui.theme import custom_css
-from persona_bot.usage import UsageTracker
+from persona_bot.ui.wizard import (
+    overwrite_confirm_required,
+    progress_markup,
+    wizard_step,
+)
+from persona_bot.usage import UsageTracker, format_token_usage
 from persona_bot.versioning import ensure_data_version, get_app_version
 
 
@@ -85,6 +90,7 @@ def _init_state() -> None:
     ss.setdefault("confirm_delete_all", False)
     ss.setdefault("confirm_delete_persona", False)
     ss.setdefault("confirm_clear_chat", False)
+    ss.setdefault("confirm_overwrite_import", False)
     ss.setdefault("remember_loaded", False)
     set_locale(str(ss["locale"]))
     if not ss["api_key"] and remember_enabled():
@@ -465,12 +471,50 @@ def _sidebar(personas: list) -> None:
 
     st.sidebar.divider()
     snap = usage.snapshot
+    token_display = format_token_usage(
+        total_tokens=snap.total_tokens,
+        daily_limit=settings.daily_token_limit,
+    )
     st.sidebar.markdown(f"**{t('label.usage_today')}**")
     st.sidebar.markdown(
-        f'<div class="pb-meta">{t("label.tokens")}: {snap.total_tokens} · '
-        f"n={snap.request_count}</div>",
+        f'<div class="pb-meta">{t("label.tokens")}: {token_display} · n={snap.request_count}</div>',
         unsafe_allow_html=True,
     )
+    if settings.daily_token_limit is not None and settings.daily_token_limit > 0:
+        st.sidebar.caption(t("label.daily_token_limit"))
+    else:
+        st.sidebar.caption(t("status.daily_limit_unset"))
+
+    has_key = bool(st.session_state.api_key or settings.groq_api_key)
+    if not has_key:
+        st.sidebar.info(t("wizard.locked_tools"))
+        st.sidebar.caption(f"{t('label.version')}: {get_app_version()}")
+        with st.sidebar.expander(t("label.advanced"), expanded=True):
+            key_val = st.text_input(
+                t("label.api_key"),
+                value=st.session_state.api_key,
+                type="password",
+                help=t("error.hint.add_api_key"),
+                key="sidebar_key_preauth",
+            )
+            remember = st.checkbox(
+                t("label.remember_key"),
+                value=remember_enabled(),
+                key="remember_key_box_preauth",
+                help=t("label.remember_key_help"),
+            )
+            st.caption(
+                t(
+                    remember_status_key(
+                        loaded_from_keyring=bool(st.session_state.get("remember_loaded"))
+                    )
+                )
+            )
+            if st.button(t("action.save_key"), key="save_key_btn_preauth"):
+                _apply_remember_choice(remember, key_val)
+                st.session_state.wizard_done = True
+                st.rerun()
+        return
 
     if persona is not None:
         with st.sidebar.expander(t("label.knowledge"), expanded=False):
@@ -583,22 +627,22 @@ def _sidebar(personas: list) -> None:
     st.sidebar.caption(f"{t('label.version')}: {get_app_version()}")
 
     with st.sidebar.expander(t("label.data_tools"), expanded=False):
-        # Export current persona (examples or user packs).
+        # Single-click Streamlit download (zip bytes ready for download_button).
         pack_dir = persona_dir_for(st.session_state.persona_id, settings)
-        if pack_dir is not None and st.button(t("action.export_persona"), key="export_persona_btn"):
+        if pack_dir is not None:
             try:
                 payload = export_persona_zip(
                     pack_dir,
                     api_key=st.session_state.api_key or settings.groq_api_key,
                 )
                 st.download_button(
-                    label=f"{st.session_state.persona_id}.zip",
+                    label=t("action.export_persona"),
                     data=payload,
                     file_name=f"{st.session_state.persona_id}.zip",
                     mime="application/zip",
                     key="export_download",
+                    help=t("status.export_ok"),
                 )
-                st.success(t("status.export_ok"))
             except Exception as exc:  # noqa: BLE001
                 _render_error(exc)
 
@@ -621,6 +665,7 @@ def _sidebar(personas: list) -> None:
                     raw,
                     personas_dir=settings.personas_dir,
                 ).to_dict()
+                st.session_state.confirm_overwrite_import = False
             except Exception as exc:  # noqa: BLE001
                 st.session_state.import_preview = None
                 st.session_state.import_bytes = None
@@ -628,7 +673,22 @@ def _sidebar(personas: list) -> None:
         if st.session_state.import_preview:
             st.markdown(f"**{t('label.import_preview')}**")
             st.json(st.session_state.import_preview)
-            if st.button(t("action.confirm_import"), key="confirm_import_btn"):
+            needs_overwrite = overwrite_confirm_required(
+                str(conflict),
+                cast(dict[str, Any] | None, st.session_state.import_preview),
+            )
+            overwrite_ok = True
+            if needs_overwrite:
+                st.warning(t("warn.overwrite_import"))
+                overwrite_ok = st.checkbox(
+                    t("action.confirm_overwrite"),
+                    key="confirm_overwrite_import",
+                )
+            if st.button(
+                t("action.confirm_import"),
+                key="confirm_import_btn",
+                disabled=needs_overwrite and not overwrite_ok,
+            ):
                 try:
                     pack = import_persona_zip(
                         cast(bytes, st.session_state.import_bytes),
@@ -638,6 +698,7 @@ def _sidebar(personas: list) -> None:
                     st.session_state.persona_id = pack.id
                     st.session_state.import_preview = None
                     st.session_state.import_bytes = None
+                    st.session_state.confirm_overwrite_import = False
                     st.success(t("status.import_ok"))
                     st.rerun()
                 except Exception as exc:  # noqa: BLE001
@@ -670,16 +731,20 @@ def _sidebar(personas: list) -> None:
                     settings.data_dir,
                     api_key=st.session_state.api_key or settings.groq_api_key,
                 )
-                st.download_button(
-                    label="persona-bot-backup.zip",
-                    data=payload,
-                    file_name="persona-bot-backup.zip",
-                    mime="application/zip",
-                    key="backup_download",
-                )
-                st.success(f"{t('status.backup_ok')} ({summary.member_count})")
+                st.session_state.backup_payload = payload
+                st.session_state.backup_summary = summary.member_count
             except Exception as exc:  # noqa: BLE001
+                st.session_state.backup_payload = None
                 _render_error(exc)
+        if st.session_state.get("backup_payload"):
+            st.download_button(
+                label="persona-bot-backup.zip",
+                data=cast(bytes, st.session_state.backup_payload),
+                file_name="persona-bot-backup.zip",
+                mime="application/zip",
+                key="backup_download",
+            )
+            st.success(f"{t('status.backup_ok')} ({st.session_state.get('backup_summary', 0)})")
 
         restore_file = st.file_uploader(
             t("action.restore"),
@@ -760,11 +825,13 @@ def _welcome() -> None:
         settings,
         api_key=st.session_state.api_key or settings.groq_api_key,
     )
+    step = wizard_step(has_key=False, privacy_ack=bool(st.session_state.privacy_ack))
     st.markdown(
         f"""
 <div class="pb-welcome">
   <h1>{t("app.title")}</h1>
   <p>{t("label.first_run")}</p>
+  {progress_markup(step)}
   <p>{t("first_run.body")}</p>
   <p>{t("app.welcome")}</p>
   <p>{t("app.welcome.body")}</p>
@@ -1000,6 +1067,10 @@ def run() -> None:
         return
 
     if not st.session_state.privacy_ack:
+        st.markdown(
+            progress_markup(wizard_step(has_key=True, privacy_ack=False)),
+            unsafe_allow_html=True,
+        )
         st.info(t("privacy.notice"))
         if st.button(t("action.got_it"), key="privacy_ack_btn"):
             st.session_state.privacy_ack = True

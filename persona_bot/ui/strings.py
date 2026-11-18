@@ -14,6 +14,10 @@ _TH: dict[str, str] = {
     "app.onboarding.step1": "1) วาง Groq API key",
     "app.onboarding.step2": "2) เลือกเพอร์โซนาด้านซ้าย",
     "app.onboarding.step3": "3) พิมพ์ข้อความด้านล่าง",
+    "wizard.step1": "API key",
+    "wizard.step2": "ความเป็นส่วนตัว",
+    "wizard.step3": "เริ่มแชต",
+    "wizard.locked_tools": "ใส่ API key ก่อนจึงจะใช้เครื่องมือขั้นสูง (สำรอง / นำเข้า / ห้องทดลองค้นหา)",
     "action.new_chat": "แชตใหม่",
     "action.clear_chat": "ล้างแชต",
     "action.confirm_clear_chat": "ยืนยันล้างแชต",
@@ -22,10 +26,11 @@ _TH: dict[str, str] = {
     "action.save_key": "ใช้คีย์นี้",
     "action.forget_key": "ลืมคีย์ในเซสชัน",
     "action.got_it": "เข้าใจแล้ว",
-    "action.export_persona": "ส่งออกเพอร์โซนา (zip)",
+    "action.export_persona": "ดาวน์โหลดเพอร์โซนา (zip)",
     "action.import_persona": "นำเข้าเพอร์โซนา (zip)",
     "action.preview_import": "ดูตัวอย่างก่อนนำเข้า",
     "action.confirm_import": "ยืนยันนำเข้า",
+    "action.confirm_overwrite": "ยืนยันเขียนทับแพ็กที่มีอยู่",
     "action.delete_persona": "ลบเพอร์โซนาผู้ใช้",
     "action.backup": "สำรอง data/",
     "action.restore": "คืนค่าจากสำรอง",
@@ -41,6 +46,7 @@ _TH: dict[str, str] = {
     "label.thread": "เธรดแชต",
     "label.sources": "แหล่งข้อมูล",
     "label.tokens": "โทเคน",
+    "label.daily_token_limit": "ลิมิตโทเคนรายวัน (แสดงอย่างเดียว)",
     "label.model": "โมเดล",
     "label.fallback": "โมเดลสำรอง",
     "label.usage_today": "การใช้งานสะสม",
@@ -112,6 +118,7 @@ _TH: dict[str, str] = {
     "status.remember_env": "จำคีย์เปิดผ่าน PERSONA_BOT_REMEMBER_KEY — บันทึกและโหลดจาก keyring",
     "status.remember_ui": "จำคีย์เปิดจากช่องนี้ — บันทึกและโหลดจาก keyring หลังรีสตาร์ท",
     "status.remember_session_only": "คีย์อยู่ในเซสชันนี้เท่านั้น — ไม่โหลดอัตโนมัติหลังรีสตาร์ท",
+    "status.daily_limit_unset": "ยังไม่ได้ตั้ง DAILY_TOKEN_LIMIT (แสดงอย่างเดียว)",
     "chat.placeholder": "พิมพ์ข้อความ…",
     "chat.empty": "ยังไม่มีข้อความ — เริ่มคุยกับเพอร์โซนาได้เลย",
     "label.starter_questions": "คำถามเริ่มต้น",
@@ -165,6 +172,7 @@ _TH: dict[str, str] = {
     "warn.delete_all": "จะลบแชต ดัชนี และเพอร์โซนาผู้ใช้ภายใต้ data/ — ย้อนกลับไม่ได้",
     "warn.delete_persona": "ลบแพ็กผู้ใช้นี้และดัชนีที่เกี่ยวข้อง",
     "warn.clear_chat": "ลบข้อความในเธรดนี้ทั้งหมด — ย้อนกลับไม่ได้",
+    "warn.overwrite_import": ("นโยบายเขียนทับจะแทนที่แพ็กผู้ใช้ที่มีรหัสเดียวกัน — ยืนยันด้านล่างก่อนนำเข้า"),
 }
 
 _EN: dict[str, str] = {
@@ -178,6 +186,12 @@ _EN: dict[str, str] = {
     "app.onboarding.step1": "1) Paste your Groq API key",
     "app.onboarding.step2": "2) Choose a persona in the sidebar",
     "app.onboarding.step3": "3) Type a message below",
+    "wizard.step1": "API key",
+    "wizard.step2": "Privacy",
+    "wizard.step3": "Start chat",
+    "wizard.locked_tools": (
+        "Add an API key first to unlock advanced tools (backup / import / search lab)"
+    ),
     "action.new_chat": "New chat",
     "action.clear_chat": "Clear chat",
     "action.confirm_clear_chat": "Confirm clear chat",
@@ -186,10 +200,11 @@ _EN: dict[str, str] = {
     "action.save_key": "Use this key",
     "action.forget_key": "Forget session key",
     "action.got_it": "Got it",
-    "action.export_persona": "Export persona (zip)",
+    "action.export_persona": "Download persona (zip)",
     "action.import_persona": "Import persona (zip)",
     "action.preview_import": "Preview import",
     "action.confirm_import": "Confirm import",
+    "action.confirm_overwrite": "Confirm overwrite of the existing pack",
     "action.delete_persona": "Delete user persona",
     "action.backup": "Backup data/",
     "action.restore": "Restore from backup",
@@ -205,6 +220,7 @@ _EN: dict[str, str] = {
     "label.thread": "Chat thread",
     "label.sources": "Sources",
     "label.tokens": "Tokens",
+    "label.daily_token_limit": "Daily token limit (display only)",
     "label.model": "Model",
     "label.fallback": "Fallback model",
     "label.usage_today": "Usage so far",
@@ -284,6 +300,7 @@ _EN: dict[str, str] = {
     "status.remember_session_only": (
         "Key stays in this session only — not auto-loaded after restart"
     ),
+    "status.daily_limit_unset": "DAILY_TOKEN_LIMIT not set (display only)",
     "chat.placeholder": "Type a message…",
     "chat.empty": "No messages yet — start chatting with the persona",
     "label.starter_questions": "Starter questions",
@@ -340,6 +357,9 @@ _EN: dict[str, str] = {
     "warn.delete_all": "This deletes chats, indexes, and user personas under data/ — irreversible",
     "warn.delete_persona": "Delete this user pack and its related index",
     "warn.clear_chat": "Delete all messages in this thread — irreversible",
+    "warn.overwrite_import": (
+        "Overwrite policy replaces the existing user pack with the same id — confirm below first"
+    ),
 }
 
 STRINGS: Final[dict[str, dict[str, str]]] = {

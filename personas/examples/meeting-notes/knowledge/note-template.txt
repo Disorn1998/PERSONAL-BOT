@@ -1,0 +1,5 @@
+Meeting notes template (demo)
+1) Goal
+2) Decisions
+3) Action items (owner + due)
+4) Open questions

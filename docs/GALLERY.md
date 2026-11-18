@@ -9,14 +9,15 @@ Bundled under `personas/examples/` (read-only in Docker image).
 | `writing-coach` | โค้ชเขียน | open | (none — style helper) |
 | `thai-tax-advisor` | ที่ปรึกษาภาษีตัวอย่าง | **strict** | fictional VAT + PIT overview + disclaimer (`min_score` placeholder) |
 | `company-faq-bot` | FAQ บริษัทโนวาสมาร์ท | **strict** | fictional company overview / leave / IT |
+| `meeting-notes` | จดบันทึกประชุม | balanced | fictional demo meeting + note template |
 
 All example packs include `icon`, `greeting`, `starter_questions`, and `metadata`.
 Tax/FAQ knowledge is **self-written fictional demo content** — not legal advice.
 
 ## Share your pack
 
-1. Sidebar → **Data & backup** → Export persona (zip)
-2. Import on another machine (preview first; duplicate id → reject/rename/overwrite)
+1. Sidebar → **Data & backup** → **Download persona (zip)** (single-click)
+2. Import on another machine (preview first; duplicate id → reject/rename/overwrite + confirm)
 3. Never put API keys inside a pack zip
 
 ## Screenshots

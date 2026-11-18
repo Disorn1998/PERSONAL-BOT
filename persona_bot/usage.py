@@ -69,3 +69,10 @@ class UsageTracker:
                 self._data.by_model.get(result.model, 0) + usage.total_tokens
             )
         self.save()
+
+
+def format_token_usage(*, total_tokens: int, daily_limit: int | None) -> str:
+    """Display-only token counter; ``daily_limit`` is a soft F12 hint (not enforced)."""
+    if daily_limit is None or daily_limit <= 0:
+        return str(total_tokens)
+    return f"{total_tokens} / {daily_limit}"
