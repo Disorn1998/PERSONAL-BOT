@@ -6,6 +6,7 @@ from pathlib import Path
 
 from persona_bot.config import EMBEDDING_PRESETS, Settings
 from persona_bot.persona import PersonaPack
+from persona_bot.persona_editor import assert_knowledge_within_limit
 from persona_bot.rag.embeddings import Embedder, FakeEmbedder, FastEmbedder
 from persona_bot.rag.fingerprint import build_index_fingerprint
 from persona_bot.rag.health import KnowledgeHealth, assess_knowledge_health
@@ -33,6 +34,8 @@ def get_or_build_store(
         personas_dir=settings.personas_dir,
         persona_id=persona.id,
     )
+    # Enforce MAX_KNOWLEDGE_MB for filesystem drops as well as UI uploads.
+    assert_knowledge_within_limit(kdir, max_knowledge_mb=settings.max_knowledge_mb)
     overlap = int(EMBEDDING_PRESETS[persona.config.embedding_preset]["chunk_overlap_chars"])
     expected_fp = build_index_fingerprint(
         kdir,

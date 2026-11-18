@@ -46,7 +46,20 @@ docker compose up --build
 See official Groq docs for free-tier limits:
 https://console.groq.com/docs/rate-limits
 
-รายละเอียดแคชโมเดล / first-run: [docs/FIRST_RUN.md](docs/FIRST_RUN.md)
+UI ผูก **http://127.0.0.1:8501** (localhost เท่านั้น) — ดู [docs/FIRST_RUN.md](docs/FIRST_RUN.md)
+สำหรับแคชโมเดล, การข้ามแบนเนอร์อีเมล Streamlit, และ first-run
+
+## ภาพหน้าจอ / Screenshots
+
+| Welcome | Persona | Knowledge |
+|---|---|---|
+| ![Welcome](assets/welcome.png) | ![Persona picker](assets/persona-picker.png) | ![Knowledge](assets/knowledge.png) |
+
+| Sources | Error card (429) |
+|---|---|
+| ![Sources](assets/sources.png) | ![Error card](assets/error-card.png) |
+
+More context: [docs/GALLERY.md](docs/GALLERY.md)
 
 ## ปรับแต่งความรู้ / Customize knowledge
 
@@ -93,7 +106,8 @@ Owner-only live smoke (not CI): `uv run python scripts/smoke_test.py`
 Weekly canary (maintainer): `GET /models` only — see `.github/workflows/canary.yml`
 
 Docs: [FAQ](docs/FAQ.md) · [Gallery](docs/GALLERY.md) · [First run](docs/FIRST_RUN.md) ·
-[Design/a11y](docs/DESIGN.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
+[Design/a11y](docs/DESIGN.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) ·
+[Third-party notices](THIRD_PARTY_NOTICES.md)
 
 ## ใบอนุญาต / License
 

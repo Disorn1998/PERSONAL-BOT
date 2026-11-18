@@ -29,3 +29,32 @@
 | `release.yml` | Tag `v*` → GHCR image |
 
 Coverage: overall **≥ 60%** hard-fail; core **≥ 80%** target when split coverage exists.
+
+## Adding an example persona
+
+Checklist for a new pack under `personas/examples/<id>/`:
+
+1. **Folder layout**
+   ```text
+   personas/examples/<id>/
+     persona.yaml
+     knowledge/          # optional; .txt .md .pdf .docx only
+       *.md
+   ```
+2. **`persona.yaml` fields** (required unless noted)
+   - `id` — lowercase `a-z0-9_-`, must match folder name
+   - `name`, `description`, `system_prompt`
+   - `config.answer_mode` — `strict` | `balanced` | `open`
+   - `config.temperature`, `config.max_tokens`, `config.embedding_preset`
+   - Optional: `icon`, `greeting`, `starter_questions`, `metadata`, retrieval knobs
+     (`top_k`, `min_score`, `chunk_chars`)
+3. **Fictional-knowledge rule**  
+   Example knowledge must be **self-written demo content** (no scraped proprietary docs,
+   no real personal data, no “real legal/tax advice” framing). Tax/FAQ-style packs need an
+   explicit disclaimer file in `knowledge/`.
+4. **Gallery row** — add the pack to the table in [`docs/GALLERY.md`](docs/GALLERY.md).
+5. **Tests** — at least one offline assertion that the pack loads
+   (e.g. extend `tests/test_services.py` / persona load coverage) and, for `strict` packs,
+   prefer an eval fixture or RAG smoke that exercises not-found vs in-scope hits.
+6. **Do not** commit API keys, `.env`, or files under `data/`.
+7. Keep README/FAQ pointers accurate if the pack introduces a new user-facing workflow.

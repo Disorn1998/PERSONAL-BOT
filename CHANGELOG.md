@@ -40,6 +40,11 @@ First tagged release. Owner locked DoD 7 eval thresholds and overall coverage CI
   plain Thai status (`พร้อมแล้ว` / `ต้องสร้างดัชนีใหม่`).
 - **ทำสำเนา** duplicates an example into an editable user pack.
 - README “Customize knowledge” bridge (Thai+EN).
+- P1 polish: remember-key env **or** checkbox (save+load) with status text; `MAX_KNOWLEDGE_MB`
+  enforcement + used/limit in Knowledge panel; 429 retry-after / reset hints on error cards;
+  clear-chat confirm; localhost bind; Streamlit email skip; README/GALLERY screenshots;
+  CONTRIBUTING example-persona checklist; FAQ data/PDF/strict entries; verified embedding
+  licences in `THIRD_PARTY_NOTICES.md`.
 
 ### Changed
 
@@ -47,3 +52,4 @@ First tagged release. Owner locked DoD 7 eval thresholds and overall coverage CI
 - Restored §9 example personas `thai-tax-advisor` + `company-faq-bot` (fictional knowledge).
 - Persona schema: optional `icon`, `greeting`, `starter_questions`, `metadata`.
 - CI: LF via `.gitattributes`, gitleaks test-fixture allowlist, pip-audit chromadb waives.
+- CLI forces `--server.address=127.0.0.1`; `.streamlit/config.toml` matches.

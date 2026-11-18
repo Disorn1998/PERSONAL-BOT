@@ -76,6 +76,83 @@ def test_keyring_roundtrip(monkeypatch: pytest.MonkeyPatch) -> None:
     assert SERVICE_NAME and USERNAME
 
 
+def test_remember_key_env_or_ui_preference(monkeypatch: pytest.MonkeyPatch) -> None:
+    store: dict[tuple[str, str], str] = {}
+
+    class FakeKeyring:
+        def set_password(self, service: str, username: str, password: str) -> None:
+            store[(service, username)] = password
+
+        def get_password(self, service: str, username: str) -> str | None:
+            return store.get((service, username))
+
+        def delete_password(self, service: str, username: str) -> None:
+            if (service, username) not in store:
+                raise keyring.errors.PasswordDeleteError("missing")
+            store.pop((service, username), None)
+
+    import keyring
+
+    monkeypatch.setattr(keyring, "set_password", FakeKeyring().set_password)
+    monkeypatch.setattr(keyring, "get_password", FakeKeyring().get_password)
+    monkeypatch.setattr(keyring, "delete_password", FakeKeyring().delete_password)
+
+    from persona_bot import keyring_store
+
+    monkeypatch.delenv("PERSONA_BOT_REMEMBER_KEY", raising=False)
+    assert keyring_store.remember_enabled() is False
+    keyring_store.set_ui_remember_preference(True)
+    assert keyring_store.remember_enabled() is True
+    assert keyring_store.remember_status_key() == "status.remember_ui"
+
+    monkeypatch.setenv("PERSONA_BOT_REMEMBER_KEY", "1")
+    assert keyring_store.env_remember_enabled() is True
+    assert keyring_store.remember_status_key() == "status.remember_env"
+
+    keyring_store.set_ui_remember_preference(False)
+    monkeypatch.delenv("PERSONA_BOT_REMEMBER_KEY", raising=False)
+    assert keyring_store.remember_enabled() is False
+    assert keyring_store.remember_status_key() == "status.remember_session_only"
+    assert keyring_store.remember_status_key(loaded_from_keyring=True) == "status.remember_loaded"
+
+
+def test_cli_binds_localhost_and_skips_email(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cred = tmp_path / ".streamlit" / "credentials.toml"
+    monkeypatch.setenv("HOME", str(tmp_path))
+    path = cli.ensure_streamlit_credentials()
+    assert path == cred
+    text = cred.read_text(encoding="utf-8")
+    assert 'email = ""' in text
+    # Idempotent — does not overwrite an existing file.
+    cred.write_text('[general]\nemail = "keep@example.com"\n', encoding="utf-8")
+    cli.ensure_streamlit_credentials()
+    assert "keep@example.com" in cred.read_text(encoding="utf-8")
+
+    # CLI argv contract (without launching Streamlit).
+    monkeypatch.setattr(cli, "project_root", lambda: Path(__file__).resolve().parents[1])
+    monkeypatch.setattr(cli, "ensure_streamlit_credentials", lambda: cred)
+    captured: dict[str, list[str]] = {}
+
+    class FakeStcli:
+        @staticmethod
+        def main() -> int:
+            import sys
+
+            captured["argv"] = list(sys.argv)
+            return 0
+
+    import streamlit.web.cli as stcli
+
+    monkeypatch.setattr(stcli, "main", FakeStcli.main)
+    with pytest.raises(SystemExit) as exited:
+        cli.main()
+    assert exited.value.code == 0
+    assert "--server.address=127.0.0.1" in captured["argv"]
+    assert "--browser.gatherUsageStats=false" in captured["argv"]
+
+
 def test_start_scripts_exist() -> None:
     root = Path(__file__).resolve().parents[1]
     assert (root / "start.bat").exists()
@@ -83,3 +160,5 @@ def test_start_scripts_exist() -> None:
     assert (root / "start.command").exists()
     assert (root / "Dockerfile").exists()
     assert (root / "docker-compose.yml").exists()
+    config = (root / ".streamlit" / "config.toml").read_text(encoding="utf-8")
+    assert 'address = "127.0.0.1"' in config

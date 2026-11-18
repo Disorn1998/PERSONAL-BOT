@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import pytest
 from persona_bot.errors import RateLimitDayError, RateLimitMinuteError
+from persona_bot.i18n import set_locale
 from persona_bot.ratelimit import classify_429, parse_rate_limit_headers, parse_reset_to_seconds
+from persona_bot.ui.errors import format_error_card, format_retry_after_line
 
 
 def test_parse_headers() -> None:
@@ -38,3 +40,27 @@ def test_classify_429_day_vs_minute() -> None:
         headers={"x-ratelimit-remaining-tokens": "0", "x-ratelimit-remaining-requests": "50"}
     )
     assert isinstance(minute, RateLimitMinuteError)
+
+
+def test_error_card_surfaces_retry_after() -> None:
+    set_locale("en")
+    try:
+        err = classify_429(
+            headers={
+                "retry-after": "12",
+                "x-ratelimit-reset-tokens": "7.66s",
+                "x-ratelimit-remaining-tokens": "0",
+            },
+            body_text="tokens per minute",
+        )
+        assert isinstance(err, RateLimitMinuteError)
+        line = format_retry_after_line(err.details)
+        assert line is not None
+        assert "12" in line
+        title, hint = format_error_card(err.to_info())
+        assert "quota" in title.lower() or "minute" in title.lower()
+        assert hint is not None
+        assert "12" in hint
+        assert "7.66s" in hint
+    finally:
+        set_locale("th")

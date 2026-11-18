@@ -20,7 +20,15 @@ from persona_bot.errors import (
 )
 from persona_bot.healthcheck import run_health_check
 from persona_bot.i18n import SUPPORTED_LOCALES, get_locale, set_locale, t
-from persona_bot.keyring_store import delete_api_key, load_api_key, remember_enabled, save_api_key
+from persona_bot.keyring_store import (
+    delete_api_key,
+    env_remember_enabled,
+    load_api_key,
+    remember_enabled,
+    remember_status_key,
+    save_api_key,
+    set_ui_remember_preference,
+)
 from persona_bot.llm import LlmClient, StreamResult
 from persona_bot.logging_setup import setup_logging
 from persona_bot.persona import PersonaPack
@@ -76,11 +84,14 @@ def _init_state() -> None:
     ss.setdefault("import_bytes", None)
     ss.setdefault("confirm_delete_all", False)
     ss.setdefault("confirm_delete_persona", False)
+    ss.setdefault("confirm_clear_chat", False)
+    ss.setdefault("remember_loaded", False)
     set_locale(str(ss["locale"]))
     if not ss["api_key"] and remember_enabled():
         stored = load_api_key()
         if stored:
             ss["api_key"] = stored
+            ss["remember_loaded"] = True
 
 
 def _store() -> ChatStore:
@@ -98,11 +109,32 @@ def _usage() -> UsageTracker:
 def _render_error(exc: BaseException) -> None:
     info = error_from_exception(exc)
     title, hint = format_error_card(info)
-    hint_html = f'<div class="hint">{hint}</div>' if hint else ""
+    hint_html = ""
+    if hint:
+        # Preserve newlines from retry-after / reset hints.
+        safe = hint.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        safe = safe.replace("\n", "<br/>")
+        hint_html = f'<div class="hint">{safe}</div>'
     st.markdown(
         f'<div class="pb-error"><strong>{title}</strong>{hint_html}</div>',
         unsafe_allow_html=True,
     )
+
+
+def _apply_remember_choice(remember: bool, key_val: str) -> None:
+    """Save or skip keyring based on env **or** UI checkbox; persist checkbox opt-in."""
+    key = key_val.strip()
+    st.session_state.api_key = key
+    # Env alone enables remember; checkbox also enables and persists for next load.
+    should_remember = bool(remember) or env_remember_enabled()
+    set_ui_remember_preference(bool(remember) or env_remember_enabled())
+    if should_remember and key:
+        save_api_key(key)
+        st.session_state.remember_loaded = True
+    elif not remember and not env_remember_enabled():
+        # User turned opt-in off and env is off — do not keep a stale keyring secret.
+        delete_api_key()
+        st.session_state.remember_loaded = False
 
 
 def _ensure_thread(store: ChatStore, persona_id: str) -> str:
@@ -395,15 +427,21 @@ def _sidebar(personas: list) -> None:
     st.sidebar.divider()
     c1, c2 = st.sidebar.columns(2)
     if c1.button(t("action.new_chat"), use_container_width=True):
+        st.session_state.confirm_clear_chat = False
         thread = store.create_thread(
             persona_id=st.session_state.persona_id, title=t("action.new_chat")
         )
         st.session_state.thread_id = thread.id
         st.rerun()
     if c2.button(t("action.clear_chat"), use_container_width=True):
-        tid = _ensure_thread(store, st.session_state.persona_id)
-        store.clear_thread_messages(tid)
-        st.rerun()
+        st.session_state.confirm_clear_chat = True
+    if st.session_state.confirm_clear_chat:
+        st.sidebar.warning(t("warn.clear_chat"))
+        if st.sidebar.button(t("action.confirm_clear_chat"), key="confirm_clear_chat_btn"):
+            tid = _ensure_thread(store, st.session_state.persona_id)
+            store.clear_thread_messages(tid)
+            st.session_state.confirm_clear_chat = False
+            st.rerun()
 
     threads = store.list_threads(persona_id=st.session_state.persona_id)
     if threads:
@@ -695,14 +733,22 @@ def _sidebar(personas: list) -> None:
             t("label.remember_key"),
             value=remember_enabled(),
             key="remember_key_box",
+            help=t("label.remember_key_help"),
+        )
+        st.caption(
+            t(
+                remember_status_key(
+                    loaded_from_keyring=bool(st.session_state.get("remember_loaded"))
+                )
+            )
         )
         if st.button(t("action.save_key"), key="save_key_btn"):
-            st.session_state.api_key = key_val.strip()
-            if remember and key_val.strip():
-                save_api_key(key_val.strip())
+            _apply_remember_choice(remember, key_val)
             st.rerun()
         if st.button(t("action.forget_key"), key="forget_key_btn"):
             st.session_state.api_key = ""
+            st.session_state.remember_loaded = False
+            set_ui_remember_preference(False)
             delete_api_key()
             st.rerun()
         st.caption(t("privacy.notice"))
@@ -739,11 +785,13 @@ def _welcome() -> None:
         t("label.remember_key"),
         value=remember_enabled(),
         key="welcome_remember",
+        help=t("label.remember_key_help"),
+    )
+    st.caption(
+        t(remember_status_key(loaded_from_keyring=bool(st.session_state.get("remember_loaded"))))
     )
     if st.button(t("action.save_key"), key="welcome_save"):
-        st.session_state.api_key = key_val.strip()
-        if remember and key_val.strip():
-            save_api_key(key_val.strip())
+        _apply_remember_choice(remember, key_val)
         st.session_state.wizard_done = True
         st.rerun()
 

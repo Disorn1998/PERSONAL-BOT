@@ -18,4 +18,5 @@ fi
 mkdir -p data
 uv sync
 export STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+# persona-bot CLI binds 127.0.0.1; see docs/FIRST_RUN.md for Streamlit email skip.
 exec uv run persona-bot

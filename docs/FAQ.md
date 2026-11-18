@@ -8,18 +8,41 @@ Yes for running the app: Groq BYOK + local embeddings. No paid SaaS in the stack
 ## คีย์ API เก็บที่ไหน / Where is my API key stored?
 
 ค่าเริ่มต้นอยู่ใน session เท่านั้น ไม่เขียนลง `data/`  
-Optional: OS keyring เมื่อตั้ง `PERSONA_BOT_REMEMBER_KEY=1` (นอก `data/`, ไม่รวมใน export/backup)
+Optional remember: ติ๊ก「จำคีย์ในระบบ」**หรือ**ตั้ง `PERSONA_BOT_REMEMBER_KEY=1` — ทั้งสองแบบ
+**บันทึกและโหลด** จาก OS keyring (นอก `data/`, ไม่รวมใน export/backup)
 
-## ทำไมโหมด strict ตอบว่าไม่พบข้อมูล
+## ข้อมูลของฉันอยู่ที่ไหน / Where is my data?
 
-`answer_mode: strict` จะ **ไม่เรียก LLM** ถ้าไม่มีชิ้นความรู้ผ่าน `min_score` — ประหยัดโควตา
+ทั้งหมดอยู่บนเครื่องคุณภายใต้ `data/` (gitignored):
+
+| Path | Contents |
+|---|---|
+| `data/chat.sqlite3` | Chat threads / messages |
+| `data/personas/<id>/` | Your persona packs + `knowledge/` uploads |
+| `data/chroma/` | Local vector index |
+| `data/usage.json` | Local token counters |
+| OS keyring | Optional remembered Groq key (not under `data/`) |
+
+Embeddings cache อยู่ที่แคชของผู้ใช้ / Docker volume — ดู [FIRST_RUN.md](FIRST_RUN.md)  
+Nothing is uploaded to a persona-bot server; only Groq receives chat prompts when you call the model.
+
+## ทำไมโหมด strict ตอบว่า「ไม่พบ」/ Why does strict say ไม่พบ?
+
+`answer_mode: strict` จะ **ไม่เรียก LLM** ถ้าไม่มีชิ้นความรู้ผ่าน `min_score`  
+ข้อความ「ไม่พบข้อมูลที่เกี่ยวข้องในคลังความรู้」เป็นพฤติกรรมที่ตั้งใจ — ประหยัดโควตาและไม่เดา
+
+ถ้าต้องการคำตอบยืดหยุ่นกว่านี้: เปลี่ยนเป็น `balanced` / `open` ในตัวแก้ไขเพอร์โซนา
+หรือเพิ่มไฟล์ความรู้แล้วกด **สร้างดัชนีใหม่** และ/หรือลด `min_score`
 
 ## เพิ่ม PDF / ความรู้ของฉันอย่างไร / How do I add my own PDFs?
 
 1. ถ้าเป็นเพอร์โซนาตัวอย่าง กด **ทำสำเนา** ก่อน (ตัวอย่างแก้ไม่ได้)  
 2. เปิด「คลังความรู้」→ อัปโหลด `.txt` `.md` `.pdf` `.docx` หรือวางข้อความ  
 3. กด **สร้างดัชนีใหม่** จนสถานะเป็น **พร้อมแล้ว**  
-ข้อมูลอยู่ใต้ `data/personas/<id>/knowledge/` บนเครื่องคุณเท่านั้น
+4. แผงความรู้แสดงขนาดใช้ไป / ขีดจำกัด `MAX_KNOWLEDGE_MB` — อัปโหลดเกินลิมิตจะถูกปฏิเสธ  
+
+ข้อมูลอยู่ใต้ `data/personas/<id>/knowledge/` บนเครื่องคุณเท่านั้น  
+ทาง zip สำรอง: ส่งออก → ใส่ไฟล์ใน `knowledge/` → นำเข้า (เปลี่ยนชื่อถ้า id ซ้ำ)
 
 ## CI เรียก Groq จริงไหม
 
