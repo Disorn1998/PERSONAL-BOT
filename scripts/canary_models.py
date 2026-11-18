@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.security import hostname_in_allowlist, url_hostname  # noqa: E402
+from persona_bot.security import hostname_in_allowlist, url_hostname  # noqa: E402
 
 ENV_EXAMPLE = ROOT / ".env.example"
 ISSUE_MARKER = "<!-- persona-bot-canary-models -->"

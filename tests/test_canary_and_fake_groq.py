@@ -10,7 +10,7 @@ import urllib.request
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
-from app.security import hostname_equals
+from persona_bot.security import hostname_equals
 
 ROOT = Path(__file__).resolve().parents[1]
 

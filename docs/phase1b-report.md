@@ -7,17 +7,17 @@ Repo: https://github.com/Disorn1998/PERSONAL-BOT
 ## 1. Files created/changed
 
 ### Core
-- `app/budget.py` — `fit_prompt` token budget trim
+- `persona_bot/budget.py` — `fit_prompt` token budget trim
 - `app/chat_store.py` — sqlite threads/messages + partial updates
 - `app/usage.py` — `UsageTracker` → `data/usage.json`
 - `app/services.py` — persona discovery helpers
-- `app/main.py` — Streamlit shell + chat loop
-- `app/cli.py` — launches Streamlit via `persona-bot`
+- `persona_bot/main.py` — Streamlit shell + chat loop
+- `persona_bot/cli.py` — launches Streamlit via `persona-bot`
 
 ### UI
-- `app/ui/theme.py` — CSS (bubbles/welcome/error/badge; no external fonts/scripts)
-- `app/ui/errors.py` — error card formatter
-- `app/ui/strings.py` — onboarding + chat copy expanded
+- `persona_bot/ui/theme.py` — CSS (bubbles/welcome/error/badge; no external fonts/scripts)
+- `persona_bot/ui/errors.py` — error card formatter
+- `persona_bot/ui/strings.py` — onboarding + chat copy expanded
 - `.streamlit/config.toml` — unchanged §17.2 tokens from 1a
 
 ### Tests / docs

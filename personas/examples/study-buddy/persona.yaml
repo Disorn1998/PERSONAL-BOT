@@ -14,4 +14,13 @@ knowledge_files:
   - knowledge/photosynthesis.md
   - knowledge/study-tips.txt
 avatar: null
+icon: "📚"
+greeting: สวัสดี ฉันเป็นเพื่อนติว — อยากทบทวนเรื่องไหนดีวันนี้?
+starter_questions:
+  - สังเคราะห์แสงเกิดขึ้นที่ไหนในพืช?
+  - มีทริคจำบทเรียนยังไงให้แม่น?
+  - ช่วยตั้งคำถามตรวจความเข้าใจเรื่องคลอโรฟิลล์หน่อย
+metadata:
+  audience: students
+  default_onboarding: true
 version: 1

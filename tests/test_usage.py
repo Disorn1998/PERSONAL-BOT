@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.llm import StreamResult, TokenUsage
-from app.usage import UsageTracker
+from persona_bot.llm import StreamResult, TokenUsage
+from persona_bot.usage import UsageTracker
 
 
 def test_usage_records_and_persists(tmp_path: Path) -> None:

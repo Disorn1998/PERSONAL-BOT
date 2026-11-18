@@ -7,10 +7,10 @@ from typing import Any
 
 import httpx
 import pytest
-from app.config import Settings
-from app.errors import MissingApiKeyError, MissingModelConfigError
-from app.llm import SDK_MAX_RETRIES, LlmClient, StreamResult, build_client
 from openai import APIStatusError
+from persona_bot.config import Settings
+from persona_bot.errors import MissingApiKeyError, MissingModelConfigError
+from persona_bot.llm import SDK_MAX_RETRIES, LlmClient, StreamResult, build_client
 
 
 class _FakeRawResponse:

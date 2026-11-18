@@ -23,7 +23,7 @@ def test_streamlit_app_loads(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
     monkeypatch.setenv("GROQ_MODEL_FALLBACK", "openai/gpt-oss-20b")
     monkeypatch.setenv("APP_PASSWORD", "")
 
-    at = AppTest.from_file(str(ROOT / "app" / "main.py"), default_timeout=30)
+    at = AppTest.from_file(str(ROOT / "persona_bot" / "main.py"), default_timeout=30)
     at.run()
     # Welcome / shell should render without an uncaught exception.
     assert not at.exception, at.exception

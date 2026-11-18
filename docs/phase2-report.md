@@ -25,8 +25,8 @@ PR [#3](https://github.com/Disorn1998/PERSONAL-BOT/pull/3) was still open when P
 - `app/rag/runtime.py` — UI/session wiring
 
 ### UI / examples / docs
-- `app/main.py` — retrieve → build_messages → budget → stream; sources + citation warn + inspector
-- `app/ui/strings.py` — knowledge / search-lab / rebuild keys
+- `persona_bot/main.py` — retrieve → build_messages → budget → stream; sources + citation warn + inspector
+- `persona_bot/ui/strings.py` — knowledge / search-lab / rebuild keys
 - `personas/examples/study-buddy/knowledge/*`, `tech-explainer/knowledge/*`
 - `docs/ASSUMPTIONS.md`, `docs/DECISIONS.md`, `docs/phase2-report.md`
 - `tests/test_rag.py` — FakeEmbedder + hypothesis chunking + PDF loader smoke

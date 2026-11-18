@@ -32,10 +32,10 @@ RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin appuser \
 
 # Project metadata first for better layer caching
 COPY --chown=appuser:appuser pyproject.toml uv.lock README.md LICENSE ./
-COPY --chown=appuser:appuser app ./app
+COPY --chown=appuser:appuser persona_bot ./persona_bot
 COPY --chown=appuser:appuser personas ./personas
 COPY --chown=appuser:appuser .streamlit ./.streamlit
-COPY --chown=appuser:appuser app/static ./app/static
+COPY --chown=appuser:appuser persona_bot/static ./persona_bot/static
 
 USER appuser
 
@@ -51,7 +51,7 @@ VOLUME ["/data", "/cache"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD curl -fsS http://127.0.0.1:8501/_stcore/health || exit 1
 
-CMD ["uv", "run", "streamlit", "run", "app/main.py", \
+CMD ["uv", "run", "streamlit", "run", "persona_bot/main.py", \
      "--browser.gatherUsageStats=false", \
      "--server.address=0.0.0.0", \
      "--server.port=8501"]

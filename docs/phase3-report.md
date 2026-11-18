@@ -9,16 +9,16 @@ Base: latest `main` (after Phase 2 PR #4)
 
 ### Launchers / Docker
 - `start.bat`, `start.sh`, `start.command`
-- `Dockerfile` (`python:3.11.11-slim-bookworm`, non-root, `.streamlit` + `app/static`, cache env)
+- `Dockerfile` (`python:3.11.11-slim-bookworm`, non-root, `.streamlit` + `persona_bot/static`, cache env)
 - `docker-compose.yml` (`127.0.0.1:8501`, `./data` + cache volume, examples in image)
 - `.dockerignore`
 
 ### App
-- `app/cli.py` — run from any cwd; telemetry off
+- `persona_bot/cli.py` — run from any cwd; telemetry off
 - `app/versioning.py` — `data/version.json` + schema migration stub
 - `app/healthcheck.py` — system health (no Groq chat)
 - `app/keyring_store.py` — optional remember-key
-- `app/main.py` — version, health panel, first-run wizard, keyring toggles
+- `persona_bot/main.py` — version, health panel, first-run wizard, keyring toggles
 - `scripts/smoke_test.py` — owner-only live smoke
 
 ### Docs

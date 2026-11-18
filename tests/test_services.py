@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.services import load_available_personas
+from persona_bot.services import load_available_personas
 
 
 def test_loads_examples_with_study_buddy_first() -> None:
@@ -11,3 +11,6 @@ def test_loads_examples_with_study_buddy_first() -> None:
     assert "study-buddy" in ids
     assert ids[0] == "study-buddy"
     assert "tech-explainer" in ids
+    assert "thai-tax-advisor" in ids
+    assert "company-faq-bot" in ids
+    assert len(ids) == len(set(ids))

@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from app.errors import KnowledgeNotFoundError
-from app.persona import PersonaPack, list_example_persona_dirs, load_persona_yaml
-from app.prompt import (
+from persona_bot.errors import KnowledgeNotFoundError
+from persona_bot.persona import PersonaPack, list_example_persona_dirs, load_persona_yaml
+from persona_bot.prompt import (
     build_messages,
     fixed_rules_block,
     not_found_reply_th,
@@ -21,12 +21,26 @@ def test_load_example_personas() -> None:
     examples = Path("personas/examples")
     dirs = list_example_persona_dirs(examples)
     ids = {p.name for p in dirs}
-    assert ids == {"study-buddy", "tech-explainer", "writing-coach"}
+    assert ids == {
+        "study-buddy",
+        "tech-explainer",
+        "writing-coach",
+        "thai-tax-advisor",
+        "company-faq-bot",
+    }
     packs = [load_persona_yaml(p / "persona.yaml") for p in dirs]
     by_id = {p.id: p for p in packs}
     assert by_id["tech-explainer"].config.answer_mode == "strict"
     assert by_id["study-buddy"].config.answer_mode == "balanced"
     assert by_id["writing-coach"].config.answer_mode == "open"
+    assert by_id["thai-tax-advisor"].config.answer_mode == "strict"
+    assert by_id["company-faq-bot"].config.answer_mode == "strict"
+    assert by_id["thai-tax-advisor"].greeting
+    assert by_id["thai-tax-advisor"].starter_questions
+    assert by_id["thai-tax-advisor"].metadata.get("disclaimer_required") is True
+    assert "min_score_note" in by_id["thai-tax-advisor"].metadata
+    assert by_id["company-faq-bot"].icon
+    assert len({p.id for p in packs}) == len(packs)
 
 
 def test_stable_system_includes_rules() -> None:

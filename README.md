@@ -56,7 +56,7 @@ https://console.groq.com/docs/rate-limits
 
 ## โครงสร้างหลัก / Layout
 
-- `app/` — application (chat UI + RAG)
+- `persona_bot/` — application (chat UI + RAG)
 - `personas/examples/` — example persona packs
 - `data/` — runtime only (gitignored)
 - `start.bat` / `start.command` / `start.sh` — one-click launchers
@@ -69,7 +69,7 @@ uv sync --extra dev
 uv run ruff check .
 uv run ruff format .
 uv run mypy
-uv run pytest -m "not slow" --cov=app --cov-fail-under=60
+uv run pytest -m "not slow" --cov=persona_bot --cov-fail-under=60
 ```
 
 Owner-only live smoke (not CI): `uv run python scripts/smoke_test.py`  

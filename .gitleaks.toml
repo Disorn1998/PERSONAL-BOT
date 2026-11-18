@@ -1,0 +1,14 @@
+# Allowlist fake secret *shapes* used only in offline redaction / keyring tests.
+# Real secrets must never appear in the repo; these paths are intentional fixtures.
+title = "persona-bot"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Offline test fixtures exercise redact_secrets / keyring with fake key shapes"
+paths = [
+  '''(^|/)tests/test_security_logging\.py$''',
+  '''(^|/)tests/test_phase3\.py$''',
+  '''(^|/)tests/test_backup\.py$''',
+]

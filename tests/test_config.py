@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from app.config import EMBEDDING_PRESETS, Settings, clear_settings_cache
+from persona_bot.config import EMBEDDING_PRESETS, Settings, clear_settings_cache
 
 
 def test_embedding_presets_have_required_keys() -> None:

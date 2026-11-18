@@ -21,10 +21,12 @@ Update when the owner replies or when APIs change.
 | Eval thresholds | DoD 7 locked: hit@top_k ≥ 0.70; strict OOS ≥ 0.80 | **LOCKED** (2026-11-18) |
 | Canary | Weekly `GET /models` only; maintainer `GROQ_API_KEY`; skip forks; no duplicate issues | Assumed |
 | CodeQL | Enabled when repo is public | Assumed |
-| gitleaks | Docker image `zricethezav/gitleaks:v8.21.2` (no org licence required) | Assumed |
+| gitleaks | Docker image `zricethezav/gitleaks:v8.21.2` + `.gitleaks.toml` allowlist for test fixture paths | Assumed |
+| pip-audit chromadb | `chromadb==1.5.9` still latest; waive PYSEC-2026-311/3813/3814/3815 (empty Fix Versions) until upstream patch | **Waived** (document-only; revisit on upgrade) |
 | GHCR image | `ghcr.io/<owner>/persona-bot` on tag `v*` | Assumed |
 | Embedding model licences | Table in THIRD_PARTY_NOTICES with **TODO(verify)** on model cards | Assumed |
 | Docker e2e | Fake Groq via `scripts/fake_groq_server.py` + `docker-compose.ci.yml` | Assumed |
+| Line endings | `.gitattributes` `* text=auto eol=lf` + Windows CI re-checkout for ruff format | Assumed |
 
 ## Phase 4 notes (2026-11-18)
 
@@ -65,7 +67,7 @@ Update when the owner replies or when APIs change.
 
 | Item | Assumption |
 |---|---|
-| Token budget | Heuristic `chars/3` in `app/budget.py` — **TODO(verify)** vs Groq tokenizer |
+| Token budget | Heuristic `chars/3` in `persona_bot/budget.py` — **TODO(verify)** vs Groq tokenizer |
 | Stop button | Streamlit rerun interrupts stream; partials flushed to sqlite each chunk (F9) |
 | RAG context | Empty in 1b; strict personas short-circuit to not-found without LLM |
 | Privacy ack | Flag file `data/privacy_ack` (F19) |
@@ -77,7 +79,7 @@ Update when the owner replies or when APIs change.
 |---|---|---|
 | Coverage floors | Overall **≥ 60%** locked in CI; core **≥ 80%** target when split feasible | **LOCKED** overall (2026-11-18) |
 | Phase split (F10) | **1a / 1b** — this work is **1a only** | Assumed |
-| Package name (F1) | Keep importable package **`app`** for now | Open ask |
+| Package name (F1) | Importable package **`persona_bot`** (renamed from `app`) | **LOCKED** (2026-11-18) |
 | §16.8 / §18.9 | Keep provisional Appendix A / §18.9 | Open ask |
 | §17.2 palette | Warm cream `#F4F1EA` + primary `#6A5ACD` (migrated from Phase 0 teal) | Assumed per coordinator |
 
@@ -85,7 +87,7 @@ Update when the owner replies or when APIs change.
 
 | Item | Assumption / result | Status |
 |---|---|---|
-| Importable package name | Keep `app/` (F1 still open for rename to `persona_bot`) | **Ask owner** |
+| Importable package name | `persona_bot/` (renamed from `app/`) | **LOCKED** (2026-11-18) |
 | `requires-python` | `>=3.11,<3.14` | Kept |
 | Python 3.13 deps | chromadb / fastembed+onnxruntime / pythainlp declare 3.13 support | Phase 0 verified metadata |
 
@@ -99,7 +101,7 @@ prefer the owner message and adjust — mark `# TODO(verify)` at call sites.
 |---|---|
 | `answer_mode` | Enum: `strict` \| `balanced` \| `open` |
 | Fallback rules | Minute 429 / transport → try fallback model; **day** 429 → no fallback |
-| Embedding presets | Single table in `app/config.py`: `lite`, `multilingual`, `quality` |
+| Embedding presets | Single table in `persona_bot/config.py`: `lite`, `multilingual`, `quality` |
 | Prompt cache prefix | `system_prompt + fixed rules` byte-stable per persona/mode |
 
 ## §3 Fast-changing external info

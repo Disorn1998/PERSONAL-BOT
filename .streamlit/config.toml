@@ -1,5 +1,5 @@
 # persona-bot Streamlit config
-# Theme tokens aligned with app/ui/tokens.py (§17.2: warm cream + #6A5ACD).
+# Theme tokens aligned with persona_bot/ui/tokens.py (§17.2: warm cream + #6A5ACD).
 
 [browser]
 gatherUsageStats = false

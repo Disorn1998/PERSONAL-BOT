@@ -7,7 +7,7 @@ redistribution.
 ## UI fonts
 
 - Status: **not bundled yet** (Streamlit / system sans-serif).
-- When fonts are added under `app/static/fonts/`, list family, source URL, and
+- When fonts are added under `persona_bot/static/fonts/`, list family, source URL, and
   licence file path here.
 
 ## Embedding models (fastembed / ONNX) — licence table

@@ -29,5 +29,13 @@ First tagged release. Owner locked DoD 7 eval thresholds and overall coverage CI
 
 ### Notes
 
-- Package import path remains `app` (rename deferred).
 - Tag `v0.1.0` triggers the GHCR release workflow.
+
+## [Unreleased]
+
+### Changed
+
+- Renamed importable package `app` → `persona_bot` (Docker `WORKDIR` still `/app`).
+- Restored §9 example personas `thai-tax-advisor` + `company-faq-bot` (fictional knowledge).
+- Persona schema: optional `icon`, `greeting`, `starter_questions`, `metadata`.
+- CI: LF via `.gitattributes`, gitleaks test-fixture allowlist, pip-audit chromadb waives.

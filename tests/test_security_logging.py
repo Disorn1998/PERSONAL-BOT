@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 
 import pytest
-from app.logging_setup import setup_logging
-from app.security import (
+from persona_bot.logging_setup import setup_logging
+from persona_bot.security import (
     hostname_equals,
     hostname_in_allowlist,
     password_ok,

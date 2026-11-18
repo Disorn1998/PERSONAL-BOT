@@ -7,19 +7,19 @@ Repo: https://github.com/Disorn1998/PERSONAL-BOT
 ## 1. Files created/changed
 
 ### New modules
-- `app/config.py` — Settings + `EMBEDDING_PRESETS`
+- `persona_bot/config.py` — Settings + `EMBEDDING_PRESETS`
 - `app/errors.py` — typed errors → Thai string keys
 - `app/security.py` — secret redaction, optional `APP_PASSWORD`
 - `app/logging_setup.py` — redacting log filter
 - `app/ratelimit.py` — header parse + 429 minute/day classify
 - `app/llm.py` — `LlmClient`, `StreamResult`, `max_retries=0`, mockable stream
 - `app/persona.py` — Persona Pack schema + YAML load
-- `app/prompt.py` — stable system prefix + answer_mode rules + strict short-circuit
+- `persona_bot/prompt.py` — stable system prefix + answer_mode rules + strict short-circuit
 
 ### Examples / UX
 - `personas/examples/{study-buddy,tech-explainer,writing-coach}/persona.yaml`
-- `app/ui/tokens.py`, `.streamlit/config.toml` → §17.2 cream + `#6A5ACD`
-- `app/ui/strings.py` — error/hint keys expanded
+- `persona_bot/ui/tokens.py`, `.streamlit/config.toml` → §17.2 cream + `#6A5ACD`
+- `persona_bot/ui/strings.py` — error/hint keys expanded
 
 ### Tests / docs
 - `tests/test_{config,security_logging,ratelimit,llm,persona_prompt,smoke}.py`

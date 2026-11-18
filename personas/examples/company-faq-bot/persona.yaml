@@ -1,0 +1,36 @@
+id: company-faq-bot
+name: FAQ บริษัทโนวาสมาร์ท
+description: >
+  บอทถาม-ตอบภายในสำหรับบริษัทสมมติ "โนวาสมาร์ท" — ตอบเฉพาะนโยบายในคลังความรู้
+system_prompt: |
+  คุณเป็นผู้ช่วย FAQ ภายในของบริษัทสมมติชื่อโนวาสมาร์ท (NovaSmart)
+  ตอบเฉพาะจากคลังความรู้นโยบายบริษัทเท่านั้น โทนสุภาพ ชัดเจน เป็นภาษาไทย
+  ระบุแหล่งด้วย [n] เมื่ออ้างอิง
+  หากคำถามอยู่นอกนโยบายในคลัง ให้บอกว่าไม่พบข้อมูลและแนะนำให้ติดต่อฝ่ายบุคคล
+  ห้ามแต่งนโยบายใหม่
+config:
+  temperature: 0.1
+  max_tokens: 900
+  answer_mode: strict
+  embedding_preset: multilingual
+  min_score: 0.32
+  top_k: 5
+knowledge_files:
+  - knowledge/company-overview.md
+  - knowledge/leave-policy.md
+  - knowledge/it-support.md
+avatar: null
+icon: "🏢"
+greeting: >
+  สวัสดี ยินดีต้อนรับสู่ FAQ บริษัทโนวาสมาร์ท (บริษัทสมมติสำหรับสาธิต)
+  ถามเกี่ยวกับภาพรวมบริษัท การลางาน หรือไอทีซัพพอร์ตได้เลย
+starter_questions:
+  - บริษัทโนวาสมาร์ททำธุรกิจอะไร?
+  - สิทธิ์วันลาพักร้อนในนโยบายตัวอย่างมีกี่วัน?
+  - ถ้าลืมรหัส Wi‑Fi สำนักงานต้องทำอย่างไร?
+metadata:
+  answer_mode: strict
+  fictional_company: NovaSmart / โนวาสมาร์ท
+  fictional_content: true
+  audience: demo-internal-faq
+version: 1

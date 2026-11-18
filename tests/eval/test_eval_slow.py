@@ -11,8 +11,8 @@ import os
 from pathlib import Path
 
 import pytest
-from app.eval_harness import assert_thresholds, load_baseline, run_suite
-from app.rag.embeddings import FastEmbedder
+from persona_bot.eval_harness import assert_thresholds, load_baseline, run_suite
+from persona_bot.rag.embeddings import FastEmbedder
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).resolve().parent / "baseline.json"
