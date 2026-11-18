@@ -3,6 +3,29 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Phase 5 (2026-11-18) — final phase wrap-up
+
+### CI / DoD 6 — **DECISION**
+
+- Matrix: Ubuntu × {3.11,3.12,3.13} + Windows/macOS × {3.12}
+- Jobs: ruff, format, mypy, pytest `-m "not slow"` + soft coverage, Docker e2e (fake Groq)
+- Security workflow: gitleaks (docker), pip-audit (`uvx`), CodeQL (public)
+- Canary workflow: weekly `GET /models` vs `.env.example`; never `chat/completions`
+- Release workflow: tag `v*` → GHCR
+
+### Coverage — **ASK (still unlocked)**
+
+- Proposal overall ≈60% / core ≈80%; CI `fail_under` / `--cov-fail-under` stay **0**
+
+### Eval thresholds — **still PROVISIONAL / ASK**
+
+- 0.70 hit@top_k / 0.80 OOS not-found until owner locks
+
+### Docs/legal — **DECISION**
+
+- CODE_OF_CONDUCT, CODEOWNERS, FAQ, GALLERY, issue/PR templates, SemVer CHANGELOG,
+  expanded THIRD_PARTY_NOTICES model licence table (TODO(verify) on HF cards)
+
 ## Phase 4 (2026-11-18)
 
 ### Eval thresholds (DoD 7) — **PROVISIONAL / ASK**
@@ -157,4 +180,5 @@ before locking. Format: date · status · decision.
 3. Supply original **§16.8** and **§18.9**
 4. Confirm answer_mode triad (`strict`/`balanced`/`open`) vs Complete Edition wording
 5. **Lock or revise Phase 4 eval numbers** (0.70 hit@top_k / 0.80 OOS not-found)?
-6. After Phase 4 merge: 「ไปต่อ」 for Phase **5** (CI matrix + canary / DoD 6)
+6. Add maintainer secret `GROQ_API_KEY` for weekly canary (optional but recommended)
+7. Verify embedding model licences on Hugging Face cards (clear TODO(verify) in THIRD_PARTY_NOTICES)

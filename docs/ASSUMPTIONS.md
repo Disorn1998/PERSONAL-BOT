@@ -3,6 +3,20 @@
 Assumptions made when the owner has not answered yet, plus verification notes.
 Update when the owner replies or when APIs change.
 
+## Phase 5 notes (2026-11-18)
+
+| Item | Assumption | Status |
+|---|---|---|
+| OS matrix | Ubuntu 3.11/3.12/3.13 + Windows/macOS 3.12 (feasible subset) | Assumed |
+| Coverage CI gate | Soft only (`--cov-fail-under=0`); floors 60%/80% **not locked** | **ASK owner** |
+| Eval thresholds | Still provisional 0.70 / 0.80 (Phase 4) | **ASK owner to lock/revise** |
+| Canary | Weekly `GET /models` only; maintainer `GROQ_API_KEY`; skip forks; no duplicate issues | Assumed |
+| CodeQL | Enabled when repo is public | Assumed |
+| gitleaks | Docker image `zricethezav/gitleaks:v8.21.2` (no org licence required) | Assumed |
+| GHCR image | `ghcr.io/<owner>/persona-bot` on tag `v*` | Assumed |
+| Embedding model licences | Table in THIRD_PARTY_NOTICES with **TODO(verify)** on model cards | Assumed |
+| Docker e2e | Fake Groq via `scripts/fake_groq_server.py` + `docker-compose.ci.yml` | Assumed |
+
 ## Phase 4 notes (2026-11-18)
 
 | Item | Assumption | Status |
