@@ -8,42 +8,47 @@ from typing import Any, cast
 
 import streamlit as st
 
-from app.backup import create_backup, delete_all_data, restore_backup
-from app.budget import fit_prompt
-from app.chat_store import ChatStore
-from app.config import clear_settings_cache, get_settings
-from app.errors import AppError, KnowledgeNotFoundError, MissingApiKeyError, MissingModelConfigError
-from app.healthcheck import run_health_check
-from app.i18n import SUPPORTED_LOCALES, get_locale, set_locale, t
-from app.keyring_store import delete_api_key, load_api_key, remember_enabled, save_api_key
-from app.llm import LlmClient, StreamResult
-from app.logging_setup import setup_logging
-from app.persona_pack_io import (
+from persona_bot.backup import create_backup, delete_all_data, restore_backup
+from persona_bot.budget import fit_prompt
+from persona_bot.chat_store import ChatStore
+from persona_bot.config import clear_settings_cache, get_settings
+from persona_bot.errors import (
+    AppError,
+    KnowledgeNotFoundError,
+    MissingApiKeyError,
+    MissingModelConfigError,
+)
+from persona_bot.healthcheck import run_health_check
+from persona_bot.i18n import SUPPORTED_LOCALES, get_locale, set_locale, t
+from persona_bot.keyring_store import delete_api_key, load_api_key, remember_enabled, save_api_key
+from persona_bot.llm import LlmClient, StreamResult
+from persona_bot.logging_setup import setup_logging
+from persona_bot.persona_pack_io import (
     delete_user_persona,
     export_persona_zip,
     import_persona_zip,
     preview_persona_zip,
 )
-from app.prompt import build_messages, not_found_reply_th, strip_context_from_content
-from app.rag.citations import format_sources_markdown, validate_citations
-from app.rag.embeddings import FakeEmbedder
-from app.rag.prompt_inspector import inspect_messages
-from app.rag.retrieve import retrieve
-from app.rag.runtime import build_embedder, get_or_build_store
-from app.rag.search_lab import run_search_lab
-from app.rag.store import VectorStore
-from app.security import password_ok
-from app.services import (
+from persona_bot.prompt import build_messages, not_found_reply_th, strip_context_from_content
+from persona_bot.rag.citations import format_sources_markdown, validate_citations
+from persona_bot.rag.embeddings import FakeEmbedder
+from persona_bot.rag.prompt_inspector import inspect_messages
+from persona_bot.rag.retrieve import retrieve
+from persona_bot.rag.runtime import build_embedder, get_or_build_store
+from persona_bot.rag.search_lab import run_search_lab
+from persona_bot.rag.store import VectorStore
+from persona_bot.security import password_ok
+from persona_bot.services import (
     chat_db_path,
     is_user_persona,
     load_available_personas,
     persona_dir_for,
     usage_path,
 )
-from app.ui.errors import error_from_exception, format_error_card
-from app.ui.theme import custom_css
-from app.usage import UsageTracker
-from app.versioning import ensure_data_version, get_app_version
+from persona_bot.ui.errors import error_from_exception, format_error_card
+from persona_bot.ui.theme import custom_css
+from persona_bot.usage import UsageTracker
+from persona_bot.versioning import ensure_data_version, get_app_version
 
 
 def _init_state() -> None:
@@ -162,7 +167,8 @@ def _sidebar(personas: list) -> None:
 
     persona = by_id.get(st.session_state.persona_id)
     if persona:
-        st.sidebar.caption(persona.description)
+        icon = f"{persona.icon} " if persona.icon else ""
+        st.sidebar.caption(f"{icon}{persona.description}")
 
     st.sidebar.divider()
     c1, c2 = st.sidebar.columns(2)
@@ -685,8 +691,20 @@ def run() -> None:
     store = _store()
     thread_id = _ensure_thread(store, st.session_state.persona_id)
     messages = store.list_messages(thread_id)
+    persona = next((p for p in personas if p.id == st.session_state.persona_id), None)
     if not messages:
-        st.caption(t("chat.empty"))
+        if persona and persona.greeting:
+            icon = f"{persona.icon} " if persona.icon else ""
+            st.info(f"{icon}{persona.greeting}")
+        else:
+            st.caption(t("chat.empty"))
+        if persona and persona.starter_questions:
+            st.caption(t("label.starter_questions"))
+            cols = st.columns(min(3, len(persona.starter_questions)))
+            for idx, question in enumerate(persona.starter_questions[:3]):
+                if cols[idx].button(question, key=f"starter_{persona.id}_{idx}"):
+                    _handle_user_message(question.strip(), personas)
+                    return
     for msg in messages:
         if msg.role not in {"user", "assistant"}:
             continue

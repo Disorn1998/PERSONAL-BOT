@@ -7,6 +7,11 @@ Bundled under `personas/examples/` (read-only in Docker image).
 | `study-buddy` | เพื่อนติว | balanced | photosynthesis + study tips |
 | `tech-explainer` | อธิบายเทค | **strict** | HTTP basics + RAG overview |
 | `writing-coach` | โค้ชเขียน | open | (none — style helper) |
+| `thai-tax-advisor` | ที่ปรึกษาภาษีตัวอย่าง | **strict** | fictional VAT + PIT overview + disclaimer (`min_score` placeholder) |
+| `company-faq-bot` | FAQ บริษัทโนวาสมาร์ท | **strict** | fictional company overview / leave / IT |
+
+All example packs include `icon`, `greeting`, `starter_questions`, and `metadata`.
+Tax/FAQ knowledge is **self-written fictional demo content** — not legal advice.
 
 ## Share your pack
 

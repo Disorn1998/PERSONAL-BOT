@@ -12,4 +12,14 @@ config:
   embedding_preset: lite
 knowledge_files: []
 avatar: null
+icon: "✍️"
+greeting: ส่งข้อความที่อยากปรับสำนวนมาได้เลย — จะช่วยให้ลื่นและชัดขึ้น
+starter_questions:
+  - ช่วยปรับย่อหน้านี้ให้อ่านลื่นขึ้น
+  - โทนทางการเกินไปไหม ช่วยทำให้อุ่นขึ้นหน่อย
+  - สรุปประโยคนี้ให้สั้นลงโดยไม่เสียความหมาย
+metadata:
+  answer_mode: open
+  knowledge: none
+  audience: writers
 version: 1

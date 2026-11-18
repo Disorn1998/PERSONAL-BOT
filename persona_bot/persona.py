@@ -9,8 +9,8 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, Field, field_validator
 
-from app.config import EMBEDDING_PRESETS, EmbeddingPresetId
-from app.errors import PersonaLoadError
+from persona_bot.config import EMBEDDING_PRESETS, EmbeddingPresetId
+from persona_bot.errors import PersonaLoadError
 
 AnswerMode = Literal["strict", "balanced", "open"]
 
@@ -49,7 +49,7 @@ class PersonaConfig(BaseModel):
 
 
 class PersonaPack(BaseModel):
-    """Persona Pack = role + knowledge refs + tuning (§1 / §0.2)."""
+    """Persona Pack = role + knowledge refs + tuning (§1 / §0.2 / §9)."""
 
     id: str = Field(min_length=2, max_length=64, pattern=r"^[a-z0-9][a-z0-9_-]*$")
     name: str = Field(min_length=1, max_length=120)
@@ -58,6 +58,11 @@ class PersonaPack(BaseModel):
     config: PersonaConfig = Field(default_factory=PersonaConfig)
     knowledge_files: list[str] = Field(default_factory=list)
     avatar: str | None = None
+    # §9 example UX fields (optional on user packs).
+    icon: str | None = None
+    greeting: str | None = None
+    starter_questions: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
     version: int = 1
 
     @field_validator("id")

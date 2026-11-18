@@ -14,4 +14,13 @@ knowledge_files:
   - knowledge/http-basics.md
   - knowledge/rag-overview.txt
 avatar: null
+icon: "⚙️"
+greeting: พร้อมอธิบายหัวข้อเทคนิคจากคลังความรู้แล้ว — ถามมาได้เลย
+starter_questions:
+  - HTTP GET ต่างจาก POST อย่างไร?
+  - RAG คืออะไรในภาพรวม?
+  - คะแนนความคล้ายในระบบค้นคืนใช้ทำอะไร?
+metadata:
+  answer_mode: strict
+  audience: builders
 version: 1
