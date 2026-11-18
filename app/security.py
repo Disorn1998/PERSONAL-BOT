@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from typing import Any
+from urllib.parse import urlparse
 
 _KEY_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?i)(api[_-]?key|authorization|bearer)\s*[:=]\s*([^\s,;]+)"),
@@ -47,3 +48,27 @@ def password_ok(configured: str, provided: str) -> bool:
     if not configured:
         return True
     return configured == provided
+
+
+def url_hostname(url: str) -> str | None:
+    """Return the URL hostname via ``urlparse`` (never substring search)."""
+    if not url or not str(url).strip():
+        return None
+    host = urlparse(str(url).strip()).hostname
+    return host.lower() if host else None
+
+
+def hostname_equals(url: str, expected_host: str) -> bool:
+    """True when ``url``'s hostname equals ``expected_host`` (case-insensitive)."""
+    host = url_hostname(url)
+    expected = expected_host.strip().lower()
+    return host is not None and bool(expected) and host == expected
+
+
+def hostname_in_allowlist(url: str, allowed_hosts: list[str] | tuple[str, ...]) -> bool:
+    """True when the URL hostname is exactly one of ``allowed_hosts``."""
+    host = url_hostname(url)
+    if host is None:
+        return False
+    allowed = {h.strip().lower() for h in allowed_hosts if h and h.strip()}
+    return host in allowed

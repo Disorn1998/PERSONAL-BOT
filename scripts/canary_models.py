@@ -20,8 +20,20 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from app.security import hostname_in_allowlist, url_hostname  # noqa: E402
+
 ENV_EXAMPLE = ROOT / ".env.example"
 ISSUE_MARKER = "<!-- persona-bot-canary-models -->"
+# Hostnames we may call for canary (exact match via urlparse — not substring).
+_CANARY_HOST_ALLOWLIST = (
+    "api.groq.com",
+    "127.0.0.1",
+    "localhost",
+    "fake-groq",
+)
 
 
 def _parse_env_example(path: Path) -> dict[str, str]:
@@ -108,6 +120,15 @@ def main() -> int:
     if not primary:
         print("GROQ_MODEL_PRIMARY missing from .env.example", file=sys.stderr)
         return 2
+
+    host = url_hostname(base)
+    if host is None or not hostname_in_allowlist(base, _CANARY_HOST_ALLOWLIST):
+        print(
+            f"GROQ_BASE_URL hostname not allowlisted: {host!r} (urlparse check)",
+            file=sys.stderr,
+        )
+        return 2
+    print(f"canary base host={host}")
 
     try:
         ids = _get_models(base, api_key)
