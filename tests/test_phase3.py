@@ -119,15 +119,15 @@ def test_remember_key_env_or_ui_preference(monkeypatch: pytest.MonkeyPatch) -> N
 def test_cli_binds_localhost_and_skips_email(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    # Pass home explicitly — Windows Path.home() ignores HOME and uses USERPROFILE.
     cred = tmp_path / ".streamlit" / "credentials.toml"
-    monkeypatch.setenv("HOME", str(tmp_path))
-    path = cli.ensure_streamlit_credentials()
+    path = cli.ensure_streamlit_credentials(home=tmp_path)
     assert path == cred
     text = cred.read_text(encoding="utf-8")
     assert 'email = ""' in text
     # Idempotent — does not overwrite an existing file.
     cred.write_text('[general]\nemail = "keep@example.com"\n', encoding="utf-8")
-    cli.ensure_streamlit_credentials()
+    cli.ensure_streamlit_credentials(home=tmp_path)
     assert "keep@example.com" in cred.read_text(encoding="utf-8")
 
     # CLI argv contract (without launching Streamlit).

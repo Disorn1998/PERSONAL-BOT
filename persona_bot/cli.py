@@ -21,9 +21,14 @@ def project_root() -> Path:
     return candidate
 
 
-def ensure_streamlit_credentials() -> Path:
-    """Create ``~/.streamlit/credentials.toml`` with empty email to skip onboarding prompt."""
-    cred_dir = Path.home() / ".streamlit"
+def ensure_streamlit_credentials(*, home: Path | None = None) -> Path:
+    """Create ``~/.streamlit/credentials.toml`` with empty email to skip onboarding prompt.
+
+    ``home`` defaults to ``Path.home()`` (on Windows that follows ``USERPROFILE``,
+    not ``HOME``). Tests should pass an explicit temp home.
+    """
+    base = home if home is not None else Path.home()
+    cred_dir = base / ".streamlit"
     cred_path = cred_dir / "credentials.toml"
     if not cred_path.exists():
         cred_dir.mkdir(parents=True, exist_ok=True)
