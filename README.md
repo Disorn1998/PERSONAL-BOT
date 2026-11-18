@@ -69,7 +69,7 @@ uv sync --extra dev
 uv run ruff check .
 uv run ruff format .
 uv run mypy
-uv run pytest -m "not slow" --cov=app --cov-fail-under=0
+uv run pytest -m "not slow" --cov=app --cov-fail-under=60
 ```
 
 Owner-only live smoke (not CI): `uv run python scripts/smoke_test.py`  

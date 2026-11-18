@@ -12,7 +12,7 @@ BASELINE = Path(__file__).resolve().parent / "baseline.json"
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
-def test_offline_eval_meets_provisional_thresholds(tmp_path: Path) -> None:
+def test_offline_eval_meets_locked_thresholds(tmp_path: Path) -> None:
     baseline = load_baseline(BASELINE)
     report = run_suite(
         baseline,
@@ -26,8 +26,9 @@ def test_offline_eval_meets_provisional_thresholds(tmp_path: Path) -> None:
     # Per-case fixture expectations must pass.
     failed = [r for r in report.results if not r.passed]
     assert not failed, {r.case_id: r.detail for r in failed}
-    # Score-gate subset + OOS rates vs provisional thresholds.
+    # Score-gate subset + OOS rates vs locked DoD 7 thresholds.
     assert_thresholds(report)
+    assert report.provisional is False
     assert report.in_scope_hit_rate + 1e-9 >= report.thresholds.in_scope_hit_at_top_k
     assert (
         report.out_of_scope_not_found_rate + 1e-9 >= report.thresholds.out_of_scope_not_found_rate
@@ -37,7 +38,8 @@ def test_offline_eval_meets_provisional_thresholds(tmp_path: Path) -> None:
 def test_baseline_json_schema() -> None:
     baseline = load_baseline(BASELINE)
     assert baseline["schema_version"] == 1
-    assert baseline["provisional"] is True
+    assert baseline["provisional"] is False
+    assert baseline.get("locked_at") == "2026-11-18"
     assert "thresholds" in baseline
     assert baseline["thresholds"]["in_scope_hit_at_top_k"] == 0.70
     assert baseline["thresholds"]["out_of_scope_not_found_rate"] == 0.80

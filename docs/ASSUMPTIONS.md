@@ -3,13 +3,22 @@
 Assumptions made when the owner has not answered yet, plus verification notes.
 Update when the owner replies or when APIs change.
 
+## Locks (2026-11-18) — owner authorized
+
+| Item | Locked value | Status |
+|---|---|---|
+| Eval DoD 7 in-scope hit@top_k | **≥ 0.70** | **LOCKED** |
+| Eval DoD 7 strict OOS / not-found | **≥ 0.80** | **LOCKED** |
+| Coverage CI overall | **≥ 60%** (`--cov-fail-under=60`, hard fail) | **LOCKED** |
+| Coverage CI core | **≥ 80%** target — enforce when split core coverage is feasible | **TARGET** (not yet split in CI) |
+
 ## Phase 5 notes (2026-11-18)
 
 | Item | Assumption | Status |
 |---|---|---|
 | OS matrix | Ubuntu 3.11/3.12/3.13 + Windows/macOS 3.12 (feasible subset) | Assumed |
-| Coverage CI gate | Soft only (`--cov-fail-under=0`); floors 60%/80% **not locked** | **ASK owner** |
-| Eval thresholds | Still provisional 0.70 / 0.80 (Phase 4) | **ASK owner to lock/revise** |
+| Coverage CI gate | Overall hard gate `--cov-fail-under=60`; core 80% target until split exists | **LOCKED** (2026-11-18) |
+| Eval thresholds | DoD 7 locked: hit@top_k ≥ 0.70; strict OOS ≥ 0.80 | **LOCKED** (2026-11-18) |
 | Canary | Weekly `GET /models` only; maintainer `GROQ_API_KEY`; skip forks; no duplicate issues | Assumed |
 | CodeQL | Enabled when repo is public | Assumed |
 | gitleaks | Docker image `zricethezav/gitleaks:v8.21.2` (no org licence required) | Assumed |
@@ -21,15 +30,15 @@ Update when the owner replies or when APIs change.
 
 | Item | Assumption | Status |
 |---|---|---|
-| Eval in-scope hit@top_k | **≥ 0.70** per example persona (provisional) | **ASK owner to lock/revise** |
-| Eval out-of-scope / not-found | **≥ 0.80** correctly below `min_score` for strict | **ASK owner to lock/revise** |
+| Eval in-scope hit@top_k | **≥ 0.70** per example persona | **LOCKED** (2026-11-18) |
+| Eval out-of-scope / not-found | **≥ 0.80** correctly below `min_score` for strict | **LOCKED** (2026-11-18) |
 | Offline suite | FakeEmbedder + fixture expectations; controlled fixtures also use score_gate | Assumed |
 | Live embedder eval | `@pytest.mark.slow` + `PERSONA_BOT_EVAL_LIVE=1` only; never CI | Assumed |
 | Zip whitelist | `persona.yaml`, `knowledge/*.{txt,md,pdf,docx}`, `avatar.*` image/svg | Assumed |
 | Zip bomb guards | 80 MiB uncompressed / 40 MiB member / 200 members / ratio ≤ 100 | Assumed |
 | Bilingual UI | Thai default; English full table in `strings.py`; sidebar toggle | Assumed |
 | Regenerate button | **Out of scope** (§19 deferred) | Assumed |
-| Baseline path | `tests/eval/baseline.json` (`provisional: true`) | Assumed |
+| Baseline path | `tests/eval/baseline.json` (`provisional: false`) | Assumed |
 
 ## Phase 3 notes (2026-11-18)
 
@@ -66,7 +75,7 @@ Update when the owner replies or when APIs change.
 
 | Item | Assumption | Status |
 |---|---|---|
-| Coverage floors | Propose overall **~60%** / core **~80%**; **do not lock** in CI (`fail_under=0`) | Open ask |
+| Coverage floors | Overall **≥ 60%** locked in CI; core **≥ 80%** target when split feasible | **LOCKED** overall (2026-11-18) |
 | Phase split (F10) | **1a / 1b** — this work is **1a only** | Assumed |
 | Package name (F1) | Keep importable package **`app`** for now | Open ask |
 | §16.8 / §18.9 | Keep provisional Appendix A / §18.9 | Open ask |
@@ -113,7 +122,9 @@ F23 contrast automated test remains later.
 
 ## Coverage
 
-Proposed floors (not locked): **overall ≈ 60%**, **core ≈ 80%**.
+**LOCKED** (2026-11-18): overall **≥ 60%** hard-fail in CI (`fail_under=60` /
+`--cov-fail-under=60`). Core **≥ 80%** remains a documented target until the
+project adds a split core-coverage gate.
 
 ## Missing source sections (F1)
 
