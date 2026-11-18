@@ -33,6 +33,14 @@ First tagged release. Owner locked DoD 7 eval thresholds and overall coverage CI
 
 ## [Unreleased]
 
+### Added
+
+- In-app persona create/edit (user packs under `data/personas/`) with Thai labels.
+- Knowledge upload (`.txt/.md/.pdf/.docx`) + paste text; one-click index rebuild with
+  plain Thai status (`พร้อมแล้ว` / `ต้องสร้างดัชนีใหม่`).
+- **ทำสำเนา** duplicates an example into an editable user pack.
+- README “Customize knowledge” bridge (Thai+EN).
+
 ### Changed
 
 - Renamed importable package `app` → `persona_bot` (Docker `WORKDIR` still `/app`).

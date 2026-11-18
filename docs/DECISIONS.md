@@ -3,6 +3,21 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## P0 in-app persona / knowledge editor (2026-11-18)
+
+### F18 — Persona form + knowledge upload — **DECISION**
+
+- User packs under `data/personas/<id>/`: create + edit name, system prompt,
+  `answer_mode`, temperature, max_tokens, embedding preset, top_k, min_score,
+  chunk_chars; save `persona.yaml`.
+- Knowledge: upload `.txt/.md/.pdf/.docx` or paste → `knowledge/`; enforce
+  extension whitelist + `MAX_KNOWLEDGE_MB`; one-click rebuild with plain Thai
+  status (`พร้อมแล้ว` / `ต้องสร้างดัชนีใหม่`).
+- Examples remain read-only for edit/delete; **ทำสำเนา** copies to a user pack
+  (`<id>-copy`).
+- Logic in `persona_bot/persona_editor.py`; UI sidebar expanders; README
+  “Customize knowledge” bridge kept for zip path.
+
 ## Finish v1 gaps (2026-11-18) — owner authorized
 
 ### Package name (F1) — **DECISION**
@@ -184,9 +199,9 @@ before locking. Format: date · status · decision.
 
 - SVG repo-only for examples; user packs raster/emoji.
 
-### F18 — Persona form fields — **PROPOSAL**
+### F18 — Persona form fields — **SUPERSEDED**
 
-- Extra §16 fields in advanced editor section (1b+).
+- Implemented as P0 in-app editor (see top section).
 
 ### F19 — Privacy notice flag — **PROPOSAL**
 
