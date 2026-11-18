@@ -38,7 +38,18 @@ STRINGS: Final[dict[str, dict[str, str]]] = {
         "label.prompt_inspector": "ตัวตรวจพรอมต์",
         "label.rebuild_index": "สร้างดัชนีใหม่",
         "label.search_query": "คำค้น",
+        "label.version": "เวอร์ชัน",
+        "label.health": "สุขภาพระบบ",
+        "label.first_run": "เริ่มต้นครั้งแรก",
+        "label.remember_key": "จำคีย์ในระบบ (keyring)",
         "action.run_search": "ค้นหา",
+        "action.run_health": "ตรวจสุขภาพ",
+        "first_run.body": (
+            "ทำสามขั้นตอนนี้แล้วเริ่มแชตได้: คัดลอก .env.example เป็น .env "
+            "ใส่ GROQ_API_KEY กับ GROQ_MODEL_* แล้วกดบันทึกคีย์ด้านล่าง"
+        ),
+        "status.health_ok": "ระบบพร้อม",
+        "status.health_issues": "ยังไม่ครบเงื่อนไขการเริ่มใช้งาน",
         "chat.placeholder": "พิมพ์ข้อความ…",
         "chat.empty": "ยังไม่มีข้อความ — เริ่มคุยกับเพอร์โซนาได้เลย",
         "status.ready": "พร้อมใช้งาน",
