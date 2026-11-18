@@ -8,7 +8,7 @@
    uv run ruff check .
    uv run ruff format --check .
    uv run mypy
-   uv run pytest -m "not slow" --cov=app --cov-fail-under=0
+   uv run pytest -m "not slow" --cov=app --cov-fail-under=60
    ```
 
 4. Never commit `.env`, `data/`, or API keys.
@@ -28,4 +28,4 @@
 | `canary.yml` | Weekly `GET /models` vs `.env.example` |
 | `release.yml` | Tag `v*` → GHCR image |
 
-Coverage floors (~60% / ~80%) stay **unlocked** until the owner says otherwise.
+Coverage: overall **≥ 60%** hard-fail; core **≥ 80%** target when split coverage exists.

@@ -5,20 +5,29 @@ All notable changes are documented here. This project follows
 
 ## [0.1.0] — 2026-11-18
 
+First tagged release. Owner locked DoD 7 eval thresholds and overall coverage CI.
+
 ### Added
 
 - Phase 0: repo scaffold, tooling, tokens, MIT licence
 - Phase 1a/1b: config/llm/persona/prompt + Streamlit chat shell
 - Phase 2: local RAG (Chroma + fastembed)
 - Phase 3: start scripts, Docker, versioning, health, optional keyring
-- Phase 4: offline eval harness (provisional DoD 7 thresholds 0.70 / 0.80),
+- Phase 4: offline eval harness (DoD 7 thresholds 0.70 / 0.80),
   safe persona zip I/O, backup/restore/delete-all, bilingual TH/EN, DESIGN a11y
-- Phase 5: CI OS×Python matrix, pytest+cov (soft), AppTest + contrast smokes,
+- Phase 5: CI OS×Python matrix, pytest+cov (hard ≥60%), AppTest + contrast smokes,
   gitleaks / pip-audit / CodeQL, Docker e2e with fake Groq, weekly models canary
   (`GET /models` only), GHCR release on `v*` tags, FAQ/GALLERY/CoC/CODEOWNERS/
   issue+PR templates, expanded THIRD_PARTY_NOTICES model licence table
 
+### Locked (2026-11-18)
+
+- Eval DoD 7: in-scope hit@top_k **≥ 0.70**; strict OOS / not-found **≥ 0.80**
+  (`tests/eval/baseline.json` `provisional: false`)
+- Coverage CI: overall **≥ 60%** hard fail (`--cov-fail-under=60` /
+  `fail_under = 60`); core **≥ 80%** documented as target until split coverage exists
+
 ### Notes
 
-- Eval thresholds remain **provisional** until the owner locks them.
-- Coverage floors (~60% / ~80%) remain **unlocked** (`fail_under=0`).
+- Package import path remains `app` (rename deferred).
+- Tag `v0.1.0` triggers the GHCR release workflow.

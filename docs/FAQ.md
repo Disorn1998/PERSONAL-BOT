@@ -26,8 +26,10 @@ Canary รายสัปดาห์เรียกแค่ `GET /models` (ไ
 
 ## Eval thresholds (DoD 7)
 
-ตัวเลขใน `tests/eval/baseline.json` ยัง **provisional** (0.70 / 0.80) จนกว่าเจ้าของจะ lock
+**LOCKED** (2026-11-18): hit@top_k ≥ **0.70**; strict OOS / not-found ≥ **0.80**  
+(`tests/eval/baseline.json` → `provisional: false`)
 
 ## Coverage floors
 
-ข้อเสนอ ~60% overall / ~80% core — **ยังไม่ lock** ใน CI (`fail_under=0`)
+**LOCKED** (2026-11-18): overall ≥ **60%** hard-fail in CI (`--cov-fail-under=60`).  
+Core ≥ **80%** is a documented target until split core coverage exists.

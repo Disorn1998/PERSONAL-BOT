@@ -3,23 +3,42 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Locks (2026-11-18) — owner authorized
+
+### Eval thresholds (DoD 7) — **LOCKED**
+
+- In-scope hit@top_k **≥ 0.70**; strict out-of-scope / not-found **≥ 0.80**.
+- `tests/eval/baseline.json` sets `provisional: false`.
+- No longer provisional; treat DoD 7 numerics as final until a future owner revision.
+
+### Coverage CI gates — **LOCKED** (overall) / **TARGET** (core)
+
+- Overall **≥ 60%**: hard fail via `pyproject.toml` `fail_under = 60` and CI
+  `--cov-fail-under=60` (not soft).
+- Core **≥ 80%**: documented target to enforce when the project adds split core
+  coverage; not wired as a separate CI gate yet (no split support today).
+
+### Release tag — **AUTHORIZED**
+
+- Cut annotated tag `v0.1.0` on the merge commit of this lock PR to trigger GHCR.
+
 ## Phase 5 (2026-11-18) — final phase wrap-up
 
 ### CI / DoD 6 — **DECISION**
 
 - Matrix: Ubuntu × {3.11,3.12,3.13} + Windows/macOS × {3.12}
-- Jobs: ruff, format, mypy, pytest `-m "not slow"` + soft coverage, Docker e2e (fake Groq)
+- Jobs: ruff, format, mypy, pytest `-m "not slow"` + hard coverage (≥60%), Docker e2e (fake Groq)
 - Security workflow: gitleaks (docker), pip-audit (`uvx`), CodeQL (public)
 - Canary workflow: weekly `GET /models` vs `.env.example`; never `chat/completions`
 - Release workflow: tag `v*` → GHCR
 
-### Coverage — **ASK (still unlocked)**
+### Coverage — **LOCKED** (2026-11-18)
 
-- Proposal overall ≈60% / core ≈80%; CI `fail_under` / `--cov-fail-under` stay **0**
+- Overall ≥60% hard-fail; core ≥80% target until split coverage exists.
 
-### Eval thresholds — **still PROVISIONAL / ASK**
+### Eval thresholds — **LOCKED** (2026-11-18)
 
-- 0.70 hit@top_k / 0.80 OOS not-found until owner locks
+- 0.70 hit@top_k / 0.80 OOS not-found (DoD 7 final until revised).
 
 ### Docs/legal — **DECISION**
 
@@ -28,11 +47,10 @@ before locking. Format: date · status · decision.
 
 ## Phase 4 (2026-11-18)
 
-### Eval thresholds (DoD 7) — **PROVISIONAL / ASK**
+### Eval thresholds (DoD 7) — **LOCKED** (superseded provisional; 2026-11-18)
 
-- Commit baseline in `tests/eval/baseline.json`.
+- Baseline in `tests/eval/baseline.json` with `provisional: false`.
 - Numbers: in-scope hit@top_k **0.70**; out-of-scope not-found **0.80**.
-- Owner must **lock or revise** before treating DoD 7 as final.
 
 ### Persona zip I/O — **DECISION**
 
@@ -105,10 +123,9 @@ before locking. Format: date · status · decision.
 
 - Still **ASK** whether to rename to `persona_bot` later.
 
-### Coverage — **ASK (not locked)**
+### Coverage — **LOCKED** (2026-11-18; see Locks section)
 
-- Proposal remains overall **~60%** / core **~80%**.
-- CI `fail_under` stays `0`.
+- Overall **≥ 60%** hard-fail; core **≥ 80%** target when split feasible.
 
 ### §17.2 palette — **DECISION (Phase 1a)**
 
@@ -175,10 +192,11 @@ before locking. Format: date · status · decision.
 
 ## Open owner questions
 
-1. Lock coverage floors? (proposal 60% / 80%)
+1. ~~Lock coverage floors?~~ → **LOCKED** 2026-11-18 (overall 60%; core 80% target)
 2. Rename package `app` → `persona_bot`? (currently keeping `app`)
 3. Supply original **§16.8** and **§18.9**
 4. Confirm answer_mode triad (`strict`/`balanced`/`open`) vs Complete Edition wording
-5. **Lock or revise Phase 4 eval numbers** (0.70 hit@top_k / 0.80 OOS not-found)?
+5. ~~Lock or revise Phase 4 eval numbers?~~ → **LOCKED** 2026-11-18 (0.70 / 0.80)
 6. Add maintainer secret `GROQ_API_KEY` for weekly canary (optional but recommended)
 7. Verify embedding model licences on Hugging Face cards (clear TODO(verify) in THIRD_PARTY_NOTICES)
+8. When to add split core-coverage CI gate (≥80%)?

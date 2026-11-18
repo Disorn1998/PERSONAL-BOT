@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
-  "provisional": true,
-  "ask_owner": "Please lock or revise provisional eval numeric criteria (DoD 7).",
+  "provisional": false,
+  "locked_at": "2026-11-18",
+  "notes_lock": "Owner locked DoD 7 thresholds (hit@top_k ≥ 0.70; strict OOS ≥ 0.80).",
   "thresholds": {
     "in_scope_hit_at_top_k": 0.70,
     "out_of_scope_not_found_rate": 0.80

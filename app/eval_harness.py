@@ -54,7 +54,7 @@ class EvalReport:
     suite: str
     thresholds: EvalThresholds
     results: list[CaseResult]
-    provisional: bool = True
+    provisional: bool = False
 
     @property
     def in_scope_hit_rate(self) -> float:
@@ -265,12 +265,12 @@ def run_suite(
         suite=suite_name,
         thresholds=thresholds,
         results=results,
-        provisional=bool(baseline.get("provisional", True)),
+        provisional=bool(baseline.get("provisional", False)),
     )
 
 
 def assert_thresholds(report: EvalReport, *, apply_score_gate_only: bool = False) -> None:
-    """Raise AssertionError when suite rates miss provisional thresholds."""
+    """Raise AssertionError when suite rates miss locked DoD 7 thresholds."""
     in_scope = [r for r in report.results if r.kind == "in_scope"]
     oos = [r for r in report.results if r.kind == "out_of_scope"]
     if apply_score_gate_only:

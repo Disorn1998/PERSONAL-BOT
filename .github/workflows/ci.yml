@@ -52,11 +52,11 @@ jobs:
       - name: Mypy
         run: uv run mypy
 
-      - name: Pytest + coverage (soft — fail_under=0 until owner locks)
+      - name: Pytest + coverage (hard — overall ≥60%; core ≥80% when split exists)
         run: >
           uv run pytest -m "not slow"
           --cov=app --cov-report=term-missing
-          --cov-fail-under=0
+          --cov-fail-under=60
 
   docker-e2e:
     name: docker e2e (fake Groq)
