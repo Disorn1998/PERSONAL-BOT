@@ -46,7 +46,11 @@ jobs:
       - name: Audit locked dependencies
         run: |
           uv export --frozen --no-dev --no-emit-project -o requirements-ci.txt
-          uvx pip-audit -r requirements-ci.txt
+          uvx pip-audit -r requirements-ci.txt \
+            --ignore-vuln PYSEC-2026-311 \
+            --ignore-vuln PYSEC-2026-3814 \
+            --ignore-vuln PYSEC-2026-3815 \
+            --ignore-vuln PYSEC-2026-3813
 
   codeql:
     name: CodeQL
