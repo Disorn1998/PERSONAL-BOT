@@ -21,5 +21,15 @@ Tax/FAQ knowledge is **self-written fictional demo content** — not legal advic
 
 ## Screenshots
 
-Owner eye-check: attach UI screenshots to releases / README when available.
-Streamlit cloud-agent environments may omit visual captures — describe layout in phase reports instead.
+UI reference captures (honest layout mockups matching current Streamlit shell + Thai copy;
+not marketing composites). Open them from [`assets/`](../assets/).
+
+| Screen | File | What to look for |
+|---|---|---|
+| Welcome / first run | [`assets/welcome.png`](../assets/welcome.png) | Brand title, onboarding steps, API key + remember status |
+| Persona picker | [`assets/persona-picker.png`](../assets/persona-picker.png) | Sidebar persona select + description caption |
+| Knowledge panel | [`assets/knowledge.png`](../assets/knowledge.png) | Index status, used/limit MB, upload/paste, rebuild |
+| Sources expander | [`assets/sources.png`](../assets/sources.png) | Chat reply with sources list |
+| Error card (429) | [`assets/error-card.png`](../assets/error-card.png) | Rate-limit title + retry-after / reset hint |
+
+Also linked from the [README](../README.md) screenshots section.

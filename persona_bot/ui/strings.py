@@ -16,6 +16,7 @@ _TH: dict[str, str] = {
     "app.onboarding.step3": "3) พิมพ์ข้อความด้านล่าง",
     "action.new_chat": "แชตใหม่",
     "action.clear_chat": "ล้างแชต",
+    "action.confirm_clear_chat": "ยืนยันล้างแชต",
     "action.stop": "หยุด",
     "action.send": "ส่ง",
     "action.save_key": "ใช้คีย์นี้",
@@ -58,6 +59,10 @@ _TH: dict[str, str] = {
     "label.health": "สุขภาพระบบ",
     "label.first_run": "เริ่มต้นครั้งแรก",
     "label.remember_key": "จำคีย์ในระบบ (keyring)",
+    "label.remember_key_help": (
+        "เปิดได้ด้วยช่องนี้ หรือ PERSONA_BOT_REMEMBER_KEY=1 ใน .env — "
+        "ทั้งสองแบบบันทึกและโหลดคีย์จาก OS keyring (นอก data/)"
+    ),
     "label.language": "ภาษา",
     "label.data_tools": "ข้อมูลและการสำรอง",
     "label.import_preview": "ตัวอย่างนำเข้า",
@@ -103,6 +108,10 @@ _TH: dict[str, str] = {
     "status.knowledge_ready": "พร้อมแล้ว",
     "status.knowledge_needs_rebuild": "ต้องสร้างดัชนีใหม่",
     "status.knowledge_empty": "ยังไม่มีไฟล์ความรู้",
+    "status.remember_loaded": "โหลดคีย์จาก OS keyring แล้ว — จะใช้ได้หลังรีสตาร์ท",
+    "status.remember_env": "จำคีย์เปิดผ่าน PERSONA_BOT_REMEMBER_KEY — บันทึกและโหลดจาก keyring",
+    "status.remember_ui": "จำคีย์เปิดจากช่องนี้ — บันทึกและโหลดจาก keyring หลังรีสตาร์ท",
+    "status.remember_session_only": "คีย์อยู่ในเซสชันนี้เท่านั้น — ไม่โหลดอัตโนมัติหลังรีสตาร์ท",
     "chat.placeholder": "พิมพ์ข้อความ…",
     "chat.empty": "ยังไม่มีข้อความ — เริ่มคุยกับเพอร์โซนาได้เลย",
     "label.starter_questions": "คำถามเริ่มต้น",
@@ -127,11 +136,15 @@ _TH: dict[str, str] = {
     "error.backup": "สำรองหรือคืนค่าข้อมูลไม่สำเร็จ",
     "error.app_password": "รหัสแอปไม่ถูกต้อง",
     "error.knowledge_load": "อ่านไฟล์ความรู้ไม่สำเร็จ",
+    "error.knowledge_too_large": "ขนาดคลังความรู้เกินขีดจำกัด MAX_KNOWLEDGE_MB",
     "error.hint.retry": "ลองใหม่อีกครั้ง หรือตรวจการตั้งค่า",
     "error.hint.add_api_key": "วางคีย์จาก console.groq.com ในช่อง API key",
     "error.hint.set_models": "ตั้ง GROQ_MODEL_PRIMARY (และ FALLBACK) ใน .env",
     "error.hint.wait_retry": "รอตาม retry-after แล้วส่งข้อความอีกครั้ง",
     "error.hint.wait_day": "ลดการใช้งานหรือรอจนโควตารายวันรีเซ็ต",
+    "error.hint.retry_after": "ลองใหม่ได้ในประมาณ {seconds} วินาที",
+    "error.hint.reset_tokens": "รีเซ็ตโทเคน: {reset} (~{seconds}s)",
+    "error.hint.reset_requests": "รีเซ็ตคำขอ: {reset} (~{seconds}s)",
     "error.hint.check_network": "ตรวจอินเทอร์เน็ตและ GROQ_BASE_URL",
     "error.hint.fix_persona": "ตรวจ persona.yaml ให้ครบและเป็น UTF-8",
     "error.hint.persona_pack_io": (
@@ -141,6 +154,9 @@ _TH: dict[str, str] = {
     "error.hint.add_knowledge": "เพิ่มไฟล์ความรู้ใน Persona Pack หรือเปลี่ยนโหมดคำตอบ",
     "error.hint.password": "ใส่รหัสที่ตั้งไว้ใน APP_PASSWORD",
     "error.hint.knowledge_file": "รองรับ .txt .md .pdf .docx — ตรวจรหัสอักขระ UTF-8",
+    "error.hint.knowledge_size": (
+        "ลดขนาดไฟล์หรือลบความรู้เก่า — ดูขนาดใช้ไป/ขีดจำกัดในแผงคลังความรู้ หรือปรับ MAX_KNOWLEDGE_MB ใน .env"
+    ),
     "error.hint.persona_editor": (
         "ใช้รหัสเพอร์โซนา a-z0-9-_ เท่านั้น · ความรู้รองรับ .txt/.md/.pdf/.docx · "
         "ตัวอย่างอ่านอย่างเดียว — กดทำสำเนาก่อน"
@@ -148,6 +164,7 @@ _TH: dict[str, str] = {
     "privacy.notice": ("ข้อความแชตถูกเก็บในเครื่องคุณ (data/) — ไม่ส่งไปที่อื่นนอกจาก Groq เมื่อมีการเรียกโมเดล"),
     "warn.delete_all": "จะลบแชต ดัชนี และเพอร์โซนาผู้ใช้ภายใต้ data/ — ย้อนกลับไม่ได้",
     "warn.delete_persona": "ลบแพ็กผู้ใช้นี้และดัชนีที่เกี่ยวข้อง",
+    "warn.clear_chat": "ลบข้อความในเธรดนี้ทั้งหมด — ย้อนกลับไม่ได้",
 }
 
 _EN: dict[str, str] = {
@@ -163,6 +180,7 @@ _EN: dict[str, str] = {
     "app.onboarding.step3": "3) Type a message below",
     "action.new_chat": "New chat",
     "action.clear_chat": "Clear chat",
+    "action.confirm_clear_chat": "Confirm clear chat",
     "action.stop": "Stop",
     "action.send": "Send",
     "action.save_key": "Use this key",
@@ -205,6 +223,10 @@ _EN: dict[str, str] = {
     "label.health": "System health",
     "label.first_run": "First run",
     "label.remember_key": "Remember key in OS keyring",
+    "label.remember_key_help": (
+        "Enable via this checkbox or PERSONA_BOT_REMEMBER_KEY=1 in .env — "
+        "either mode saves and loads the key from the OS keyring (outside data/)"
+    ),
     "label.language": "Language",
     "label.data_tools": "Data & backup",
     "label.import_preview": "Import preview",
@@ -252,6 +274,16 @@ _EN: dict[str, str] = {
     "status.knowledge_ready": "Ready",
     "status.knowledge_needs_rebuild": "Rebuild the index",
     "status.knowledge_empty": "No knowledge files yet",
+    "status.remember_loaded": "Loaded key from OS keyring — available after restart",
+    "status.remember_env": (
+        "Remember enabled via PERSONA_BOT_REMEMBER_KEY — save and load from keyring"
+    ),
+    "status.remember_ui": (
+        "Remember enabled via checkbox — save and load from keyring after restart"
+    ),
+    "status.remember_session_only": (
+        "Key stays in this session only — not auto-loaded after restart"
+    ),
     "chat.placeholder": "Type a message…",
     "chat.empty": "No messages yet — start chatting with the persona",
     "label.starter_questions": "Starter questions",
@@ -276,11 +308,15 @@ _EN: dict[str, str] = {
     "error.backup": "Backup or restore failed",
     "error.app_password": "Incorrect app password",
     "error.knowledge_load": "Could not read a knowledge file",
+    "error.knowledge_too_large": "Knowledge size exceeds the MAX_KNOWLEDGE_MB limit",
     "error.hint.retry": "Try again or check your settings",
     "error.hint.add_api_key": "Paste a key from console.groq.com into the API key field",
     "error.hint.set_models": "Set GROQ_MODEL_PRIMARY (and FALLBACK) in .env",
     "error.hint.wait_retry": "Wait for retry-after, then send again",
     "error.hint.wait_day": "Reduce usage or wait for the daily quota reset",
+    "error.hint.retry_after": "Retry in about {seconds} seconds",
+    "error.hint.reset_tokens": "Token reset: {reset} (~{seconds}s)",
+    "error.hint.reset_requests": "Request reset: {reset} (~{seconds}s)",
     "error.hint.check_network": "Check internet connectivity and GROQ_BASE_URL",
     "error.hint.fix_persona": "Ensure persona.yaml is complete and UTF-8",
     "error.hint.persona_pack_io": (
@@ -290,6 +326,10 @@ _EN: dict[str, str] = {
     "error.hint.add_knowledge": "Add knowledge files to the Persona Pack or change answer mode",
     "error.hint.password": "Enter the password configured in APP_PASSWORD",
     "error.hint.knowledge_file": "Supported: .txt .md .pdf .docx — use UTF-8 text",
+    "error.hint.knowledge_size": (
+        "Remove or shrink knowledge files — see used/limit in the Knowledge panel "
+        "or raise MAX_KNOWLEDGE_MB in .env"
+    ),
     "error.hint.persona_editor": (
         "Use persona ids a-z0-9-_ only · knowledge allows .txt/.md/.pdf/.docx · "
         "examples are read-only — duplicate first"
@@ -299,6 +339,7 @@ _EN: dict[str, str] = {
     ),
     "warn.delete_all": "This deletes chats, indexes, and user personas under data/ — irreversible",
     "warn.delete_persona": "Delete this user pack and its related index",
+    "warn.clear_chat": "Delete all messages in this thread — irreversible",
 }
 
 STRINGS: Final[dict[str, dict[str, str]]] = {

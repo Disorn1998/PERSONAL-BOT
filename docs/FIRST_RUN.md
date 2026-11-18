@@ -10,6 +10,36 @@
 1. ติดตั้ง [uv](https://docs.astral.sh/uv/) (สคริปต์ `start.*` ช่วยติดตั้งให้ถ้ายังไม่มี)
 2. คัดลอก `.env.example` → `.env` แล้วใส่ `GROQ_API_KEY`, `GROQ_MODEL_PRIMARY`, `GROQ_MODEL_FALLBACK`
 3. รัน `start.bat` / `start.sh` / `docker compose up --build`
+4. เปิด UI ที่ **http://127.0.0.1:8501** เท่านั้น (โลคอล)
+
+## Localhost bind (non-Docker)
+
+`persona-bot` / `uv run persona-bot` บังคับ `--server.address=127.0.0.1`  
+และ `.streamlit/config.toml` ตั้ง `server.address = "127.0.0.1"`  
+Docker Compose ผูกพอร์ต `127.0.0.1:8501:8501` เช่นกัน — ไม่เปิดออกเน็ตภายนอกโดยค่าเริ่มต้น
+
+## Streamlit email / onboarding banner
+
+ครั้งแรก Streamlit อาจถามอีเมล (“Welcome to Streamlit!”)  
+`persona-bot` CLI จะสร้าง `~/.streamlit/credentials.toml` ด้วย `email = ""` ถ้ายังไม่มี
+เพื่อข้าม prompt นี้
+
+ข้ามเองด้วยมือ:
+
+```bash
+mkdir -p ~/.streamlit
+printf '%s\n' '[general]' 'email = ""' > ~/.streamlit/credentials.toml
+```
+
+Windows (PowerShell):
+
+```powershell
+New-Item -ItemType Directory -Force -Path "$HOME\.streamlit" | Out-Null
+Set-Content -Path "$HOME\.streamlit\credentials.toml" -Value "[general]`nemail = `"`""
+```
+
+`STREAMLIT_BROWSER_GATHER_USAGE_STATS=false` / `gatherUsageStats = false` ปิด telemetry
+แต่ **ไม่** แทนที่ credentials ด้านบน
 
 ## Embedding cache (โลคอล)
 

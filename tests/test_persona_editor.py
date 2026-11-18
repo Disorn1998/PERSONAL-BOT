@@ -8,9 +8,11 @@ import pytest
 from persona_bot.config import Settings
 from persona_bot.persona import PersonaConfig, load_persona_yaml
 from persona_bot.persona_editor import (
+    KnowledgeTooLargeError,
     PersonaEditorError,
     add_knowledge_bytes,
     add_knowledge_paste,
+    assert_knowledge_within_limit,
     create_user_persona,
     duplicate_persona_to_user,
     index_status_key,
@@ -120,12 +122,21 @@ def test_knowledge_upload_paste_and_limits(tmp_path: Path) -> None:
             data=b"x",
         )
 
-    with pytest.raises(PersonaEditorError):
+    with pytest.raises(KnowledgeTooLargeError):
         add_knowledge_bytes(
             settings=settings,
             persona_id="know-bot",
             filename="huge.txt",
             data=b"x" * (2 * 1024 * 1024),  # over MAX_KNOWLEDGE_MB=1
+        )
+
+    # Existing on-disk knowledge over the limit is rejected before rebuild/ingest.
+    fat = settings.personas_dir / "know-bot" / "knowledge" / "fat.bin"
+    fat.write_bytes(b"y" * (2 * 1024 * 1024))
+    with pytest.raises(KnowledgeTooLargeError):
+        assert_knowledge_within_limit(
+            settings.personas_dir / "know-bot" / "knowledge",
+            max_knowledge_mb=1,
         )
 
 

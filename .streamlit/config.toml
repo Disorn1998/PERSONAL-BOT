@@ -4,6 +4,10 @@
 [browser]
 gatherUsageStats = false
 
+[server]
+# Local-only bind for non-Docker runs (CLI also passes --server.address=127.0.0.1).
+address = "127.0.0.1"
+
 [client]
 toolbarMode = "minimal"
 

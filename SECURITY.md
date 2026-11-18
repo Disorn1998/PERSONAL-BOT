@@ -9,7 +9,8 @@ Do not file public issues that include live API keys or personal chat logs.
 ## Practices
 
 - Bring your own Groq key (BYOK). Keys stay in session by default.
-- Optional OS keyring (`PERSONA_BOT_REMEMBER_KEY=1`) stores the key **outside** `data/`.
+- Optional OS keyring (`PERSONA_BOT_REMEMBER_KEY=1` **or** the UI “remember key” checkbox)
+  stores the key **outside** `data/` and enables both save and load across restarts.
 - Never commit `.env` or anything under `data/`.
 - Logs redact API-key-like strings (`persona_bot/security.py`).
 - Persona zip import rejects path traversal, symlinks, non-whitelist members, and zip bombs.

@@ -35,6 +35,14 @@ class PersonaEditorError(AppError):
     hint_key = "error.hint.persona_editor"
 
 
+class KnowledgeTooLargeError(PersonaEditorError):
+    """Raised when knowledge upload/paste/dir exceeds ``MAX_KNOWLEDGE_MB``."""
+
+    code = "error.knowledge_too_large"
+    string_key = "error.knowledge_too_large"
+    hint_key = "error.hint.knowledge_size"
+
+
 def _require_safe_id(persona_id: str) -> str:
     value = persona_id.strip().lower()
     if not _ID_SAFE.match(value):
@@ -61,23 +69,39 @@ def knowledge_total_bytes(knowledge_dir: Path) -> int:
     return total
 
 
+def assert_knowledge_within_limit(
+    knowledge_dir: Path,
+    *,
+    max_knowledge_mb: int,
+    incoming_bytes: int = 0,
+) -> None:
+    """Reject when current + incoming knowledge would exceed ``MAX_KNOWLEDGE_MB``."""
+    limit = max(1, int(max_knowledge_mb)) * 1024 * 1024
+    current = knowledge_total_bytes(knowledge_dir)
+    if current + incoming_bytes > limit:
+        raise KnowledgeTooLargeError(
+            "knowledge size limit exceeded",
+            details={
+                "current_bytes": current,
+                "incoming_bytes": incoming_bytes,
+                "max_bytes": limit,
+                "max_mb": max(1, int(max_knowledge_mb)),
+                "used_mb": round(current / (1024 * 1024), 2),
+            },
+        )
+
+
 def _assert_within_knowledge_budget(
     knowledge_dir: Path,
     *,
     incoming_bytes: int,
     max_knowledge_mb: int,
 ) -> None:
-    limit = max(1, int(max_knowledge_mb)) * 1024 * 1024
-    current = knowledge_total_bytes(knowledge_dir)
-    if current + incoming_bytes > limit:
-        raise PersonaEditorError(
-            "knowledge size limit exceeded",
-            details={
-                "current_bytes": current,
-                "incoming_bytes": incoming_bytes,
-                "max_bytes": limit,
-            },
-        )
+    assert_knowledge_within_limit(
+        knowledge_dir,
+        max_knowledge_mb=max_knowledge_mb,
+        incoming_bytes=incoming_bytes,
+    )
 
 
 def _safe_knowledge_filename(filename: str) -> str:

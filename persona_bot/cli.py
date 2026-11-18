@@ -21,11 +21,27 @@ def project_root() -> Path:
     return candidate
 
 
+def ensure_streamlit_credentials(*, home: Path | None = None) -> Path:
+    """Create ``~/.streamlit/credentials.toml`` with empty email to skip onboarding prompt.
+
+    ``home`` defaults to ``Path.home()`` (on Windows that follows ``USERPROFILE``,
+    not ``HOME``). Tests should pass an explicit temp home.
+    """
+    base = home if home is not None else Path.home()
+    cred_dir = base / ".streamlit"
+    cred_path = cred_dir / "credentials.toml"
+    if not cred_path.exists():
+        cred_dir.mkdir(parents=True, exist_ok=True)
+        cred_path.write_text('[general]\nemail = ""\n', encoding="utf-8")
+    return cred_path
+
+
 def main() -> None:
     """Run the Streamlit UI (``persona-bot`` console script)."""
     root = project_root()
     os.chdir(root)
     os.environ.setdefault("STREAMLIT_BROWSER_GATHER_USAGE_STATS", "false")
+    ensure_streamlit_credentials()
 
     app_path = root / "persona_bot" / "main.py"
     from streamlit.web import cli as stcli
@@ -34,6 +50,7 @@ def main() -> None:
         "streamlit",
         "run",
         str(app_path),
+        "--server.address=127.0.0.1",
         "--browser.gatherUsageStats=false",
         "--global.developmentMode=false",
     ]
