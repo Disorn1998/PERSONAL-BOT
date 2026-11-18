@@ -1,7 +1,7 @@
 # DESIGN — persona-bot
 
-Design tokens live in `app/ui/tokens.py` and `.streamlit/config.toml` (§17.2).
-Product copy lives in `app/ui/strings.py` (Thai primary, English secondary).
+Design tokens live in `persona_bot/ui/tokens.py` and `.streamlit/config.toml` (§17.2).
+Product copy lives in `persona_bot/ui/strings.py` (Thai primary, English secondary).
 
 ## Accessibility checklist (Phase 4)
 
@@ -19,7 +19,7 @@ Owner eye-check after UI changes. Streamlit limits some semantics; prefer native
 | A8 | Attachments — zip import shows preview JSON before confirm (filename + sizes) | Safe pack I/O |
 | A9 | Non-text — example avatars may be emoji/raster; SVG examples stay repo-only (F17) | Still proposal for custom packs |
 | A10 | Keyboard — Streamlit chat input + tab through sidebar controls | Owner eye-check on Windows/macOS |
-| A11 | Locale fallback — missing EN key falls back to TH then raw key | `app/i18n.py` |
+| A11 | Locale fallback — missing EN key falls back to TH then raw key | `persona_bot/i18n.py` |
 | A12 | No regenerate control in v1 (§19 deferred) | Explicitly out of Phase 4 |
 
 ## Visual principles (short)

@@ -7,12 +7,12 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-from app.persona import PersonaPack, load_persona_yaml
-from app.prompt import should_short_circuit_strict
-from app.rag.embeddings import Embedder, FakeEmbedder
-from app.rag.ingest import ensure_index, knowledge_dir_for_persona
-from app.rag.retrieve import retrieve
-from app.rag.store import VectorStore
+from persona_bot.persona import PersonaPack, load_persona_yaml
+from persona_bot.prompt import should_short_circuit_strict
+from persona_bot.rag.embeddings import Embedder, FakeEmbedder
+from persona_bot.rag.ingest import ensure_index, knowledge_dir_for_persona
+from persona_bot.rag.retrieve import retrieve
+from persona_bot.rag.store import VectorStore
 
 CaseKind = Literal["in_scope", "out_of_scope"]
 

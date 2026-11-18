@@ -6,7 +6,7 @@ import logging
 import sys
 from typing import Any
 
-from app.security import redact_secrets
+from persona_bot.security import redact_secrets
 
 
 class RedactingFilter(logging.Filter):

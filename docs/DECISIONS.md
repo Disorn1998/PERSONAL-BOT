@@ -3,6 +3,28 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Finish v1 gaps (2026-11-18) — owner authorized
+
+### Package name (F1) — **DECISION**
+
+- Renamed importable package **`app` → `persona_bot`**.
+- Package root lives at `persona_bot/` (same layout as former `app/`).
+- Console script entry: `persona-bot = "persona_bot.cli:main"`.
+- Docker image `WORKDIR` remains `/app` (container path, not the Python package).
+- i18n string keys such as `app.title` are unchanged (UI keys, not imports).
+
+### Example personas (§9) — **DECISION**
+
+- Restored `thai-tax-advisor` + `company-faq-bot` alongside study-buddy / tech-explainer / writing-coach.
+- Schema fields: `icon`, `greeting`, `starter_questions`, `metadata` (optional).
+- Knowledge is self-written fictional demo content only; tax pack carries disclaimer + `min_score` placeholder note.
+
+### CI hardening — **DECISION**
+
+- `.gitattributes`: `* text=auto eol=lf` (Windows ruff format / CRLF).
+- `.gitleaks.toml`: allowlist test fixture secret shapes (history + current).
+- `pip-audit`: `--ignore-vuln` for chromadb PYSEC IDs with empty Fix Versions until upstream patches; recorded in ASSUMPTIONS.
+
 ## Locks (2026-11-18) — owner authorized
 
 ### Eval thresholds (DoD 7) — **LOCKED**
@@ -101,7 +123,7 @@ before locking. Format: date · status · decision.
 
 - Welcome card when no API key (F15); advanced key controls in sidebar.
 - New chat vs clear chat (F16); threads in sqlite `data/chat.sqlite3`.
-- Thai error cards via `strings.py` only; CSS bubbles/theme in `app/ui/theme.py`.
+- Thai error cards via `strings.py` only; CSS bubbles/theme in `persona_bot/ui/theme.py`.
 - Partial assistant text persisted during stream (F9).
 - Usage in `data/usage.json`; model badge + token chips under replies.
 - study-buddy default; knowledge/RAG deferred to Phase 2.
@@ -119,9 +141,9 @@ before locking. Format: date · status · decision.
 - **1b** (Streamlit shell, chat loop, Stop/partial, usage tracker, budget) waits
   for owner 「ไปต่อ」.
 
-### Package name (F1) — **ASSUMED keep `app`**
+### Package name (F1) — **SUPERSEDED**
 
-- Still **ASK** whether to rename to `persona_bot` later.
+- Originally kept `app`; owner later authorized rename → see **Finish v1 gaps**.
 
 ### Coverage — **LOCKED** (2026-11-18; see Locks section)
 
@@ -133,7 +155,7 @@ before locking. Format: date · status · decision.
 
 ### F2 — Retry layering — **DECISION**
 
-- OpenAI/Groq client `max_retries=0` (`app.llm.SDK_MAX_RETRIES`).
+- OpenAI/Groq client `max_retries=0` (`persona_bot.llm.SDK_MAX_RETRIES`).
 - App owns minute-limit/transport fallback to secondary model; day-limit does not fallback.
 
 ### F8 — Model names — **DECISION**
@@ -142,7 +164,7 @@ before locking. Format: date · status · decision.
 
 ### Answer modes — **ASSUMED**
 
-- `strict` | `balanced` | `open` with fixed rules blocks in `app/prompt.py`.
+- `strict` | `balanced` | `open` with fixed rules blocks in `persona_bot/prompt.py`.
 
 ### §16.8 / §18.9 — **ASSUMED provisional**
 
@@ -176,7 +198,7 @@ before locking. Format: date · status · decision.
 
 ### F21 — Microcopy — **PROPOSAL**
 
-- Expanded error/hint keys in `app/ui/strings.py` (Phase 1a).
+- Expanded error/hint keys in `persona_bot/ui/strings.py` (Phase 1a).
 
 ### F22 — Streamlit constraints — **PROPOSAL / VERIFY**
 
@@ -193,7 +215,7 @@ before locking. Format: date · status · decision.
 ## Open owner questions
 
 1. ~~Lock coverage floors?~~ → **LOCKED** 2026-11-18 (overall 60%; core 80% target)
-2. Rename package `app` → `persona_bot`? (currently keeping `app`)
+2. ~~Rename package `app` → `persona_bot`?~~ → **DONE** 2026-11-18
 3. Supply original **§16.8** and **§18.9**
 4. Confirm answer_mode triad (`strict`/`balanced`/`open`) vs Complete Edition wording
 5. ~~Lock or revise Phase 4 eval numbers?~~ → **LOCKED** 2026-11-18 (0.70 / 0.80)

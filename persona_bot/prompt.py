@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from app.errors import KnowledgeNotFoundError
-from app.persona import AnswerMode, PersonaPack
+from persona_bot.errors import KnowledgeNotFoundError
+from persona_bot.persona import AnswerMode, PersonaPack
 
 Role = Literal["system", "user", "assistant"]
 

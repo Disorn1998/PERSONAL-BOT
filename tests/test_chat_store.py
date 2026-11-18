@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.chat_store import ChatStore
+from persona_bot.chat_store import ChatStore
 
 
 def test_thread_and_partial_message(tmp_path: Path) -> None:

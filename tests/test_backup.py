@@ -7,8 +7,8 @@ import zipfile
 from pathlib import Path
 
 import pytest
-from app.backup import BackupError, create_backup, delete_all_data, restore_backup
-from app.versioning import ensure_data_version, read_version_file
+from persona_bot.backup import BackupError, create_backup, delete_all_data, restore_backup
+from persona_bot.versioning import ensure_data_version, read_version_file
 
 
 def test_backup_restore_roundtrip(tmp_path: Path) -> None:

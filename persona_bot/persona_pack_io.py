@@ -10,9 +10,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, BinaryIO, Literal
 
-from app.errors import AppError, PersonaLoadError
-from app.persona import PersonaPack, load_persona_yaml, save_persona_yaml
-from app.security import assert_no_secret_in_mapping
+from persona_bot.errors import AppError, PersonaLoadError
+from persona_bot.persona import PersonaPack, load_persona_yaml, save_persona_yaml
+from persona_bot.security import assert_no_secret_in_mapping
 
 ConflictPolicy = Literal["reject", "rename", "overwrite"]
 

@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.config import EMBEDDING_PRESETS, EmbeddingPresetId
-from app.persona import PersonaPack
-from app.rag.chunking import Chunk, chunk_text
-from app.rag.embeddings import Embedder
-from app.rag.fingerprint import build_index_fingerprint
-from app.rag.loaders import iter_knowledge_files, load_text_file
-from app.rag.store import IndexManifest, VectorStore
+from persona_bot.config import EMBEDDING_PRESETS, EmbeddingPresetId
+from persona_bot.persona import PersonaPack
+from persona_bot.rag.chunking import Chunk, chunk_text
+from persona_bot.rag.embeddings import Embedder
+from persona_bot.rag.fingerprint import build_index_fingerprint
+from persona_bot.rag.loaders import iter_knowledge_files, load_text_file
+from persona_bot.rag.store import IndexManifest, VectorStore
 
 
 def knowledge_dir_for_persona(

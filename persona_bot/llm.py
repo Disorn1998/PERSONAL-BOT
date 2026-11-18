@@ -8,8 +8,8 @@ from typing import Any, Protocol
 
 from openai import APIConnectionError, APIStatusError, APITimeoutError, OpenAI
 
-from app.config import Settings, get_settings
-from app.errors import (
+from persona_bot.config import Settings, get_settings
+from persona_bot.errors import (
     LlmResponseError,
     LlmTransportError,
     MissingApiKeyError,
@@ -17,9 +17,9 @@ from app.errors import (
     RateLimitDayError,
     RateLimitMinuteError,
 )
-from app.logging_setup import get_logger
-from app.ratelimit import RateLimitInfo, classify_429, parse_rate_limit_headers
-from app.security import safe_exception_message
+from persona_bot.logging_setup import get_logger
+from persona_bot.ratelimit import RateLimitInfo, classify_429, parse_rate_limit_headers
+from persona_bot.security import safe_exception_message
 
 logger = get_logger(__name__)
 

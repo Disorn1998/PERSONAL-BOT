@@ -8,7 +8,7 @@ import re
 from collections.abc import Sequence
 from typing import Protocol
 
-from app.config import EMBEDDING_PRESETS, EmbeddingPresetId
+from persona_bot.config import EMBEDDING_PRESETS, EmbeddingPresetId
 
 
 class Embedder(Protocol):

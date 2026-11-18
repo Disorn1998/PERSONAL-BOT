@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.ui import tokens
+from persona_bot.ui import tokens
 
 
 def _hex_to_rgb(value: str) -> tuple[float, float, float]:

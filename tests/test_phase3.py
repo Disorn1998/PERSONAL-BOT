@@ -5,11 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from app import cli
-from app.config import Settings
-from app.healthcheck import run_health_check
-from app.keyring_store import SERVICE_NAME, USERNAME
-from app.versioning import (
+from persona_bot import cli
+from persona_bot.config import Settings
+from persona_bot.healthcheck import run_health_check
+from persona_bot.keyring_store import SERVICE_NAME, USERNAME
+from persona_bot.versioning import (
     DATA_SCHEMA_VERSION,
     ensure_data_version,
     get_app_version,
@@ -19,7 +19,7 @@ from app.versioning import (
 
 def test_project_root_finds_main() -> None:
     root = cli.project_root()
-    assert (root / "app" / "main.py").exists()
+    assert (root / "persona_bot" / "main.py").exists()
     assert (root / "pyproject.toml").exists()
 
 
@@ -67,7 +67,7 @@ def test_keyring_roundtrip(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(keyring, "get_password", FakeKeyring().get_password)
     monkeypatch.setattr(keyring, "delete_password", FakeKeyring().delete_password)
 
-    from app import keyring_store
+    from persona_bot import keyring_store
 
     keyring_store.save_api_key("gsk_test_key_value")
     assert keyring_store.load_api_key() == "gsk_test_key_value"

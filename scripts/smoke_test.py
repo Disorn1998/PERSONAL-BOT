@@ -34,9 +34,9 @@ Owner smoke checklist (Phase 4)
 
 def main() -> int:
     print(CHECKLIST)
-    from app.config import get_settings
-    from app.llm import LlmClient, StreamResult
-    from app.persona import load_persona_yaml
+    from persona_bot.config import get_settings
+    from persona_bot.llm import LlmClient, StreamResult
+    from persona_bot.persona import load_persona_yaml
 
     settings = get_settings()
     if not settings.groq_api_key.strip():

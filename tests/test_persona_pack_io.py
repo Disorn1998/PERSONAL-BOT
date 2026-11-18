@@ -7,8 +7,8 @@ import zipfile
 from pathlib import Path
 
 import pytest
-from app.persona import PersonaConfig, PersonaPack, save_persona_yaml
-from app.persona_pack_io import (
+from persona_bot.persona import PersonaConfig, PersonaPack, save_persona_yaml
+from persona_bot.persona_pack_io import (
     PersonaPackIoError,
     delete_user_persona,
     export_persona_zip,

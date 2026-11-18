@@ -34,7 +34,7 @@ uv sync --extra dev
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy
-uv run pytest -m "not slow" --cov=app --cov-fail-under=0
+uv run pytest -m "not slow" --cov=persona_bot --cov-fail-under=0
 # Optional local docker e2e:
 # cp .env.example .env.ci && … (see ci.yml) && docker compose -f docker-compose.yml -f docker-compose.ci.yml up --build
 ```
@@ -89,7 +89,7 @@ uv run pytest -m "not slow" --cov=app --cov-fail-under=0
 
 1. Lock or revise eval numbers (0.70 / 0.80)?
 2. Lock coverage floors (60% / 80%)?
-3. Rename package `app` → `persona_bot`?
+3. Rename package `persona_bot` → `persona_bot`?
 4. Supply original §16.8 / §18.9?
 
 **STOP.** Phase 5 is the final build phase. No Phase 6 planned in-scope.

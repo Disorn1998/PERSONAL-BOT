@@ -18,11 +18,11 @@ Base: latest `main` (after Phase 3 PR #5)
 - `app/persona_pack_io.py` — zip export/import with bomb/symlink/whitelist/duplicate/preview
 - `app/backup.py` — backup / restore / delete-all (never packs `.env` / key-looking paths)
 - `app/services.py` — `is_user_persona`, `persona_dir_for`
-- `app/main.py` — sidebar language + Data & backup tools (no regenerate — §19 deferred)
+- `persona_bot/main.py` — sidebar language + Data & backup tools (no regenerate — §19 deferred)
 - `tests/test_persona_pack_io.py`, `tests/test_backup.py`
 
 ### Bilingual + a11y docs
-- `app/ui/strings.py` — complete `th` + `en`
+- `persona_bot/ui/strings.py` — complete `th` + `en`
 - `app/i18n.py` — locale get/set + EN→TH fallback
 - `docs/DESIGN.md` — accessibility checklist A1–A12
 - `scripts/smoke_test.py` — expanded owner checklist

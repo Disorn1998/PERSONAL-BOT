@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.rag.store import VectorStore
+from persona_bot.rag.store import VectorStore
 
 
 def run_search_lab(

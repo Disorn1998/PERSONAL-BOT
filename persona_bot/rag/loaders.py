@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.errors import AppError
+from persona_bot.errors import AppError
 
 
 class KnowledgeLoadError(AppError):

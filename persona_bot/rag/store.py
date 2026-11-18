@@ -11,8 +11,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-from app.rag.chunking import Chunk
-from app.rag.embeddings import Embedder
+from persona_bot.rag.chunking import Chunk
+from persona_bot.rag.embeddings import Embedder
 
 
 def sanitize_collection_name(persona_id: str) -> str:

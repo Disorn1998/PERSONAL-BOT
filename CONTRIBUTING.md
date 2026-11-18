@@ -8,7 +8,7 @@
    uv run ruff check .
    uv run ruff format --check .
    uv run mypy
-   uv run pytest -m "not slow" --cov=app --cov-fail-under=60
+   uv run pytest -m "not slow" --cov=persona_bot --cov-fail-under=60
    ```
 
 4. Never commit `.env`, `data/`, or API keys.

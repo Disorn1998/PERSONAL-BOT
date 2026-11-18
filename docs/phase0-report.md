@@ -11,9 +11,9 @@ Repo: https://github.com/Disorn1998/PERSONAL-BOT
 - `.gitignore`, `.env.example`, `.pre-commit-config.yaml`
 - `.github/workflows/ci.yml` (minimal matrix: Ubuntu × 3.11/3.12/3.13)
 - `.streamlit/config.toml`
-- `app/__init__.py`, `app/cli.py` (empty skeleton), `app/i18n.py`
-- `app/ui/__init__.py`, `app/ui/tokens.py`, `app/ui/strings.py`
-- `app/rag/__init__.py`, `app/static/fonts/.gitkeep`
+- `persona_bot/__init__.py`, `persona_bot/cli.py` (empty skeleton), `app/i18n.py`
+- `persona_bot/ui/__init__.py`, `persona_bot/ui/tokens.py`, `persona_bot/ui/strings.py`
+- `app/rag/__init__.py`, `persona_bot/static/fonts/.gitkeep`
 - `personas/examples/.gitkeep`, `assets/.gitkeep`, `scripts/.gitkeep`
 - `tests/test_smoke.py`
 - `docs/ASSUMPTIONS.md`, `docs/DECISIONS.md`, `docs/phase0-report.md`
@@ -98,7 +98,7 @@ If the owner prefers a single Phase 1, merge 1a+1b but expect a large PR.
 
 | # | Handling in Phase 0 |
 |---|---|
-| F1 | **ASK:** package `app` vs `persona_bot`; original §16.8 / §18.9 still missing |
+| F1 | **ASK:** package `persona_bot` vs `persona_bot`; original §16.8 / §18.9 still missing |
 | F2 | **PROPOSAL** in DECISIONS: SDK `max_retries=0` |
 | F3 | Document later as Known limitation (calm UX) — Phase 1 |
 | F4 | Phase 1: YAML for 3 examples; study-buddy for chat; knowledge Phase 2 |

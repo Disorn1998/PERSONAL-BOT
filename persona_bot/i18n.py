@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from app.ui import strings
+from persona_bot.ui import strings
 
 Locale = Literal["th", "en"]
 

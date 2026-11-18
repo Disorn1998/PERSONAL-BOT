@@ -6,19 +6,19 @@ from pathlib import Path
 
 import hypothesis.strategies as st
 import pytest
-from app.errors import KnowledgeNotFoundError
-from app.persona import load_persona_yaml
-from app.prompt import build_messages
-from app.rag.chunking import chunk_text
-from app.rag.citations import validate_citations
-from app.rag.embeddings import FakeEmbedder
-from app.rag.fingerprint import build_index_fingerprint
-from app.rag.ingest import collect_chunks, ensure_index, knowledge_dir_for_persona
-from app.rag.loaders import load_text_file
-from app.rag.prompt_inspector import inspect_messages
-from app.rag.retrieve import build_retrieval_query, previous_user_message, retrieve
-from app.rag.store import VectorStore, sanitize_collection_name
 from hypothesis import given, settings
+from persona_bot.errors import KnowledgeNotFoundError
+from persona_bot.persona import load_persona_yaml
+from persona_bot.prompt import build_messages
+from persona_bot.rag.chunking import chunk_text
+from persona_bot.rag.citations import validate_citations
+from persona_bot.rag.embeddings import FakeEmbedder
+from persona_bot.rag.fingerprint import build_index_fingerprint
+from persona_bot.rag.ingest import collect_chunks, ensure_index, knowledge_dir_for_persona
+from persona_bot.rag.loaders import load_text_file
+from persona_bot.rag.prompt_inspector import inspect_messages
+from persona_bot.rag.retrieve import build_retrieval_query, previous_user_message, retrieve
+from persona_bot.rag.store import VectorStore, sanitize_collection_name
 
 
 def test_sanitize_collection_name() -> None:

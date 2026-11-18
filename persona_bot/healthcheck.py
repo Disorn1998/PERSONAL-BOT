@@ -7,8 +7,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-from app.config import Settings
-from app.versioning import ensure_data_version, get_app_version
+from persona_bot.config import Settings
+from persona_bot.versioning import ensure_data_version, get_app_version
 
 
 @dataclass(slots=True)

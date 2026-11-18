@@ -9,15 +9,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO
 
-from app.errors import AppError
-from app.persona_pack_io import (
+from persona_bot.errors import AppError
+from persona_bot.persona_pack_io import (
     DEFAULT_MAX_COMPRESSION_RATIO,
     DEFAULT_MAX_MEMBER_BYTES,
     DEFAULT_MAX_MEMBERS,
     DEFAULT_MAX_UNCOMPRESSED_BYTES,
 )
-from app.security import redact_secrets
-from app.versioning import ensure_data_version
+from persona_bot.security import redact_secrets
+from persona_bot.versioning import ensure_data_version
 
 # Paths under data/ that must never appear in a backup archive.
 _FORBIDDEN_NAME_PARTS = (".env", "api_key", "groq_api_key")

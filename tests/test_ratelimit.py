@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from app.errors import RateLimitDayError, RateLimitMinuteError
-from app.ratelimit import classify_429, parse_rate_limit_headers, parse_reset_to_seconds
+from persona_bot.errors import RateLimitDayError, RateLimitMinuteError
+from persona_bot.ratelimit import classify_429, parse_rate_limit_headers, parse_reset_to_seconds
 
 
 def test_parse_headers() -> None:

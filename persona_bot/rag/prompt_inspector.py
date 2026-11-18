@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.budget import estimate_tokens, total_tokens
+from persona_bot.budget import estimate_tokens, total_tokens
 
 
 def inspect_messages(messages: list[dict[str, Any]]) -> dict[str, Any]:

@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from app.errors import RateLimitDayError, RateLimitMinuteError
+from persona_bot.errors import RateLimitDayError, RateLimitMinuteError
 
 # Groq docs: *-requests → RPD; *-tokens → TPM. Reset values look like "7.66s" / "2m59s".
 _RESET_RE = re.compile(

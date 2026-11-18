@@ -8,15 +8,15 @@ from pathlib import Path
 
 
 def project_root() -> Path:
-    """Return repository / install root that contains ``app/main.py`` and pyproject."""
+    """Return repository / install root that contains ``persona_bot/main.py`` and pyproject."""
     here = Path(__file__).resolve().parent
-    # Editable/src layout: <root>/app/cli.py
+    # Editable/src layout: <root>/persona_bot/cli.py
     candidate = here.parent
-    if (candidate / "app" / "main.py").exists():
+    if (candidate / "persona_bot" / "main.py").exists():
         return candidate
     # Fallback: cwd if it looks like the project
     cwd = Path.cwd()
-    if (cwd / "app" / "main.py").exists():
+    if (cwd / "persona_bot" / "main.py").exists():
         return cwd
     return candidate
 
@@ -27,7 +27,7 @@ def main() -> None:
     os.chdir(root)
     os.environ.setdefault("STREAMLIT_BROWSER_GATHER_USAGE_STATS", "false")
 
-    app_path = root / "app" / "main.py"
+    app_path = root / "persona_bot" / "main.py"
     from streamlit.web import cli as stcli
 
     sys.argv = [

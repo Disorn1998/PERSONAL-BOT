@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-from app.llm import StreamResult, TokenUsage
+from persona_bot.llm import StreamResult, TokenUsage
 
 
 @dataclass(slots=True)

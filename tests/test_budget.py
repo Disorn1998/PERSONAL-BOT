@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.budget import estimate_tokens, fit_prompt, total_tokens
+from persona_bot.budget import estimate_tokens, fit_prompt, total_tokens
 
 
 def test_estimate_tokens_nonzero() -> None:

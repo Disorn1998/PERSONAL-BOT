@@ -45,15 +45,15 @@ dev = [
 ]
 
 [project.scripts]
-persona-bot = "app.cli:main"
+persona-bot = "persona_bot.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["app"]
+packages = ["persona_bot"]
 
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-src = ["app", "tests", "scripts"]
+src = ["persona_bot", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
@@ -70,7 +70,7 @@ warn_unused_configs = true
 ignore_missing_imports = true
 # Strict mode applied later to core modules only (Phase 1+).
 strict = false
-files = ["app"]
+files = ["persona_bot"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
@@ -82,7 +82,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["app"]
+source = ["persona_bot"]
 branch = true
 
 [tool.coverage.report]

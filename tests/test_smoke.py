@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from app import cli, i18n
-from app.ui import strings, tokens
+from persona_bot import cli, i18n
+from persona_bot.ui import strings, tokens
 
 
 def test_import_package() -> None:
@@ -22,7 +22,7 @@ def test_cli_launches_streamlit(monkeypatch: pytest.MonkeyPatch) -> None:
     with pytest.raises(SystemExit) as exited:
         cli.main()
     assert exited.value.code == 0
-    assert (Path(__file__).resolve().parents[1] / "app" / "main.py").exists()
+    assert (Path(__file__).resolve().parents[1] / "persona_bot" / "main.py").exists()
 
 
 def test_i18n_resolves_thai_key() -> None:
@@ -45,6 +45,6 @@ def test_i18n_english_table_complete_enough() -> None:
 
 
 def test_main_module_imports() -> None:
-    import app.main as main_mod
+    import persona_bot.main as main_mod
 
     assert callable(main_mod.run)

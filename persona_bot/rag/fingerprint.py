@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from app.rag.loaders import iter_knowledge_files
+from persona_bot.rag.loaders import iter_knowledge_files
 
 
 def file_digest(path: Path) -> str:

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.config import Settings, get_settings
-from app.persona import PersonaPack, list_example_persona_dirs, load_persona_yaml
+from persona_bot.config import Settings, get_settings
+from persona_bot.persona import PersonaPack, list_example_persona_dirs, load_persona_yaml
 
 
 def load_available_personas(settings: Settings | None = None) -> list[PersonaPack]:

@@ -6,10 +6,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from app.persona import PersonaPack
-from app.rag.ingest import knowledge_dir_for_persona
-from app.rag.loaders import iter_knowledge_files
-from app.rag.store import VectorStore
+from persona_bot.persona import PersonaPack
+from persona_bot.rag.ingest import knowledge_dir_for_persona
+from persona_bot.rag.loaders import iter_knowledge_files
+from persona_bot.rag.store import VectorStore
 
 
 @dataclass(slots=True)

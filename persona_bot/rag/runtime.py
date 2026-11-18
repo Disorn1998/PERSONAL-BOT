@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.config import EMBEDDING_PRESETS, Settings
-from app.persona import PersonaPack
-from app.rag.embeddings import Embedder, FakeEmbedder, FastEmbedder
-from app.rag.fingerprint import build_index_fingerprint
-from app.rag.health import KnowledgeHealth, assess_knowledge_health
-from app.rag.ingest import ensure_index, knowledge_dir_for_persona
-from app.rag.store import IndexManifest, VectorStore
+from persona_bot.config import EMBEDDING_PRESETS, Settings
+from persona_bot.persona import PersonaPack
+from persona_bot.rag.embeddings import Embedder, FakeEmbedder, FastEmbedder
+from persona_bot.rag.fingerprint import build_index_fingerprint
+from persona_bot.rag.health import KnowledgeHealth, assess_knowledge_health
+from persona_bot.rag.ingest import ensure_index, knowledge_dir_for_persona
+from persona_bot.rag.store import IndexManifest, VectorStore
 
 
 def build_embedder(settings: Settings, *, persona: PersonaPack, fake: bool = False) -> Embedder:

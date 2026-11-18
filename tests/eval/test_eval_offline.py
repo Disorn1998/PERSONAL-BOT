@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.eval_harness import assert_thresholds, load_baseline, run_suite
-from app.rag.embeddings import FakeEmbedder
+from persona_bot.eval_harness import assert_thresholds, load_baseline, run_suite
+from persona_bot.rag.embeddings import FakeEmbedder
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).resolve().parent / "baseline.json"

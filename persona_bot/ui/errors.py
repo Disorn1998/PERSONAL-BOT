@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from app.errors import AppError, ErrorInfo, to_error_info
-from app.i18n import t
+from persona_bot.errors import AppError, ErrorInfo, to_error_info
+from persona_bot.i18n import t
 
 
 def format_error_card(info: ErrorInfo) -> tuple[str, str | None]:
