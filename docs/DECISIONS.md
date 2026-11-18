@@ -3,6 +3,20 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Phase 2 (2026-11-18)
+
+### RAG stack — **DONE**
+
+- Loaders (txt/md/pdf/docx), chunker, FakeEmbedder/FastEmbedder, Chroma store
+- `index_fingerprint` + atomic collection rebuild + JSON manifest under `data/index/`
+- Retrieval query = previous user + latest; `min_score` filter; strict short-circuit (no LLM)
+- Sources expander + citation validation; knowledge health + search lab + prompt inspector
+- Example knowledge for study-buddy + tech-explainer
+
+### PDF generation dep — **NOT ADDED**
+
+- No reportlab/fpdf; tests use a minimal hand-written PDF + Thai markdown fixtures (F7).
+
 ## Phase 1b (2026-11-18)
 
 ### Chat UX shell — **DONE**

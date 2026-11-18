@@ -10,6 +10,8 @@ config:
   max_tokens: 1024
   answer_mode: balanced
   embedding_preset: lite
-knowledge_files: []
+knowledge_files:
+  - knowledge/photosynthesis.md
+  - knowledge/study-tips.txt
 avatar: null
 version: 1
