@@ -12,7 +12,9 @@ from app.budget import fit_prompt
 from app.chat_store import ChatStore
 from app.config import clear_settings_cache, get_settings
 from app.errors import AppError, KnowledgeNotFoundError, MissingApiKeyError, MissingModelConfigError
+from app.healthcheck import run_health_check
 from app.i18n import t
+from app.keyring_store import delete_api_key, load_api_key, remember_enabled, save_api_key
 from app.llm import LlmClient, StreamResult
 from app.logging_setup import setup_logging
 from app.prompt import build_messages, not_found_reply_th, strip_context_from_content
@@ -26,6 +28,7 @@ from app.services import chat_db_path, load_available_personas, usage_path
 from app.ui.errors import error_from_exception, format_error_card
 from app.ui.theme import custom_css
 from app.usage import UsageTracker
+from app.versioning import ensure_data_version, get_app_version
 
 
 def _init_state() -> None:
@@ -36,6 +39,11 @@ def _init_state() -> None:
     ss.setdefault("thread_id", "")
     ss.setdefault("privacy_ack", False)
     ss.setdefault("last_error", None)
+    ss.setdefault("wizard_done", False)
+    if not ss["api_key"] and remember_enabled():
+        stored = load_api_key()
+        if stored:
+            ss["api_key"] = stored
 
 
 def _store() -> ChatStore:
@@ -203,6 +211,16 @@ def _sidebar(personas: list) -> None:
             except Exception as exc:  # noqa: BLE001
                 _render_error(exc)
 
+    st.sidebar.caption(f"{t('label.version')}: {get_app_version()}")
+
+    with st.sidebar.expander(t("label.health")):
+        report = run_health_check(
+            settings,
+            api_key=st.session_state.api_key or settings.groq_api_key,
+        )
+        st.write(t("status.health_ok") if report.ok else t("status.health_issues"))
+        st.json(report.to_dict())
+
     with st.sidebar.expander(t("label.advanced")):
         key_val = st.text_input(
             t("label.api_key"),
@@ -210,20 +228,35 @@ def _sidebar(personas: list) -> None:
             type="password",
             help=t("error.hint.add_api_key"),
         )
+        remember = st.checkbox(
+            t("label.remember_key"),
+            value=remember_enabled(),
+            key="remember_key_box",
+        )
         if st.button(t("action.save_key"), key="save_key_btn"):
             st.session_state.api_key = key_val.strip()
+            if remember and key_val.strip():
+                save_api_key(key_val.strip())
             st.rerun()
         if st.button(t("action.forget_key"), key="forget_key_btn"):
             st.session_state.api_key = ""
+            delete_api_key()
             st.rerun()
         st.caption(t("privacy.notice"))
 
 
 def _welcome() -> None:
+    settings = get_settings()
+    report = run_health_check(
+        settings,
+        api_key=st.session_state.api_key or settings.groq_api_key,
+    )
     st.markdown(
         f"""
 <div class="pb-welcome">
   <h1>{t("app.title")}</h1>
+  <p>{t("label.first_run")}</p>
+  <p>{t("first_run.body")}</p>
   <p>{t("app.welcome")}</p>
   <p>{t("app.welcome.body")}</p>
   <ol>
@@ -235,9 +268,20 @@ def _welcome() -> None:
 """,
         unsafe_allow_html=True,
     )
+    st.info(t("status.health_ok") if report.ok else t("status.health_issues"))
+    with st.expander(t("label.health")):
+        st.json(report.to_dict())
     key_val = st.text_input(t("label.api_key"), type="password", key="welcome_key")
+    remember = st.checkbox(
+        t("label.remember_key"),
+        value=remember_enabled(),
+        key="welcome_remember",
+    )
     if st.button(t("action.save_key"), key="welcome_save"):
         st.session_state.api_key = key_val.strip()
+        if remember and key_val.strip():
+            save_api_key(key_val.strip())
+        st.session_state.wizard_done = True
         st.rerun()
 
 
@@ -416,6 +460,7 @@ def run() -> None:
 
     clear_settings_cache()
     settings = get_settings()
+    ensure_data_version(settings.data_dir)
     setup_logging(settings.log_level, api_key=st.session_state.api_key or settings.groq_api_key)
 
     try:
@@ -435,7 +480,11 @@ def run() -> None:
         return
 
     has_key = bool(st.session_state.api_key or settings.groq_api_key)
-    if not has_key:
+    health = run_health_check(
+        settings,
+        api_key=st.session_state.api_key or settings.groq_api_key,
+    )
+    if not has_key or (not health.models_configured and not st.session_state.wizard_done):
         _welcome()
         return
 

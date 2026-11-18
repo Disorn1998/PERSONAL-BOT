@@ -1,0 +1,33 @@
+# Bind Streamlit to localhost only. Examples are baked into the image (read-only).
+services:
+  persona-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: persona-bot:local
+    ports:
+      - "127.0.0.1:8501:8501"
+    env_file:
+      - .env
+    environment:
+      DATA_DIR: /data
+      PERSONAS_DIR: /data/personas
+      EXAMPLES_DIR: /app/personas/examples
+      HF_HOME: /cache/huggingface
+      FASTEMBED_CACHE_PATH: /cache/fastembed
+      XDG_CACHE_HOME: /cache
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
+    volumes:
+      - ./data:/data
+      - persona-bot-cache:/cache
+    # personas/examples are in the image; do not mount over them.
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8501/_stcore/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  persona-bot-cache:

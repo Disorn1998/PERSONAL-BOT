@@ -3,6 +3,16 @@
 Assumptions made when the owner has not answered yet, plus verification notes.
 Update when the owner replies or when APIs change.
 
+## Phase 3 notes (2026-11-18)
+
+| Item | Assumption |
+|---|---|
+| Docker base | Pinned `python:3.11.11-slim-bookworm` (multi-arch notes in FIRST_RUN.md) |
+| Compose bind | `127.0.0.1:8501` only |
+| DoD 1 timing | ≈5 min excludes first embedding model download |
+| Keyring | Opt-in via `PERSONA_BOT_REMEMBER_KEY`; stores outside `data/` |
+| smoke_test.py | Owner-only; never CI |
+
 ## Phase 2 notes (2026-11-18)
 
 | Item | Assumption |

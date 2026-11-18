@@ -3,6 +3,15 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Phase 3 (2026-11-18)
+
+### Distribution — **DONE**
+
+- `start.bat` / `start.command` / `start.sh`; CLI chdirs to project root; telemetry off
+- Dockerfile non-root + healthcheck; compose localhost + `./data` + cache volume
+- `data/version.json` schema v1 + UI version caption; system health + first-run wizard
+- Optional keyring remember-key; APP_PASSWORD gate retained
+
 ## Phase 2 (2026-11-18)
 
 ### RAG stack — **DONE**
