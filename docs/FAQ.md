@@ -44,6 +44,19 @@ Nothing is uploaded to a persona-bot server; only Groq receives chat prompts whe
 ข้อมูลอยู่ใต้ `data/personas/<id>/knowledge/` บนเครื่องคุณเท่านั้น  
 ทาง zip สำรอง: ส่งออก → ใส่ไฟล์ใน `knowledge/` → นำเข้า (เปลี่ยนชื่อถ้า id ซ้ำ)
 
+## Windows: `uv` / SmartScreen / long paths
+
+- **`uv` not found:** `start.bat` เติม PATH ชั่วคราวเท่านั้น — เปิดเทอร์มินัลใหม่แล้วรัน  
+  `$env:Path = "$env:USERPROFILE\.local\bin;$env:Path"` หรือเพิ่ม User PATH ถาวร  
+- **SmartScreen:** More info → Run anyway สำหรับ `start.bat` หรือใช้ขั้นตอน PowerShell ใน README  
+- **Path too long:** เปิด Win32 long paths หรือวางโปรเจกต์ใกล้ `C:\`  
+ดู [FIRST_RUN.md](FIRST_RUN.md) ส่วน Windows troubleshooting
+
+## `DAILY_TOKEN_LIMIT` คืออะไร
+
+ค่าใน `.env` สำหรับ **แสดงในแถบใช้งาน** เท่านั้น (F12) — ไม่บังคับโควตา Groq  
+ว่าง = แสดงจำนวนโทเคนสะสมโดยไม่มีตัวเศษ
+
 ## CI เรียก Groq จริงไหม
 
 ไม่ — unit tests ใช้ mock + `FakeEmbedder`  

@@ -61,6 +61,39 @@ def custom_css() -> str:
     border-color: {tokens.COLOR_WARNING};
     color: {tokens.COLOR_WARNING};
   }}
+  .pb-wizard {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: {tokens.SPACE_SM_PX}px;
+    margin: {tokens.SPACE_SM_PX}px 0 {tokens.SPACE_MD_PX}px 0;
+  }}
+  .pb-wizard-step {{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid {tokens.COLOR_BORDER};
+    border-radius: {tokens.RADIUS_MD_PX}px;
+    padding: 4px 10px;
+    font-size: {tokens.FONT_SIZE_SMALL_PX}px;
+    color: {tokens.COLOR_MUTED_TEXT};
+    background: {tokens.COLOR_BACKGROUND};
+  }}
+  .pb-wizard-step .n {{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4em;
+    font-weight: 600;
+  }}
+  .pb-wizard-step.active {{
+    border-color: {tokens.COLOR_PRIMARY};
+    color: {tokens.COLOR_TEXT};
+    background: {tokens.COLOR_SECONDARY_BACKGROUND};
+  }}
+  .pb-wizard-step.done {{
+    border-color: {tokens.COLOR_SUCCESS};
+    color: {tokens.COLOR_SUCCESS};
+  }}
   /* Keep primary column usable ~360px */
   .block-container {{
     padding-top: 1.2rem;

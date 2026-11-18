@@ -97,6 +97,25 @@ def test_duplicate_id_reject_and_rename(tmp_path: Path) -> None:
     assert (personas / "dup-id-import" / "persona.yaml").exists()
 
 
+def test_duplicate_id_overwrite(tmp_path: Path) -> None:
+    src = _write_pack(tmp_path / "src", pid="ow-id")
+    data = export_persona_zip(src)
+    personas = tmp_path / "personas"
+    import_persona_zip(data, personas_dir=personas, conflict="reject")
+    (personas / "ow-id" / "knowledge" / "note.txt").write_text("old", encoding="utf-8")
+    # Mutate export payload knowledge via a fresh pack zip.
+    src2 = _write_pack(tmp_path / "src2", pid="ow-id")
+    (src2 / "knowledge" / "note.txt").write_text("new-content", encoding="utf-8")
+    data2 = export_persona_zip(src2)
+    preview = preview_persona_zip(data2, personas_dir=personas)
+    assert preview.duplicate_of == "ow-id"
+    imported = import_persona_zip(data2, personas_dir=personas, conflict="overwrite")
+    assert imported.id == "ow-id"
+    assert (personas / "ow-id" / "knowledge" / "note.txt").read_text(
+        encoding="utf-8"
+    ) == "new-content"
+
+
 def test_zip_bomb_ratio(tmp_path: Path) -> None:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:

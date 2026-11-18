@@ -27,6 +27,7 @@ def test_load_example_personas() -> None:
         "writing-coach",
         "thai-tax-advisor",
         "company-faq-bot",
+        "meeting-notes",
     }
     packs = [load_persona_yaml(p / "persona.yaml") for p in dirs]
     by_id = {p.id: p for p in packs}
@@ -35,6 +36,8 @@ def test_load_example_personas() -> None:
     assert by_id["writing-coach"].config.answer_mode == "open"
     assert by_id["thai-tax-advisor"].config.answer_mode == "strict"
     assert by_id["company-faq-bot"].config.answer_mode == "strict"
+    assert by_id["meeting-notes"].config.answer_mode == "balanced"
+    assert by_id["meeting-notes"].greeting
     assert by_id["thai-tax-advisor"].greeting
     assert by_id["thai-tax-advisor"].starter_questions
     assert by_id["thai-tax-advisor"].metadata.get("disclaimer_required") is True

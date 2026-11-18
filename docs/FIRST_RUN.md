@@ -18,6 +18,28 @@
 และ `.streamlit/config.toml` ตั้ง `server.address = "127.0.0.1"`  
 Docker Compose ผูกพอร์ต `127.0.0.1:8501:8501` เช่นกัน — ไม่เปิดออกเน็ตภายนอกโดยค่าเริ่มต้น
 
+## Windows troubleshooting
+
+### `uv` not on PATH
+
+`start.bat` ติดตั้ง uv แล้วเติม `%USERPROFILE%\.local\bin` (และ `.cargo\bin`) ให้ **เฉพาะเซสชันนั้น**  
+ถ้าเปิด PowerShell ใหม่แล้วขึ้น `uv: command not found`:
+
+```powershell
+$env:Path = "$env:USERPROFILE\.local\bin;$env:USERPROFILE\.cargo\bin;$env:Path"
+# หรือเพิ่มโฟลเดอร์นี้ใน Settings → System → Environment Variables → Path
+```
+
+### SmartScreen
+
+Windows อาจบล็อก `start.bat` ที่ดาวน์โหลดจาก GitHub — เลือก **More info → Run anyway**  
+หรือข้ามไปใช้คำสั่ง PowerShell ใน README แทน
+
+### Long paths
+
+เส้นทางลึก / unzip ยาวเกินขีดจำกัดเก่าของ Windows อาจพังตอน `uv sync` หรือแตก zip  
+เปิด **Win32 long paths** (Group Policy / registry) หรือคลอน repo ใกล้รากดิสก์ เช่น `C:\dev\PERSONAL-BOT`
+
 ## Streamlit email / onboarding banner
 
 ครั้งแรก Streamlit อาจถามอีเมล (“Welcome to Streamlit!”)  

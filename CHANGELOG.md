@@ -45,6 +45,10 @@ First tagged release. Owner locked DoD 7 eval thresholds and overall coverage CI
   clear-chat confirm; localhost bind; Streamlit email skip; README/GALLERY screenshots;
   CONTRIBUTING example-persona checklist; FAQ data/PDF/strict entries; verified embedding
   licences in `THIRD_PARTY_NOTICES.md`.
+- P2 polish: first-run wizard progress steps; advanced sidebar tools gated until API key;
+  `DAILY_TOKEN_LIMIT` in usage sidebar; single-click persona zip download; overwrite-import
+  confirm; Windows troubleshooting (uv PATH / SmartScreen / long paths); example
+  `meeting-notes` persona.
 
 ### Changed
 
