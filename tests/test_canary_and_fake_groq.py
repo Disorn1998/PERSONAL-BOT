@@ -10,6 +10,8 @@ import urllib.request
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
+from app.security import hostname_equals
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -28,7 +30,8 @@ def test_parse_env_example_models() -> None:
     values = canary._parse_env_example(ROOT / ".env.example")
     assert values["GROQ_MODEL_PRIMARY"]
     assert values["GROQ_MODEL_FALLBACK"]
-    assert "api.groq.com" in values["GROQ_BASE_URL"]
+    # Hostname equality — never substring ``in`` (CodeQL incomplete URL sanitization).
+    assert hostname_equals(values["GROQ_BASE_URL"], "api.groq.com")
 
 
 def test_fake_groq_models_endpoint() -> None:
