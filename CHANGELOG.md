@@ -3,6 +3,49 @@
 All notable changes are documented here. This project follows
 [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`).
 
+## [Unreleased]
+
+## [0.2.0] — 2026-11-18
+
+Minor release: in-app persona editor + public-readiness P1/P2 polish after `v0.1.1`.
+
+### Added
+
+- In-app persona create/edit (user packs under `data/personas/`) with Thai labels.
+- Knowledge upload (`.txt/.md/.pdf/.docx`) + paste text; one-click index rebuild with
+  plain Thai status (`พร้อมแล้ว` / `ต้องสร้างดัชนีใหม่`).
+- **ทำสำเนา** duplicates an example into an editable user pack.
+- README “Customize knowledge” bridge (Thai+EN).
+- P1 polish: remember-key env **or** checkbox (save+load) with status text; `MAX_KNOWLEDGE_MB`
+  enforcement + used/limit in Knowledge panel; 429 retry-after / reset hints on error cards;
+  clear-chat confirm; localhost bind; Streamlit email skip; README/GALLERY screenshots;
+  CONTRIBUTING example-persona checklist; FAQ data/PDF/strict entries; verified embedding
+  licences in `THIRD_PARTY_NOTICES.md`.
+- P2 polish: first-run wizard progress steps; advanced sidebar tools gated until API key;
+  `DAILY_TOKEN_LIMIT` in usage sidebar; single-click persona zip download; overwrite-import
+  confirm; Windows troubleshooting (uv PATH / SmartScreen / long paths); example
+  `meeting-notes` persona.
+
+### Changed
+
+- CLI forces `--server.address=127.0.0.1`; `.streamlit/config.toml` matches.
+
+### Notes
+
+- Tag `v0.2.0` triggers the GHCR release workflow (`:v0.2.0` + `:latest`).
+
+## [0.1.1] — 2026-11-18
+
+Retrospective section for tag `v0.1.1` (rename + examples + CI greens).
+`pyproject.toml` was not bumped at tag time; package metadata stayed `0.1.0` until `0.2.0`.
+
+### Changed
+
+- Renamed importable package `app` → `persona_bot` (Docker `WORKDIR` still `/app`).
+- Restored §9 example personas `thai-tax-advisor` + `company-faq-bot` (fictional knowledge).
+- Persona schema: optional `icon`, `greeting`, `starter_questions`, `metadata`.
+- CI: LF via `.gitattributes`, gitleaks test-fixture allowlist, pip-audit chromadb waives.
+
 ## [0.1.0] — 2026-11-18
 
 First tagged release. Owner locked DoD 7 eval thresholds and overall coverage CI.
@@ -30,30 +73,3 @@ First tagged release. Owner locked DoD 7 eval thresholds and overall coverage CI
 ### Notes
 
 - Tag `v0.1.0` triggers the GHCR release workflow.
-
-## [Unreleased]
-
-### Added
-
-- In-app persona create/edit (user packs under `data/personas/`) with Thai labels.
-- Knowledge upload (`.txt/.md/.pdf/.docx`) + paste text; one-click index rebuild with
-  plain Thai status (`พร้อมแล้ว` / `ต้องสร้างดัชนีใหม่`).
-- **ทำสำเนา** duplicates an example into an editable user pack.
-- README “Customize knowledge” bridge (Thai+EN).
-- P1 polish: remember-key env **or** checkbox (save+load) with status text; `MAX_KNOWLEDGE_MB`
-  enforcement + used/limit in Knowledge panel; 429 retry-after / reset hints on error cards;
-  clear-chat confirm; localhost bind; Streamlit email skip; README/GALLERY screenshots;
-  CONTRIBUTING example-persona checklist; FAQ data/PDF/strict entries; verified embedding
-  licences in `THIRD_PARTY_NOTICES.md`.
-- P2 polish: first-run wizard progress steps; advanced sidebar tools gated until API key;
-  `DAILY_TOKEN_LIMIT` in usage sidebar; single-click persona zip download; overwrite-import
-  confirm; Windows troubleshooting (uv PATH / SmartScreen / long paths); example
-  `meeting-notes` persona.
-
-### Changed
-
-- Renamed importable package `app` → `persona_bot` (Docker `WORKDIR` still `/app`).
-- Restored §9 example personas `thai-tax-advisor` + `company-faq-bot` (fictional knowledge).
-- Persona schema: optional `icon`, `greeting`, `starter_questions`, `metadata`.
-- CI: LF via `.gitattributes`, gitleaks test-fixture allowlist, pip-audit chromadb waives.
-- CLI forces `--server.address=127.0.0.1`; `.streamlit/config.toml` matches.
