@@ -32,6 +32,18 @@ def test_i18n_resolves_thai_key() -> None:
     assert i18n.t("missing.key") == "missing.key"
 
 
+def test_i18n_english_table_complete_enough() -> None:
+    th = strings.STRINGS["th"]
+    en = strings.STRINGS["en"]
+    missing = sorted(set(th) - set(en))
+    assert missing == []
+    i18n.set_locale("en")
+    assert i18n.t("action.new_chat") == "New chat"
+    assert i18n.t("error.not_found_strict").startswith("No relevant")
+    i18n.set_locale("th")
+    assert i18n.t("action.new_chat") == "แชตใหม่"
+
+
 def test_main_module_imports() -> None:
     import app.main as main_mod
 

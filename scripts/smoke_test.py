@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Owner-only Thai quality smoke test against real Groq.
+"""Owner-only live smoke checklist against real Groq (+ optional embedder).
 
 Never run in CI. Requires GROQ_API_KEY + models in the environment / .env.
-Usage (from repo root):
+
+Usage (from repo root)::
 
     uv run python scripts/smoke_test.py
+    PERSONA_BOT_EVAL_LIVE=1 uv run pytest -m slow tests/eval/test_eval_slow.py
 """
 
 from __future__ import annotations
@@ -16,8 +18,22 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+CHECKLIST = """
+Owner smoke checklist (Phase 4)
+-------------------------------
+[ ] Fresh start.bat / start.sh reaches UI (~5 min excluding first model download)
+[ ] Welcome card → save Groq key → study-buddy chat streams Thai reply
+[ ] tech-explainer strict: in-file HTTP question cites sources; OOS question → not-found (no LLM)
+[ ] Language toggle TH/EN updates sidebar + errors without restart
+[ ] Export persona zip → preview import → import (reject duplicate, then rename)
+[ ] Backup data/ → restore into a temp copy; delete-all keeps version.json
+[ ] Optional: PERSONA_BOT_EVAL_LIVE=1 pytest -m slow (DoD 7 real embedder)
+[ ] No API key appears in logs, backup zip, or export zip
+"""
+
 
 def main() -> int:
+    print(CHECKLIST)
     from app.config import get_settings
     from app.llm import LlmClient, StreamResult
     from app.persona import load_persona_yaml

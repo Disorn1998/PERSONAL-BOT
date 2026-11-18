@@ -1,4 +1,4 @@
-"""Streamlit chat shell for persona-bot (Phase 1b + Phase 2 RAG)."""
+"""Streamlit chat shell for persona-bot (Phase 1b–4)."""
 
 from __future__ import annotations
 
@@ -8,23 +8,38 @@ from typing import Any, cast
 
 import streamlit as st
 
+from app.backup import create_backup, delete_all_data, restore_backup
 from app.budget import fit_prompt
 from app.chat_store import ChatStore
 from app.config import clear_settings_cache, get_settings
 from app.errors import AppError, KnowledgeNotFoundError, MissingApiKeyError, MissingModelConfigError
 from app.healthcheck import run_health_check
-from app.i18n import t
+from app.i18n import SUPPORTED_LOCALES, get_locale, set_locale, t
 from app.keyring_store import delete_api_key, load_api_key, remember_enabled, save_api_key
 from app.llm import LlmClient, StreamResult
 from app.logging_setup import setup_logging
+from app.persona_pack_io import (
+    delete_user_persona,
+    export_persona_zip,
+    import_persona_zip,
+    preview_persona_zip,
+)
 from app.prompt import build_messages, not_found_reply_th, strip_context_from_content
 from app.rag.citations import format_sources_markdown, validate_citations
+from app.rag.embeddings import FakeEmbedder
 from app.rag.prompt_inspector import inspect_messages
 from app.rag.retrieve import retrieve
 from app.rag.runtime import build_embedder, get_or_build_store
 from app.rag.search_lab import run_search_lab
+from app.rag.store import VectorStore
 from app.security import password_ok
-from app.services import chat_db_path, load_available_personas, usage_path
+from app.services import (
+    chat_db_path,
+    is_user_persona,
+    load_available_personas,
+    persona_dir_for,
+    usage_path,
+)
 from app.ui.errors import error_from_exception, format_error_card
 from app.ui.theme import custom_css
 from app.usage import UsageTracker
@@ -40,6 +55,12 @@ def _init_state() -> None:
     ss.setdefault("privacy_ack", False)
     ss.setdefault("last_error", None)
     ss.setdefault("wizard_done", False)
+    ss.setdefault("locale", "th")
+    ss.setdefault("import_preview", None)
+    ss.setdefault("import_bytes", None)
+    ss.setdefault("confirm_delete_all", False)
+    ss.setdefault("confirm_delete_persona", False)
+    set_locale(str(ss["locale"]))
     if not ss["api_key"] and remember_enabled():
         stored = load_api_key()
         if stored:
@@ -79,6 +100,15 @@ def _ensure_thread(store: ChatStore, persona_id: str) -> str:
     return thread.id
 
 
+def _wipe_persona_index(persona_id: str) -> None:
+    settings = get_settings()
+    # Best-effort wipe without requiring a live ONNX embedder.
+    VectorStore(
+        data_dir=settings.data_dir,
+        embedder=FakeEmbedder(dim=8, model_name="fake:wipe"),
+    ).wipe_persona(persona_id)
+
+
 def _sidebar(personas: list) -> None:
     settings = get_settings()
     store = _store()
@@ -87,6 +117,22 @@ def _sidebar(personas: list) -> None:
 
     st.sidebar.markdown(f"### {t('app.title')}")
     st.sidebar.caption(t("app.tagline"))
+
+    lang = st.sidebar.selectbox(
+        t("label.language"),
+        options=list(SUPPORTED_LOCALES),
+        index=list(SUPPORTED_LOCALES).index(get_locale())
+        if get_locale() in SUPPORTED_LOCALES
+        else 0,
+        format_func=lambda code: "ไทย" if code == "th" else "English",
+        key="locale_select",
+    )
+    if lang != st.session_state.locale:
+        st.session_state.locale = lang
+        set_locale(lang)
+        st.rerun()
+    else:
+        set_locale(str(st.session_state.locale))
 
     if settings.app_password and not st.session_state.password_ok:
         pwd = st.sidebar.text_input(t("label.password"), type="password")
@@ -212,6 +258,138 @@ def _sidebar(personas: list) -> None:
                 _render_error(exc)
 
     st.sidebar.caption(f"{t('label.version')}: {get_app_version()}")
+
+    with st.sidebar.expander(t("label.data_tools"), expanded=False):
+        # Export current persona (examples or user packs).
+        pack_dir = persona_dir_for(st.session_state.persona_id, settings)
+        if pack_dir is not None and st.button(t("action.export_persona"), key="export_persona_btn"):
+            try:
+                payload = export_persona_zip(
+                    pack_dir,
+                    api_key=st.session_state.api_key or settings.groq_api_key,
+                )
+                st.download_button(
+                    label=f"{st.session_state.persona_id}.zip",
+                    data=payload,
+                    file_name=f"{st.session_state.persona_id}.zip",
+                    mime="application/zip",
+                    key="export_download",
+                )
+                st.success(t("status.export_ok"))
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
+
+        uploaded = st.file_uploader(
+            t("action.import_persona"),
+            type=["zip"],
+            key="import_persona_upload",
+        )
+        conflict = st.selectbox(
+            t("label.conflict_policy"),
+            options=["reject", "rename", "overwrite"],
+            format_func=lambda v: t(f"label.conflict.{v}"),
+            key="import_conflict",
+        )
+        if uploaded is not None and st.button(t("action.preview_import"), key="preview_import_btn"):
+            try:
+                raw = uploaded.getvalue()
+                st.session_state.import_bytes = raw
+                st.session_state.import_preview = preview_persona_zip(
+                    raw,
+                    personas_dir=settings.personas_dir,
+                ).to_dict()
+            except Exception as exc:  # noqa: BLE001
+                st.session_state.import_preview = None
+                st.session_state.import_bytes = None
+                _render_error(exc)
+        if st.session_state.import_preview:
+            st.markdown(f"**{t('label.import_preview')}**")
+            st.json(st.session_state.import_preview)
+            if st.button(t("action.confirm_import"), key="confirm_import_btn"):
+                try:
+                    pack = import_persona_zip(
+                        cast(bytes, st.session_state.import_bytes),
+                        personas_dir=settings.personas_dir,
+                        conflict=cast(Any, conflict),
+                    )
+                    st.session_state.persona_id = pack.id
+                    st.session_state.import_preview = None
+                    st.session_state.import_bytes = None
+                    st.success(t("status.import_ok"))
+                    st.rerun()
+                except Exception as exc:  # noqa: BLE001
+                    _render_error(exc)
+
+        if is_user_persona(st.session_state.persona_id, settings):
+            st.caption(t("warn.delete_persona"))
+            if st.button(t("action.delete_persona"), key="delete_persona_btn"):
+                st.session_state.confirm_delete_persona = True
+            if st.session_state.confirm_delete_persona and st.button(
+                t("action.confirm_delete"), key="confirm_delete_persona_btn"
+            ):
+                try:
+                    pid = str(st.session_state.persona_id)
+                    delete_user_persona(personas_dir=settings.personas_dir, persona_id=pid)
+                    _wipe_persona_index(pid)
+                    st.session_state.persona_id = "study-buddy"
+                    st.session_state.thread_id = ""
+                    st.session_state.confirm_delete_persona = False
+                    st.success(t("status.delete_persona_ok"))
+                    st.rerun()
+                except Exception as exc:  # noqa: BLE001
+                    _render_error(exc)
+        else:
+            st.caption(t("status.example_persona_readonly"))
+
+        if st.button(t("action.backup"), key="backup_btn"):
+            try:
+                payload, summary = create_backup(
+                    settings.data_dir,
+                    api_key=st.session_state.api_key or settings.groq_api_key,
+                )
+                st.download_button(
+                    label="persona-bot-backup.zip",
+                    data=payload,
+                    file_name="persona-bot-backup.zip",
+                    mime="application/zip",
+                    key="backup_download",
+                )
+                st.success(f"{t('status.backup_ok')} ({summary.member_count})")
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
+
+        restore_file = st.file_uploader(
+            t("action.restore"),
+            type=["zip"],
+            key="restore_upload",
+        )
+        if restore_file is not None and st.button(t("action.restore"), key="restore_btn"):
+            try:
+                restore_backup(restore_file.getvalue(), data_dir=settings.data_dir)
+                st.session_state.chat_store = ChatStore(chat_db_path())
+                st.session_state.usage_tracker = UsageTracker(usage_path())
+                st.session_state.thread_id = ""
+                st.success(t("status.restore_ok"))
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
+
+        st.warning(t("warn.delete_all"))
+        if st.button(t("action.delete_all_data"), key="delete_all_btn"):
+            st.session_state.confirm_delete_all = True
+        if st.session_state.confirm_delete_all and st.button(
+            t("action.confirm_delete"), key="confirm_delete_all_btn"
+        ):
+            try:
+                delete_all_data(settings.data_dir, keep_version=True)
+                st.session_state.chat_store = ChatStore(chat_db_path())
+                st.session_state.usage_tracker = UsageTracker(usage_path())
+                st.session_state.thread_id = ""
+                st.session_state.confirm_delete_all = False
+                st.success(t("status.delete_all_ok"))
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
 
     with st.sidebar.expander(t("label.health")):
         report = run_health_check(

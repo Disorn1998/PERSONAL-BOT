@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "provisional": true,
+  "ask_owner": "Please lock or revise provisional eval numeric criteria (DoD 7).",
+  "thresholds": {
+    "in_scope_hit_at_top_k": 0.70,
+    "out_of_scope_not_found_rate": 0.80
+  },
+  "notes": [
+    "Offline FakeEmbedder suite: controlled fixtures use offline_mode=score_gate; example personas use fixture_expectation (token/source overlap).",
+    "Real-model @pytest.mark.slow is manual (PERSONA_BOT_EVAL_LIVE=1); never runs in CI.",
+    "writing-coach has empty knowledge — excluded from retrieval hit cases."
+  ],
+  "cases": [
+    {
+      "id": "fixture-alpha-in-1",
+      "persona_id": "eval-alpha",
+      "kind": "in_scope",
+      "query": "UNIQUE_ALPHA_TOKEN chlorophyll light-dependent reaction oxygen thylakoid ATP NADPH",
+      "expect_source_contains": "alpha.md",
+      "offline_mode": "score_gate"
+    },
+    {
+      "id": "fixture-alpha-in-2",
+      "persona_id": "eval-alpha",
+      "kind": "in_scope",
+      "query": "UNIQUE_BETA_TOKEN HTTP GET retrieves resources without side effects Accept Authorization",
+      "expect_source_contains": "beta.md",
+      "offline_mode": "score_gate"
+    },
+    {
+      "id": "fixture-alpha-oos-1",
+      "persona_id": "eval-alpha",
+      "kind": "out_of_scope",
+      "query": "UNIQUE_DELTA_TOKEN quantum entanglement superconductors nowhere in pack",
+      "min_score_override": 0.55,
+      "offline_mode": "score_gate"
+    },
+    {
+      "id": "fixture-strict-in-1",
+      "persona_id": "eval-strict",
+      "kind": "in_scope",
+      "query": "UNIQUE_STRICT_TOKEN Retrieval-Augmented Generation local embeddings cosine score citations",
+      "expect_source_contains": "core.md",
+      "offline_mode": "score_gate"
+    },
+    {
+      "id": "fixture-strict-oos-1",
+      "persona_id": "eval-strict",
+      "kind": "out_of_scope",
+      "query": "สูตรทำต้มยำกุ้งแบบดั้งเดิม UNIQUE_COOKING_TOKEN",
+      "offline_mode": "score_gate"
+    },
+    {
+      "id": "fixture-strict-oos-2",
+      "persona_id": "eval-strict",
+      "kind": "out_of_scope",
+      "query": "weather forecast Bangkok tomorrow UNIQUE_WEATHER_TOKEN",
+      "offline_mode": "score_gate"
+    },
+    {
+      "id": "fixture-strict-oos-3",
+      "persona_id": "eval-strict",
+      "kind": "out_of_scope",
+      "query": "stock market tips UNIQUE_FINANCE_TOKEN cryptocurrency",
+      "offline_mode": "score_gate"
+    },
+    {
+      "id": "fixture-strict-oos-4",
+      "persona_id": "eval-strict",
+      "kind": "out_of_scope",
+      "query": "how to bake sourdough bread UNIQUE_BAKE_TOKEN",
+      "offline_mode": "score_gate"
+    },
+    {
+      "id": "study-buddy-in-1",
+      "persona_id": "study-buddy",
+      "kind": "in_scope",
+      "query": "คลอโรฟิลล์ดูดกลืนแสงสีน้ำเงินและแดง",
+      "expect_text_contains": ["คลอโรฟิลล์"],
+      "offline_mode": "fixture_expectation"
+    },
+    {
+      "id": "study-buddy-in-2",
+      "persona_id": "study-buddy",
+      "kind": "in_scope",
+      "query": "ปฏิกิริยาที่ต้องใช้แสง ไทลาคอยด์ ATP NADPH",
+      "expect_text_contains": ["ไทลาคอยด์"],
+      "offline_mode": "fixture_expectation"
+    },
+    {
+      "id": "study-buddy-oos-1",
+      "persona_id": "study-buddy",
+      "kind": "out_of_scope",
+      "query": "quantum entanglement superconductors UNIQUE_OOS_STUDY",
+      "min_score_override": 0.55,
+      "offline_mode": "fixture_expectation"
+    },
+    {
+      "id": "tech-explainer-in-1",
+      "persona_id": "tech-explainer",
+      "kind": "in_scope",
+      "query": "HTTP GET ดึงข้อมูล ไม่ควรมีผลข้างเคียง",
+      "expect_text_contains": ["GET"],
+      "offline_mode": "fixture_expectation"
+    },
+    {
+      "id": "tech-explainer-in-2",
+      "persona_id": "tech-explainer",
+      "kind": "in_scope",
+      "query": "RAG Retrieval-Augmented Generation embeddings",
+      "expect_text_contains": ["RAG"],
+      "offline_mode": "fixture_expectation"
+    },
+    {
+      "id": "tech-explainer-oos-1",
+      "persona_id": "tech-explainer",
+      "kind": "out_of_scope",
+      "query": "สูตรทำต้มยำกุ้งแบบดั้งเดิม",
+      "offline_mode": "fixture_expectation"
+    },
+    {
+      "id": "tech-explainer-oos-2",
+      "persona_id": "tech-explainer",
+      "kind": "out_of_scope",
+      "query": "UNIQUE_OOS_TECH weather forecast skiing tips",
+      "min_score_override": 0.50,
+      "offline_mode": "fixture_expectation"
+    }
+  ]
+}
