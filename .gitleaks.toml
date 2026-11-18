@@ -1,0 +1,5 @@
+[[allowlists]]
+description = "Synthetic secret values in security logging tests"
+paths = [
+  "tests/test_security_logging.py",
+]
