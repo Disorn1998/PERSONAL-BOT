@@ -1,5 +1,5 @@
-# persona-bot Streamlit config (Phase 0)
-# Theme tokens aligned with app/ui/tokens.py; reconcile with full §17.2 when provided.
+# persona-bot Streamlit config
+# Theme tokens aligned with app/ui/tokens.py (§17.2: warm cream + #6A5ACD).
 
 [browser]
 gatherUsageStats = false
@@ -9,8 +9,8 @@ toolbarMode = "minimal"
 
 [theme]
 base = "light"
-primaryColor = "#0F766E"
-backgroundColor = "#F7F8FA"
-secondaryBackgroundColor = "#EEF1F4"
+primaryColor = "#6A5ACD"
+backgroundColor = "#F4F1EA"
+secondaryBackgroundColor = "#EBE6DC"
 textColor = "#1A1D21"
 font = "sans-serif"
