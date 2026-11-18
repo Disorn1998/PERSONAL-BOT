@@ -48,6 +48,23 @@ https://console.groq.com/docs/rate-limits
 
 รายละเอียดแคชโมเดล / first-run: [docs/FIRST_RUN.md](docs/FIRST_RUN.md)
 
+## ปรับแต่งความรู้ / Customize knowledge
+
+**ในแอป (แนะนำ):** เลือกเพอร์โซนา → แถบข้าง「แก้ไขเพอร์โซนา」/ Edit persona  
+- กด **ทำสำเนา** ถ้าเป็นตัวอย่าง (ตัวอย่างอ่านอย่างเดียว)  
+- สร้าง/แก้ชื่อ พรอมต์ระบบ โหมดคำตอบ temperature / max tokens / top_k / min_score / chunk  
+- ใน「คลังความรู้」อัปโหลด `.txt` `.md` `.pdf` `.docx` หรือวางข้อความ แล้วกด **สร้างดัชนีใหม่**  
+  สถานะไทย: **พร้อมแล้ว** / **ต้องสร้างดัชนีใหม่**
+
+**In-app (recommended):** pick a persona → sidebar **Edit persona**  
+- Click **Duplicate** for example packs (examples stay read-only)  
+- Create/edit name, system prompt, answer mode, and retrieval knobs  
+- Under **Knowledge**, upload `.txt`/`.md`/`.pdf`/`.docx` or paste text, then **Rebuild index**  
+  Status: **Ready** / **Rebuild the index**
+
+**ทาง zip (สำรอง / bridge):** ส่งออก → แก้ `persona.yaml` + `knowledge/` นอกแอป → นำเข้า (เปลี่ยนชื่อถ้า id ซ้ำ)  
+**Zip bridge:** Export → edit files → Import (rename on id conflict). See [docs/FAQ.md](docs/FAQ.md).
+
 ## ความต้องการ / Requirements
 
 - Python **3.11–3.13** หรือ Docker

@@ -23,6 +23,17 @@ from persona_bot.i18n import SUPPORTED_LOCALES, get_locale, set_locale, t
 from persona_bot.keyring_store import delete_api_key, load_api_key, remember_enabled, save_api_key
 from persona_bot.llm import LlmClient, StreamResult
 from persona_bot.logging_setup import setup_logging
+from persona_bot.persona import PersonaPack
+from persona_bot.persona_editor import (
+    add_knowledge_bytes,
+    add_knowledge_paste,
+    build_persona_config,
+    create_user_persona,
+    duplicate_persona_to_user,
+    index_status_key,
+    knowledge_total_bytes,
+    save_user_persona,
+)
 from persona_bot.persona_pack_io import (
     delete_user_persona,
     export_persona_zip,
@@ -112,6 +123,217 @@ def _wipe_persona_index(persona_id: str) -> None:
         data_dir=settings.data_dir,
         embedder=FakeEmbedder(dim=8, model_name="fake:wipe"),
     ).wipe_persona(persona_id)
+
+
+def _clear_rag_cache(persona_id: str | None = None) -> None:
+    """Drop cached embedder/index bundles so the next chat rebuilds cleanly."""
+    prefix = f"rag::{persona_id}::" if persona_id else "rag::"
+    for key in list(st.session_state.keys()):
+        if isinstance(key, str) and key.startswith(prefix):
+            del st.session_state[key]
+
+
+def _optional_int(raw: str) -> int | None:
+    text = raw.strip()
+    if not text:
+        return None
+    return int(text)
+
+
+def _optional_float(raw: str) -> float | None:
+    text = raw.strip()
+    if not text:
+        return None
+    return float(text)
+
+
+def _render_persona_editor(persona: PersonaPack | None) -> None:
+    """Create / edit user packs; examples stay read-only with Duplicate."""
+    settings = get_settings()
+    with st.sidebar.expander(t("label.persona_editor"), expanded=False):
+        if persona is not None and st.button(
+            t("action.duplicate_persona"),
+            key="duplicate_persona_btn",
+            use_container_width=True,
+        ):
+            try:
+                pack = duplicate_persona_to_user(settings=settings, source_id=persona.id)
+                st.session_state.persona_id = pack.id
+                st.session_state.thread_id = ""
+                _clear_rag_cache(pack.id)
+                st.success(t("status.persona_duplicated"))
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
+
+        user_pack = (
+            is_user_persona(st.session_state.persona_id, settings) if persona is not None else False
+        )
+        if persona is not None and not user_pack:
+            st.caption(t("status.example_edit_readonly"))
+
+        if persona is not None and user_pack:
+            st.markdown(f"**{t('label.persona_editor')}**")
+            name = st.text_input(
+                t("label.persona_name"),
+                value=persona.name,
+                key=f"edit_name_{persona.id}",
+            )
+            description = st.text_area(
+                t("label.persona_description"),
+                value=persona.description,
+                key=f"edit_desc_{persona.id}",
+                height=68,
+            )
+            system_prompt = st.text_area(
+                t("label.system_prompt"),
+                value=persona.system_prompt,
+                key=f"edit_prompt_{persona.id}",
+                height=140,
+            )
+            answer_mode = st.selectbox(
+                t("label.answer_mode"),
+                options=["strict", "balanced", "open"],
+                index=["strict", "balanced", "open"].index(persona.config.answer_mode),
+                key=f"edit_mode_{persona.id}",
+            )
+            temperature = st.slider(
+                t("label.temperature"),
+                min_value=0.0,
+                max_value=2.0,
+                value=float(persona.config.temperature),
+                step=0.05,
+                key=f"edit_temp_{persona.id}",
+            )
+            max_tokens = st.number_input(
+                t("label.max_tokens"),
+                min_value=16,
+                max_value=8192,
+                value=int(persona.config.max_tokens),
+                step=64,
+                key=f"edit_max_tokens_{persona.id}",
+            )
+            embedding_preset = st.selectbox(
+                t("label.embedding_preset"),
+                options=["lite", "multilingual", "quality"],
+                index=["lite", "multilingual", "quality"].index(persona.config.embedding_preset),
+                key=f"edit_preset_{persona.id}",
+            )
+            st.caption(t("label.optional_override"))
+            top_k_raw = st.text_input(
+                t("label.top_k"),
+                value="" if persona.config.top_k is None else str(persona.config.top_k),
+                key=f"edit_top_k_{persona.id}",
+            )
+            min_score_raw = st.text_input(
+                t("label.min_score"),
+                value="" if persona.config.min_score is None else str(persona.config.min_score),
+                key=f"edit_min_score_{persona.id}",
+            )
+            chunk_raw = st.text_input(
+                t("label.chunk_chars"),
+                value="" if persona.config.chunk_chars is None else str(persona.config.chunk_chars),
+                key=f"edit_chunk_{persona.id}",
+            )
+            if st.button(t("action.save_persona"), key=f"save_persona_{persona.id}"):
+                try:
+                    updated = persona.model_copy(
+                        update={
+                            "name": name.strip(),
+                            "description": description.strip(),
+                            "system_prompt": system_prompt.strip(),
+                            "config": build_persona_config(
+                                answer_mode=cast(Any, answer_mode),
+                                temperature=float(temperature),
+                                max_tokens=int(max_tokens),
+                                embedding_preset=cast(Any, embedding_preset),
+                                top_k=_optional_int(top_k_raw),
+                                min_score=_optional_float(min_score_raw),
+                                chunk_chars=_optional_int(chunk_raw),
+                            ),
+                        }
+                    )
+                    save_user_persona(personas_dir=settings.personas_dir, pack=updated)
+                    _clear_rag_cache(persona.id)
+                    st.success(t("status.persona_saved"))
+                    st.rerun()
+                except Exception as exc:  # noqa: BLE001
+                    _render_error(exc)
+
+        st.divider()
+        st.markdown(f"**{t('label.persona_create')}**")
+        new_id = st.text_input(t("label.persona_id"), key="create_persona_id")
+        new_name = st.text_input(t("label.persona_name"), key="create_persona_name")
+        new_desc = st.text_area(
+            t("label.persona_description"),
+            key="create_persona_desc",
+            height=68,
+        )
+        new_prompt = st.text_area(
+            t("label.system_prompt"),
+            key="create_persona_prompt",
+            height=120,
+            value="คุณเป็นผู้ช่วยที่ตอบจากคลังความรู้ของเพอร์โซนานี้",
+        )
+        new_mode = st.selectbox(
+            t("label.answer_mode"),
+            options=["strict", "balanced", "open"],
+            index=1,
+            key="create_persona_mode",
+        )
+        new_temp = st.slider(
+            t("label.temperature"),
+            min_value=0.0,
+            max_value=2.0,
+            value=0.2,
+            step=0.05,
+            key="create_persona_temp",
+        )
+        new_max_tokens = st.number_input(
+            t("label.max_tokens"),
+            min_value=16,
+            max_value=8192,
+            value=1024,
+            step=64,
+            key="create_persona_max_tokens",
+        )
+        new_preset = st.selectbox(
+            t("label.embedding_preset"),
+            options=["lite", "multilingual", "quality"],
+            index=0,
+            key="create_persona_preset",
+        )
+        st.caption(t("label.optional_override"))
+        new_top_k = st.text_input(t("label.top_k"), value="", key="create_persona_top_k")
+        new_min_score = st.text_input(
+            t("label.min_score"), value="", key="create_persona_min_score"
+        )
+        new_chunk = st.text_input(t("label.chunk_chars"), value="", key="create_persona_chunk")
+        if st.button(t("action.create_persona"), key="create_persona_btn"):
+            try:
+                pack = create_user_persona(
+                    personas_dir=settings.personas_dir,
+                    persona_id=new_id,
+                    name=new_name,
+                    description=new_desc,
+                    system_prompt=new_prompt,
+                    config=build_persona_config(
+                        answer_mode=cast(Any, new_mode),
+                        temperature=float(new_temp),
+                        max_tokens=int(new_max_tokens),
+                        embedding_preset=cast(Any, new_preset),
+                        top_k=_optional_int(new_top_k),
+                        min_score=_optional_float(new_min_score),
+                        chunk_chars=_optional_int(new_chunk),
+                    ),
+                )
+                st.session_state.persona_id = pack.id
+                st.session_state.thread_id = ""
+                _clear_rag_cache(pack.id)
+                st.success(t("status.persona_created"))
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
 
 
 def _sidebar(personas: list) -> None:
@@ -229,14 +451,68 @@ def _sidebar(personas: list) -> None:
                     }
                 embedder = st.session_state[cache_key]["embedder"]
                 vstore, manifest, kdir, health = st.session_state[cache_key]["bundle"]
-                st.caption(f"{t('label.knowledge_health')}: {health.file_count} files")
-                st.caption(
-                    t("status.index_ready")
-                    if not health.needs_rebuild
-                    else ", ".join(health.notes) or t("label.rebuild_index")
+                status_key = index_status_key(
+                    needs_rebuild=bool(health.needs_rebuild),
+                    file_count=int(health.file_count),
                 )
-                st.caption(f"chunks={manifest.chunk_count}")
-                st.caption(str(kdir))
+                st.markdown(f"**{t('label.knowledge_health')}:** {t(status_key)}")
+                st.caption(
+                    f"{health.file_count} files · {manifest.chunk_count} chunks · "
+                    f"{t('label.knowledge_size')}: "
+                    f"{knowledge_total_bytes(Path(kdir)) / (1024 * 1024):.2f} / "
+                    f"{settings.max_knowledge_mb} MB"
+                )
+                if is_user_persona(persona.id, settings):
+                    uploaded_knowledge = st.file_uploader(
+                        t("action.upload_knowledge"),
+                        type=["txt", "md", "pdf", "docx"],
+                        key=f"knowledge_upload_{persona.id}",
+                    )
+                    if uploaded_knowledge is not None and st.button(
+                        t("action.upload_knowledge"),
+                        key=f"knowledge_upload_btn_{persona.id}",
+                    ):
+                        try:
+                            dest = add_knowledge_bytes(
+                                settings=settings,
+                                persona_id=persona.id,
+                                filename=uploaded_knowledge.name,
+                                data=uploaded_knowledge.getvalue(),
+                            )
+                            _clear_rag_cache(persona.id)
+                            st.success(f"{t('status.knowledge_uploaded')} ({dest.name})")
+                            st.rerun()
+                        except Exception as exc:  # noqa: BLE001
+                            _render_error(exc)
+                    paste_name = st.text_input(
+                        t("label.knowledge_paste_name"),
+                        value="pasted.md",
+                        key=f"knowledge_paste_name_{persona.id}",
+                    )
+                    paste_text = st.text_area(
+                        t("label.knowledge_paste"),
+                        key=f"knowledge_paste_{persona.id}",
+                        height=100,
+                    )
+                    if st.button(
+                        t("action.paste_knowledge"),
+                        key=f"knowledge_paste_btn_{persona.id}",
+                    ):
+                        try:
+                            dest = add_knowledge_paste(
+                                settings=settings,
+                                persona_id=persona.id,
+                                text=paste_text,
+                                filename=paste_name,
+                            )
+                            _clear_rag_cache(persona.id)
+                            st.success(f"{t('status.knowledge_pasted')} ({dest.name})")
+                            st.rerun()
+                        except Exception as exc:  # noqa: BLE001
+                            _render_error(exc)
+                else:
+                    st.caption(t("status.example_edit_readonly"))
+
                 if st.button(t("label.rebuild_index"), key="rebuild_idx"):
                     st.session_state[cache_key]["bundle"] = get_or_build_store(
                         settings=settings,
@@ -246,6 +522,7 @@ def _sidebar(personas: list) -> None:
                     )
                     st.success(t("status.index_rebuilt"))
                     st.rerun()
+                st.caption(t("label.search_lab"))
                 q = st.text_input(t("label.search_query"), key="search_lab_q")
                 if st.button(t("action.run_search"), key="search_lab_go") and q.strip():
                     hits = run_search_lab(
@@ -262,6 +539,8 @@ def _sidebar(personas: list) -> None:
                         )
             except Exception as exc:  # noqa: BLE001
                 _render_error(exc)
+
+    _render_persona_editor(persona)
 
     st.sidebar.caption(f"{t('label.version')}: {get_app_version()}")
 
