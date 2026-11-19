@@ -120,9 +120,7 @@ _TH: dict[str, str] = {
     "label.needs_rebuild_banner": ("ความรู้ยังไม่พร้อม — กดบันทึกให้พร้อมใช้ หรือสร้างดัชนีใหม่ก่อนถาม"),
     "action.run_search": "ค้นหา",
     "action.run_health": "ตรวจสุขภาพ",
-    "first_run.body": (
-        "เลือกใส่คีย์ API หรืออัปโหลดความรู้ — เปลี่ยนทีหลังได้ในตั้งค่า"
-    ),
+    "first_run.body": ("เลือกใส่คีย์ API หรืออัปโหลดความรู้ — เปลี่ยนทีหลังได้ในตั้งค่า"),
     "status.health_ok": "ระบบพร้อม",
     "status.health_issues": "ยังไม่ครบเงื่อนไขการเริ่มใช้งาน",
     "status.import_ok": "นำเข้าเพอร์โซนาสำเร็จ",
@@ -338,9 +336,7 @@ _EN: dict[str, str] = {
     ),
     "action.run_search": "Search",
     "action.run_health": "Run health check",
-    "first_run.body": (
-        "Choose Add API key or Upload knowledge — change later in Settings"
-    ),
+    "first_run.body": ("Choose Add API key or Upload knowledge — change later in Settings"),
     "status.health_ok": "System ready",
     "status.health_issues": "Setup requirements are incomplete",
     "status.import_ok": "Persona imported",

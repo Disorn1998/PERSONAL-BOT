@@ -1509,7 +1509,7 @@ def run() -> None:
                 if msg.meta.get("knowledge_only"):
                     st.markdown(
                         f'<span class="pb-badge knowledge">'
-                        f'{t("label.knowledge_only_badge")}</span>',
+                        f"{t('label.knowledge_only_badge')}</span>",
                         unsafe_allow_html=True,
                     )
                 else:
