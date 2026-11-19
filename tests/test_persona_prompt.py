@@ -30,6 +30,7 @@ def test_load_example_personas() -> None:
         "meeting-notes",
         "pdf-handbook-demo",
         "en-study-coach",
+        "personal-notes",
     }
     packs = [load_persona_yaml(p / "persona.yaml") for p in dirs]
     by_id = {p.id: p for p in packs}
@@ -51,6 +52,9 @@ def test_load_example_personas() -> None:
     assert by_id["pdf-handbook-demo"].greeting
     assert by_id["en-study-coach"].greeting
     assert by_id["en-study-coach"].metadata.get("language") == "en"
+    assert by_id["personal-notes"].config.answer_mode == "strict"
+    assert by_id["personal-notes"].metadata.get("template") == "personal-notes"
+    assert by_id["personal-notes"].greeting
     assert any(str(p).endswith(".pdf") for p in by_id["pdf-handbook-demo"].knowledge_files)
     assert len({p.id for p in packs}) == len(packs)
 

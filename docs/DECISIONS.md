@@ -3,6 +3,25 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Everyday beginner UX + knowledge-only fallback (2026-11-19) — **DECISION**
+
+- **Audience docs:** README / FIRST_RUN / FAQ lead with「สำหรับคนทั่วไป」; pin what
+  this is/isn’t; multi-device = zip only; honest offline/token limits (no fake
+  local ChatGPT claim).
+- **Editor UX:** default fields = name + system prompt + plain answer-mode labels
+  (ตอบเฉพาะความรู้ / ยืดหยุ่น / สไตล์อิสระ) + knowledge; temperature / top_k /
+  min_score / chunk / embedding under「ขั้นสูง」. Search lab + prompt inspector
+  live under Advanced only.
+- **Knowledge ready:** upload/paste primary action auto-rebuilds index
+  (「บันทึกความรู้ให้พร้อมใช้」); manual rebuild remains secondary; banner when
+  `needs_rebuild`.
+- **Calm OOS:** strict not-found is an info empty state — no error card / model
+  token chrome when no LLM call.
+- **Knowledge-only mode:** `persona_bot/knowledge_answer.py` formats extractive
+  citations when key missing, 429 (minute/day), transport error, or user chose
+  continue-without-key. BYOK + Groq remains primary when key+quota available.
+- **Template:** example pack `personal-notes` (strict, fictional sample notes).
+
 ## P0 in-app persona / knowledge editor (2026-11-18)
 
 ### F18 — Persona form + knowledge upload — **DECISION**

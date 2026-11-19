@@ -15,7 +15,6 @@ from persona_bot.config import clear_settings_cache, get_settings
 from persona_bot.errors import (
     AppError,
     KnowledgeNotFoundError,
-    MissingApiKeyError,
     MissingModelConfigError,
 )
 from persona_bot.healthcheck import run_health_check
@@ -28,6 +27,10 @@ from persona_bot.keyring_store import (
     remember_status_key,
     save_api_key,
     set_ui_remember_preference,
+)
+from persona_bot.knowledge_answer import (
+    resolve_knowledge_only_reply,
+    should_fallback_to_knowledge_only,
 )
 from persona_bot.llm import LlmClient, StreamResult
 from persona_bot.logging_setup import setup_logging
@@ -48,7 +51,7 @@ from persona_bot.persona_pack_io import (
     import_persona_zip,
     preview_persona_zip,
 )
-from persona_bot.prompt import build_messages, not_found_reply_th, strip_context_from_content
+from persona_bot.prompt import build_messages, strip_context_from_content
 from persona_bot.rag.citations import format_sources_markdown, validate_citations
 from persona_bot.rag.embeddings import FakeEmbedder
 from persona_bot.rag.prompt_inspector import inspect_messages
@@ -92,12 +95,34 @@ def _init_state() -> None:
     ss.setdefault("confirm_clear_chat", False)
     ss.setdefault("confirm_overwrite_import", False)
     ss.setdefault("remember_loaded", False)
+    ss.setdefault("knowledge_only_mode", False)
+    ss.setdefault("show_prompt_inspector", False)
     set_locale(str(ss["locale"]))
     if not ss["api_key"] and remember_enabled():
         stored = load_api_key()
         if stored:
             ss["api_key"] = stored
             ss["remember_loaded"] = True
+
+
+def _answer_mode_label(mode: str) -> str:
+    key = f"label.answer_mode.{mode}"
+    labeled = t(key)
+    return labeled if labeled != key else mode
+
+
+def _rebuild_persona_index(persona: PersonaPack) -> None:
+    """Force-rebuild the local index and refresh the session RAG cache."""
+    settings = get_settings()
+    cache_key = f"rag::{persona.id}::{persona.config.embedding_preset}"
+    embedder = build_embedder(settings, persona=persona, fake=False)
+    bundle = get_or_build_store(
+        settings=settings,
+        persona=persona,
+        embedder=embedder,
+        force=True,
+    )
+    st.session_state[cache_key] = {"embedder": embedder, "bundle": bundle}
 
 
 def _store() -> ChatStore:
@@ -233,46 +258,69 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
                 t("label.answer_mode"),
                 options=["strict", "balanced", "open"],
                 index=["strict", "balanced", "open"].index(persona.config.answer_mode),
+                format_func=_answer_mode_label,
                 key=f"edit_mode_{persona.id}",
             )
-            temperature = st.slider(
-                t("label.temperature"),
-                min_value=0.0,
-                max_value=2.0,
-                value=float(persona.config.temperature),
-                step=0.05,
-                key=f"edit_temp_{persona.id}",
+            temperature = float(persona.config.temperature)
+            max_tokens = int(persona.config.max_tokens)
+            embedding_preset = persona.config.embedding_preset
+            top_k_raw = "" if persona.config.top_k is None else str(persona.config.top_k)
+            min_score_raw = (
+                "" if persona.config.min_score is None else str(persona.config.min_score)
             )
-            max_tokens = st.number_input(
-                t("label.max_tokens"),
-                min_value=16,
-                max_value=8192,
-                value=int(persona.config.max_tokens),
-                step=64,
-                key=f"edit_max_tokens_{persona.id}",
+            chunk_raw = (
+                "" if persona.config.chunk_chars is None else str(persona.config.chunk_chars)
             )
-            embedding_preset = st.selectbox(
-                t("label.embedding_preset"),
-                options=["lite", "multilingual", "quality"],
-                index=["lite", "multilingual", "quality"].index(persona.config.embedding_preset),
-                key=f"edit_preset_{persona.id}",
-            )
-            st.caption(t("label.optional_override"))
-            top_k_raw = st.text_input(
-                t("label.top_k"),
-                value="" if persona.config.top_k is None else str(persona.config.top_k),
-                key=f"edit_top_k_{persona.id}",
-            )
-            min_score_raw = st.text_input(
-                t("label.min_score"),
-                value="" if persona.config.min_score is None else str(persona.config.min_score),
-                key=f"edit_min_score_{persona.id}",
-            )
-            chunk_raw = st.text_input(
-                t("label.chunk_chars"),
-                value="" if persona.config.chunk_chars is None else str(persona.config.chunk_chars),
-                key=f"edit_chunk_{persona.id}",
-            )
+            with st.expander(t("label.advanced"), expanded=False):
+                st.caption(t("label.lab_tuning"))
+                temperature = st.slider(
+                    t("label.temperature"),
+                    min_value=0.0,
+                    max_value=2.0,
+                    value=float(persona.config.temperature),
+                    step=0.05,
+                    key=f"edit_temp_{persona.id}",
+                )
+                max_tokens = int(
+                    st.number_input(
+                        t("label.max_tokens"),
+                        min_value=16,
+                        max_value=8192,
+                        value=int(persona.config.max_tokens),
+                        step=64,
+                        key=f"edit_max_tokens_{persona.id}",
+                    )
+                )
+                embedding_preset = st.selectbox(
+                    t("label.embedding_preset"),
+                    options=["lite", "multilingual", "quality"],
+                    index=["lite", "multilingual", "quality"].index(
+                        persona.config.embedding_preset
+                    ),
+                    key=f"edit_preset_{persona.id}",
+                )
+                st.caption(t("label.optional_override"))
+                top_k_raw = st.text_input(
+                    t("label.top_k"),
+                    value="" if persona.config.top_k is None else str(persona.config.top_k),
+                    key=f"edit_top_k_{persona.id}",
+                )
+                min_score_raw = st.text_input(
+                    t("label.min_score"),
+                    value=(
+                        "" if persona.config.min_score is None else str(persona.config.min_score)
+                    ),
+                    key=f"edit_min_score_{persona.id}",
+                )
+                chunk_raw = st.text_input(
+                    t("label.chunk_chars"),
+                    value=(
+                        ""
+                        if persona.config.chunk_chars is None
+                        else str(persona.config.chunk_chars)
+                    ),
+                    key=f"edit_chunk_{persona.id}",
+                )
             if st.button(t("action.save_persona"), key=f"save_persona_{persona.id}"):
                 try:
                     updated = persona.model_copy(
@@ -317,36 +365,47 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
             t("label.answer_mode"),
             options=["strict", "balanced", "open"],
             index=1,
+            format_func=_answer_mode_label,
             key="create_persona_mode",
         )
-        new_temp = st.slider(
-            t("label.temperature"),
-            min_value=0.0,
-            max_value=2.0,
-            value=0.2,
-            step=0.05,
-            key="create_persona_temp",
-        )
-        new_max_tokens = st.number_input(
-            t("label.max_tokens"),
-            min_value=16,
-            max_value=8192,
-            value=1024,
-            step=64,
-            key="create_persona_max_tokens",
-        )
-        new_preset = st.selectbox(
-            t("label.embedding_preset"),
-            options=["lite", "multilingual", "quality"],
-            index=0,
-            key="create_persona_preset",
-        )
-        st.caption(t("label.optional_override"))
-        new_top_k = st.text_input(t("label.top_k"), value="", key="create_persona_top_k")
-        new_min_score = st.text_input(
-            t("label.min_score"), value="", key="create_persona_min_score"
-        )
-        new_chunk = st.text_input(t("label.chunk_chars"), value="", key="create_persona_chunk")
+        new_temp = 0.2
+        new_max_tokens = 1024
+        new_preset = "lite"
+        new_top_k = ""
+        new_min_score = ""
+        new_chunk = ""
+        with st.expander(t("label.advanced"), expanded=False):
+            st.caption(t("label.lab_tuning"))
+            new_temp = st.slider(
+                t("label.temperature"),
+                min_value=0.0,
+                max_value=2.0,
+                value=0.2,
+                step=0.05,
+                key="create_persona_temp",
+            )
+            new_max_tokens = int(
+                st.number_input(
+                    t("label.max_tokens"),
+                    min_value=16,
+                    max_value=8192,
+                    value=1024,
+                    step=64,
+                    key="create_persona_max_tokens",
+                )
+            )
+            new_preset = st.selectbox(
+                t("label.embedding_preset"),
+                options=["lite", "multilingual", "quality"],
+                index=0,
+                key="create_persona_preset",
+            )
+            st.caption(t("label.optional_override"))
+            new_top_k = st.text_input(t("label.top_k"), value="", key="create_persona_top_k")
+            new_min_score = st.text_input(
+                t("label.min_score"), value="", key="create_persona_min_score"
+            )
+            new_chunk = st.text_input(t("label.chunk_chars"), value="", key="create_persona_chunk")
         if st.button(t("action.create_persona"), key="create_persona_btn"):
             try:
                 pack = create_user_persona(
@@ -487,8 +546,104 @@ def _sidebar(personas: list) -> None:
 
     has_key = bool(st.session_state.api_key or settings.groq_api_key)
     if not has_key:
-        st.sidebar.info(t("wizard.locked_tools"))
-        st.sidebar.caption(f"{t('label.version')}: {get_app_version()}")
+        st.sidebar.info(t("wizard.knowledge_only_hint"))
+        st.sidebar.caption(t("wizard.locked_tools"))
+
+    if persona is not None:
+        with st.sidebar.expander(t("label.knowledge"), expanded=True):
+            try:
+                cache_key = f"rag::{persona.id}::{persona.config.embedding_preset}"
+                if cache_key not in st.session_state:
+                    embedder = build_embedder(settings, persona=persona, fake=False)
+                    st.session_state[cache_key] = {
+                        "embedder": embedder,
+                        "bundle": get_or_build_store(
+                            settings=settings,
+                            persona=persona,
+                            embedder=embedder,
+                            force=False,
+                        ),
+                    }
+                embedder = st.session_state[cache_key]["embedder"]
+                _vstore, manifest, kdir, health = st.session_state[cache_key]["bundle"]
+                status_key = index_status_key(
+                    needs_rebuild=bool(health.needs_rebuild),
+                    file_count=int(health.file_count),
+                )
+                st.markdown(f"**{t('label.knowledge_health')}:** {t(status_key)}")
+                if health.needs_rebuild:
+                    st.warning(t("label.needs_rebuild_banner"))
+                st.caption(
+                    f"{health.file_count} files · {manifest.chunk_count} chunks · "
+                    f"{t('label.knowledge_size')}: "
+                    f"{knowledge_total_bytes(Path(kdir)) / (1024 * 1024):.2f} / "
+                    f"{settings.max_knowledge_mb} MB"
+                )
+                if is_user_persona(persona.id, settings):
+                    uploaded_knowledge = st.file_uploader(
+                        t("action.upload_knowledge"),
+                        type=["txt", "md", "pdf", "docx"],
+                        key=f"knowledge_upload_{persona.id}",
+                    )
+                    if uploaded_knowledge is not None and st.button(
+                        t("action.make_knowledge_ready"),
+                        key=f"knowledge_upload_btn_{persona.id}",
+                    ):
+                        try:
+                            dest = add_knowledge_bytes(
+                                settings=settings,
+                                persona_id=persona.id,
+                                filename=uploaded_knowledge.name,
+                                data=uploaded_knowledge.getvalue(),
+                            )
+                            _clear_rag_cache(persona.id)
+                            _rebuild_persona_index(persona)
+                            st.success(f"{t('status.knowledge_ready_after_save')} ({dest.name})")
+                            st.rerun()
+                        except Exception as exc:  # noqa: BLE001
+                            _render_error(exc)
+                    paste_name = st.text_input(
+                        t("label.knowledge_paste_name"),
+                        value="pasted.md",
+                        key=f"knowledge_paste_name_{persona.id}",
+                    )
+                    paste_text = st.text_area(
+                        t("label.knowledge_paste"),
+                        key=f"knowledge_paste_{persona.id}",
+                        height=100,
+                    )
+                    if st.button(
+                        t("action.make_knowledge_ready"),
+                        key=f"knowledge_paste_btn_{persona.id}",
+                    ):
+                        try:
+                            dest = add_knowledge_paste(
+                                settings=settings,
+                                persona_id=persona.id,
+                                text=paste_text,
+                                filename=paste_name,
+                            )
+                            _clear_rag_cache(persona.id)
+                            _rebuild_persona_index(persona)
+                            st.success(f"{t('status.knowledge_ready_after_save')} ({dest.name})")
+                            st.rerun()
+                        except Exception as exc:  # noqa: BLE001
+                            _render_error(exc)
+                else:
+                    st.caption(t("status.example_edit_readonly"))
+
+                if st.button(t("label.rebuild_index"), key="rebuild_idx"):
+                    _rebuild_persona_index(persona)
+                    st.success(t("status.index_rebuilt"))
+                    st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
+
+    _render_persona_editor(persona)
+
+    st.sidebar.caption(f"{t('label.version')}: {get_app_version()}")
+
+    if not has_key:
         with st.sidebar.expander(t("label.advanced"), expanded=True):
             key_val = st.text_input(
                 t("label.api_key"),
@@ -513,118 +668,9 @@ def _sidebar(personas: list) -> None:
             if st.button(t("action.save_key"), key="save_key_btn_preauth"):
                 _apply_remember_choice(remember, key_val)
                 st.session_state.wizard_done = True
+                st.session_state.knowledge_only_mode = False
                 st.rerun()
         return
-
-    if persona is not None:
-        with st.sidebar.expander(t("label.knowledge"), expanded=False):
-            try:
-                cache_key = f"rag::{persona.id}::{persona.config.embedding_preset}"
-                if cache_key not in st.session_state:
-                    embedder = build_embedder(settings, persona=persona, fake=False)
-                    st.session_state[cache_key] = {
-                        "embedder": embedder,
-                        "bundle": get_or_build_store(
-                            settings=settings,
-                            persona=persona,
-                            embedder=embedder,
-                            force=False,
-                        ),
-                    }
-                embedder = st.session_state[cache_key]["embedder"]
-                vstore, manifest, kdir, health = st.session_state[cache_key]["bundle"]
-                status_key = index_status_key(
-                    needs_rebuild=bool(health.needs_rebuild),
-                    file_count=int(health.file_count),
-                )
-                st.markdown(f"**{t('label.knowledge_health')}:** {t(status_key)}")
-                st.caption(
-                    f"{health.file_count} files · {manifest.chunk_count} chunks · "
-                    f"{t('label.knowledge_size')}: "
-                    f"{knowledge_total_bytes(Path(kdir)) / (1024 * 1024):.2f} / "
-                    f"{settings.max_knowledge_mb} MB"
-                )
-                if is_user_persona(persona.id, settings):
-                    uploaded_knowledge = st.file_uploader(
-                        t("action.upload_knowledge"),
-                        type=["txt", "md", "pdf", "docx"],
-                        key=f"knowledge_upload_{persona.id}",
-                    )
-                    if uploaded_knowledge is not None and st.button(
-                        t("action.upload_knowledge"),
-                        key=f"knowledge_upload_btn_{persona.id}",
-                    ):
-                        try:
-                            dest = add_knowledge_bytes(
-                                settings=settings,
-                                persona_id=persona.id,
-                                filename=uploaded_knowledge.name,
-                                data=uploaded_knowledge.getvalue(),
-                            )
-                            _clear_rag_cache(persona.id)
-                            st.success(f"{t('status.knowledge_uploaded')} ({dest.name})")
-                            st.rerun()
-                        except Exception as exc:  # noqa: BLE001
-                            _render_error(exc)
-                    paste_name = st.text_input(
-                        t("label.knowledge_paste_name"),
-                        value="pasted.md",
-                        key=f"knowledge_paste_name_{persona.id}",
-                    )
-                    paste_text = st.text_area(
-                        t("label.knowledge_paste"),
-                        key=f"knowledge_paste_{persona.id}",
-                        height=100,
-                    )
-                    if st.button(
-                        t("action.paste_knowledge"),
-                        key=f"knowledge_paste_btn_{persona.id}",
-                    ):
-                        try:
-                            dest = add_knowledge_paste(
-                                settings=settings,
-                                persona_id=persona.id,
-                                text=paste_text,
-                                filename=paste_name,
-                            )
-                            _clear_rag_cache(persona.id)
-                            st.success(f"{t('status.knowledge_pasted')} ({dest.name})")
-                            st.rerun()
-                        except Exception as exc:  # noqa: BLE001
-                            _render_error(exc)
-                else:
-                    st.caption(t("status.example_edit_readonly"))
-
-                if st.button(t("label.rebuild_index"), key="rebuild_idx"):
-                    st.session_state[cache_key]["bundle"] = get_or_build_store(
-                        settings=settings,
-                        persona=persona,
-                        embedder=embedder,
-                        force=True,
-                    )
-                    st.success(t("status.index_rebuilt"))
-                    st.rerun()
-                st.caption(t("label.search_lab"))
-                q = st.text_input(t("label.search_query"), key="search_lab_q")
-                if st.button(t("action.run_search"), key="search_lab_go") and q.strip():
-                    hits = run_search_lab(
-                        vstore,
-                        persona_id=persona.id,
-                        query=q.strip(),
-                        top_k=persona.config.resolved_top_k(),
-                        min_score=0.0,
-                    )
-                    for hit in hits:
-                        st.write(
-                            f"{float(hit['score']):.3f} · {hit.get('source')} — "
-                            f"{str(hit.get('text', ''))[:120]}"
-                        )
-            except Exception as exc:  # noqa: BLE001
-                _render_error(exc)
-
-    _render_persona_editor(persona)
-
-    st.sidebar.caption(f"{t('label.version')}: {get_app_version()}")
 
     with st.sidebar.expander(t("label.data_tools"), expanded=False):
         # Single-click Streamlit download (zip bytes ready for download_button).
@@ -809,14 +855,53 @@ def _sidebar(personas: list) -> None:
         )
         if st.button(t("action.save_key"), key="save_key_btn"):
             _apply_remember_choice(remember, key_val)
+            st.session_state.knowledge_only_mode = False
             st.rerun()
         if st.button(t("action.forget_key"), key="forget_key_btn"):
             st.session_state.api_key = ""
             st.session_state.remember_loaded = False
+            st.session_state.knowledge_only_mode = True
             set_ui_remember_preference(False)
             delete_api_key()
             st.rerun()
         st.caption(t("privacy.notice"))
+        st.checkbox(
+            t("label.prompt_inspector"),
+            key="show_prompt_inspector",
+            help=t("label.lab_tuning"),
+        )
+        if persona is not None:
+            st.caption(t("label.search_lab"))
+            q = st.text_input(t("label.search_query"), key="search_lab_q")
+            if st.button(t("action.run_search"), key="search_lab_go") and q.strip():
+                try:
+                    cache_key = f"rag::{persona.id}::{persona.config.embedding_preset}"
+                    if cache_key not in st.session_state:
+                        embedder = build_embedder(settings, persona=persona, fake=False)
+                        st.session_state[cache_key] = {
+                            "embedder": embedder,
+                            "bundle": get_or_build_store(
+                                settings=settings,
+                                persona=persona,
+                                embedder=embedder,
+                                force=False,
+                            ),
+                        }
+                    vstore = st.session_state[cache_key]["bundle"][0]
+                    hits = run_search_lab(
+                        vstore,
+                        persona_id=persona.id,
+                        query=q.strip(),
+                        top_k=persona.config.resolved_top_k(),
+                        min_score=0.0,
+                    )
+                    for hit in hits:
+                        st.write(
+                            f"{float(hit['score']):.3f} · {hit.get('source')} — "
+                            f"{str(hit.get('text', ''))[:120]}"
+                        )
+                except Exception as exc:  # noqa: BLE001
+                    _render_error(exc)
 
 
 def _welcome() -> None:
@@ -835,6 +920,7 @@ def _welcome() -> None:
   <p>{t("first_run.body")}</p>
   <p>{t("app.welcome")}</p>
   <p>{t("app.welcome.body")}</p>
+  <p>{t("app.what_this_is")}</p>
   <ol>
     <li>{t("app.onboarding.step1")}</li>
     <li>{t("app.onboarding.step2")}</li>
@@ -845,6 +931,7 @@ def _welcome() -> None:
         unsafe_allow_html=True,
     )
     st.info(t("status.health_ok") if report.ok else t("status.health_issues"))
+    st.caption(t("wizard.knowledge_only_hint"))
     with st.expander(t("label.health")):
         st.json(report.to_dict())
     key_val = st.text_input(t("label.api_key"), type="password", key="welcome_key")
@@ -860,10 +947,17 @@ def _welcome() -> None:
     if st.button(t("action.save_key"), key="welcome_save"):
         _apply_remember_choice(remember, key_val)
         st.session_state.wizard_done = True
+        st.session_state.knowledge_only_mode = False
+        st.rerun()
+    if st.button(t("action.continue_knowledge_only"), key="welcome_knowledge_only"):
+        st.session_state.wizard_done = True
+        st.session_state.knowledge_only_mode = True
         st.rerun()
 
 
 def _render_meta(result: StreamResult) -> None:
+    if not result.model and result.usage.total_tokens <= 0:
+        return
     badge_cls = "pb-badge fallback" if result.used_fallback else "pb-badge"
     label = t("label.fallback") if result.used_fallback else t("label.model")
     st.markdown(
@@ -874,6 +968,61 @@ def _render_meta(result: StreamResult) -> None:
     )
 
 
+def _render_knowledge_only_message(
+    *,
+    reply: str,
+    kept: list[dict[str, Any]],
+    has_hits: bool,
+    note: str | None = None,
+) -> None:
+    with st.chat_message("assistant"):
+        if has_hits:
+            st.markdown(reply)
+            st.caption(t("label.knowledge_only_badge"))
+            if note:
+                st.caption(note)
+            if kept:
+                with st.expander(t("label.sources")):
+                    st.markdown(format_sources_markdown(kept))
+        else:
+            # Calm empty state — no error chrome / model-token badges.
+            st.info(reply)
+
+
+def _emit_knowledge_only(
+    *,
+    store: ChatStore,
+    thread_id: str,
+    user_text: str,
+    context_chunks: list[dict[str, Any]],
+    min_score: float,
+    note: str | None = None,
+) -> None:
+    reply, kept, has_hits = resolve_knowledge_only_reply(
+        context_chunks,
+        min_score=min_score,
+        locale=get_locale(),
+        question=user_text,
+    )
+    store.add_message(
+        thread_id=thread_id,
+        role="assistant",
+        content=reply,
+        meta={
+            "knowledge_only": True,
+            "tokens": 0,
+            "model": "",
+            "sources": [{"source": c.get("source"), "score": c.get("score")} for c in kept],
+        },
+    )
+    _render_knowledge_only_message(
+        reply=reply,
+        kept=kept,
+        has_hits=has_hits,
+        note=note,
+    )
+
+
 def _handle_user_message(user_text: str, personas: list) -> None:
     settings = get_settings()
     store = _store()
@@ -881,6 +1030,7 @@ def _handle_user_message(user_text: str, personas: list) -> None:
     by_id = {p.id: p for p in personas}
     persona = by_id[st.session_state.persona_id]
     thread_id = _ensure_thread(store, persona.id)
+    min_score = persona.config.resolved_min_score()
 
     store.add_message(thread_id=thread_id, role="user", content=user_text)
     current_thread = store.get_thread(thread_id)
@@ -908,14 +1058,18 @@ def _handle_user_message(user_text: str, personas: list) -> None:
                     force=False,
                 ),
             }
-        vstore = st.session_state[cache_key]["bundle"][0]
+        bundle = st.session_state[cache_key]["bundle"]
+        health = bundle[3]
+        if getattr(health, "needs_rebuild", False):
+            st.warning(t("label.needs_rebuild_banner"))
+        vstore = bundle[0]
         context_chunks = retrieve(
             vstore,
             persona_id=persona.id,
             latest=user_text,
             history=history,
             top_k=persona.config.resolved_top_k(),
-            min_score=persona.config.resolved_min_score(),
+            min_score=min_score,
         )
     except AppError as exc:
         with st.chat_message("assistant"):
@@ -926,21 +1080,34 @@ def _handle_user_message(user_text: str, personas: list) -> None:
             _render_error(exc)
         return
 
+    api_key = (st.session_state.api_key or settings.groq_api_key or "").strip()
+    prefer_knowledge_only = bool(st.session_state.get("knowledge_only_mode")) or not api_key
+
     try:
         messages = build_messages(
             persona,
             history=history,
             user_text=user_text,
             context_chunks=context_chunks,
-            min_score=persona.config.resolved_min_score(),
+            min_score=min_score,
         )
-    except KnowledgeNotFoundError as exc:
-        # Strict + no passing chunks → no LLM call (DoD 2).
-        reply = not_found_reply_th()
+    except KnowledgeNotFoundError:
+        # Strict + no passing chunks → calm empty state, no LLM / usage chrome.
+        reply = t("status.oos_calm")
         store.add_message(thread_id=thread_id, role="assistant", content=reply)
         with st.chat_message("assistant"):
-            st.markdown(reply)
-            _render_error(exc)
+            st.info(reply)
+        return
+
+    if prefer_knowledge_only:
+        _emit_knowledge_only(
+            store=store,
+            thread_id=thread_id,
+            user_text=user_text,
+            context_chunks=context_chunks,
+            min_score=min_score,
+            note=None if api_key else t("wizard.knowledge_only_hint"),
+        )
         return
 
     messages = fit_prompt(messages)
@@ -954,11 +1121,8 @@ def _handle_user_message(user_text: str, personas: list) -> None:
         message_id=assistant_id,
     )
 
-    api_key = st.session_state.api_key or settings.groq_api_key
     result = StreamResult()
     try:
-        if not api_key:
-            raise MissingApiKeyError()
         if not settings.groq_model_primary.strip():
             raise MissingModelConfigError()
         client = LlmClient(settings=settings, api_key=api_key)
@@ -1000,19 +1164,55 @@ def _handle_user_message(user_text: str, personas: list) -> None:
                     st.markdown(format_sources_markdown(context_chunks))
             if not cite["ok"]:
                 st.warning(t("status.citations_invalid"))
-            with st.expander(t("label.prompt_inspector")):
-                st.json(inspector)
+            if st.session_state.get("show_prompt_inspector"):
+                with st.expander(t("label.prompt_inspector")):
+                    st.json(inspector)
         usage.record(result)
     except AppError as exc:
-        store.update_message(
-            assistant_id,
-            content=result.text or "",
-            partial=bool(result.text),
-        )
-        with st.chat_message("assistant"):
-            if result.text:
+        if result.text:
+            store.update_message(
+                assistant_id,
+                content=result.text,
+                partial=True,
+            )
+            with st.chat_message("assistant"):
                 st.markdown(result.text)
                 st.caption(t("status.partial_saved"))
+                _render_error(exc)
+            return
+        # Auto-fall back to extractive knowledge when key/quota/network fails.
+        if should_fallback_to_knowledge_only(exc):
+            reply, kept, has_hits = resolve_knowledge_only_reply(
+                context_chunks,
+                min_score=min_score,
+                locale=get_locale(),
+                question=user_text,
+            )
+            store.update_message(
+                assistant_id,
+                content=reply,
+                partial=False,
+                meta={
+                    "knowledge_only": True,
+                    "tokens": 0,
+                    "model": "",
+                    "sources": [{"source": c.get("source"), "score": c.get("score")} for c in kept],
+                    "fallback_from": getattr(exc, "code", type(exc).__name__),
+                },
+            )
+            _render_knowledge_only_message(
+                reply=reply,
+                kept=kept,
+                has_hits=has_hits,
+                note=t("status.knowledge_only_fallback"),
+            )
+            return
+        store.update_message(
+            assistant_id,
+            content="",
+            partial=False,
+        )
+        with st.chat_message("assistant"):
             _render_error(exc)
     except Exception as exc:  # noqa: BLE001 — show Thai card, never traceback
         store.update_message(
@@ -1062,9 +1262,20 @@ def run() -> None:
         settings,
         api_key=st.session_state.api_key or settings.groq_api_key,
     )
-    if not has_key or (not health.models_configured and not st.session_state.wizard_done):
+    knowledge_only = bool(st.session_state.get("knowledge_only_mode"))
+    # Allow chat without a key after explicit knowledge-only continue, or when
+    # models are missing but the wizard was completed for knowledge-only use.
+    needs_welcome = (not has_key and not knowledge_only and not st.session_state.wizard_done) or (
+        not has_key
+        and not knowledge_only
+        and not health.models_configured
+        and not st.session_state.wizard_done
+    )
+    if needs_welcome:
         _welcome()
         return
+    if not has_key:
+        st.session_state.knowledge_only_mode = True
 
     if not st.session_state.privacy_ack:
         st.markdown(
@@ -1112,12 +1323,15 @@ def run() -> None:
             if msg.partial:
                 st.caption(t("status.partial_saved"))
             if msg.meta and msg.role == "assistant":
-                fake = StreamResult(
-                    model=str(msg.meta.get("model") or ""),
-                    used_fallback=bool(msg.meta.get("used_fallback")),
-                )
-                fake.usage.total_tokens = int(msg.meta.get("tokens") or 0)
-                _render_meta(fake)
+                if msg.meta.get("knowledge_only"):
+                    st.caption(t("label.knowledge_only_badge"))
+                else:
+                    fake = StreamResult(
+                        model=str(msg.meta.get("model") or ""),
+                        used_fallback=bool(msg.meta.get("used_fallback")),
+                    )
+                    fake.usage.total_tokens = int(msg.meta.get("tokens") or 0)
+                    _render_meta(fake)
 
     prompt = st.chat_input(t("chat.placeholder"))
     if prompt:
