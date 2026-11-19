@@ -28,3 +28,7 @@ def test_font_face_css_embeds_woff2_data_uris() -> None:
     theme = custom_css()
     assert "font/woff2;base64," in theme
     assert FONT_FAMILY_UI.split(",")[0].strip('"') in theme or "Inter" in theme
+    assert "@keyframes pb-fade" in theme
+    assert "pb-cite" in theme
+    assert "pb-role-user" in theme
+    assert '[data-testid="stChatInput"]' in theme

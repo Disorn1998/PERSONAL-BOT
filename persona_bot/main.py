@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import html
+import re
 import uuid
 from pathlib import Path
 from typing import Any, cast
@@ -80,6 +82,8 @@ from persona_bot.ui.wizard import (
 )
 from persona_bot.usage import UsageTracker, format_token_usage
 from persona_bot.versioning import ensure_data_version, get_app_version
+
+_CITE_MARK_RE = re.compile(r"\[(\d+)\]")
 
 
 def _init_state() -> None:
@@ -1132,8 +1136,36 @@ def _welcome(personas: list) -> None:
     _welcome_gate()
 
 
+def _cite_chips(text: str) -> str:
+    """Turn ``[n]`` markers into soft blue citation chips (HTML)."""
+    return _CITE_MARK_RE.sub(r'<span class="pb-cite">[\1]</span>', text)
+
+
+def _role_marker(role: str) -> None:
+    """Invisible class marker so bubble CSS works without flaky ``:has(avatar)``."""
+    cls = "pb-role-user" if role == "user" else "pb-role-assistant"
+    st.markdown(f'<span class="{cls}" aria-hidden="true"></span>', unsafe_allow_html=True)
+
+
+def _render_user_body(text: str, *, fade: bool = False) -> None:
+    fade_cls = " pb-fade" if fade else ""
+    st.markdown(
+        f'<div class="pb-bubble-user{fade_cls}">{html.escape(text)}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _render_assistant_body(text: str, *, fade: bool = False) -> None:
+    fade_cls = " pb-fade" if fade else ""
+    body = _cite_chips(text) if text else "…"
+    st.markdown(
+        f'<div class="pb-bubble-assistant{fade_cls}">\n\n{body}\n</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def _render_chat_empty(persona: PersonaPack | None) -> None:
-    """Soft empty state — local icons + short ask-anything copy."""
+    """Soft empty state — local icons + one short sentence (no wizard)."""
     cols = st.columns([1, 1, 1, 1, 1])
     for idx, name in enumerate(("chat", "doc", "check")):
         path = icon_path(name)
@@ -1144,20 +1176,34 @@ def _render_chat_empty(persona: PersonaPack | None) -> None:
         st.info(f"{icon}{persona.greeting}")
     else:
         st.markdown(
-            f'<div class="pb-empty"><p>{t("chat.empty")}</p></div>',
+            f'<div class="pb-empty"><p>{html.escape(t("chat.empty"))}</p></div>',
             unsafe_allow_html=True,
         )
 
 
 def _render_meta(result: StreamResult) -> None:
+    """Short model/token badges — skipped when knowledge-only (no model/tokens)."""
     if not result.model and result.usage.total_tokens <= 0:
         return
     badge_cls = "pb-badge fallback" if result.used_fallback else "pb-badge"
     label = t("label.fallback") if result.used_fallback else t("label.model")
+    model = html.escape(result.model or "-")
+    tokens_n = int(result.usage.total_tokens)
     st.markdown(
-        f'<span class="{badge_cls}">{label}: {result.model or "-"}</span>'
-        f'<span class="pb-badge">{t("label.tokens")}: '
-        f"{result.usage.total_tokens}</span>",
+        f'<div class="pb-meta">'
+        f'<span class="{badge_cls}">{html.escape(label)} · {model}</span>'
+        f'<span class="pb-badge">{html.escape(t("label.tokens"))} · {tokens_n}</span>'
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def _render_knowledge_badge(*, fade: bool = False) -> None:
+    fade_cls = " pb-fade" if fade else ""
+    st.markdown(
+        f'<div class="pb-meta{fade_cls}">'
+        f'<span class="pb-badge knowledge">{html.escape(t("label.knowledge_only_badge"))}</span>'
+        f"</div>",
         unsafe_allow_html=True,
     )
 
@@ -1170,12 +1216,11 @@ def _render_knowledge_only_message(
     note: str | None = None,
 ) -> None:
     with st.chat_message("assistant"):
+        _role_marker("assistant")
         if has_hits:
-            st.markdown(reply)
-            st.markdown(
-                f'<span class="pb-badge knowledge">{t("label.knowledge_only_badge")}</span>',
-                unsafe_allow_html=True,
-            )
+            _render_assistant_body(reply, fade=True)
+            # Knowledge-only: badge only — no model/token chrome.
+            _render_knowledge_badge(fade=True)
             if note:
                 st.caption(note)
             if kept:
@@ -1239,7 +1284,8 @@ def _handle_user_message(user_text: str, personas: list) -> None:
     history = history[:-1]
 
     with st.chat_message("user"):
-        st.markdown(user_text)
+        _role_marker("user")
+        _render_user_body(user_text, fade=True)
 
     context_chunks: list[dict[str, Any]] = []
     try:
@@ -1270,10 +1316,12 @@ def _handle_user_message(user_text: str, personas: list) -> None:
         )
     except AppError as exc:
         with st.chat_message("assistant"):
+            _role_marker("assistant")
             _render_error(exc)
         return
     except Exception as exc:  # noqa: BLE001
         with st.chat_message("assistant"):
+            _role_marker("assistant")
             _render_error(exc)
         return
 
@@ -1293,6 +1341,7 @@ def _handle_user_message(user_text: str, personas: list) -> None:
         reply = t("status.oos_calm")
         store.add_message(thread_id=thread_id, role="assistant", content=reply)
         with st.chat_message("assistant"):
+            _role_marker("assistant")
             st.info(reply)
         return
 
@@ -1324,6 +1373,7 @@ def _handle_user_message(user_text: str, personas: list) -> None:
             raise MissingModelConfigError()
         client = LlmClient(settings=settings, api_key=api_key)
         with st.chat_message("assistant"):
+            _role_marker("assistant")
             placeholder = st.empty()
             parts: list[str] = []
             for chunk in client.stream_chat(
@@ -1334,7 +1384,10 @@ def _handle_user_message(user_text: str, personas: list) -> None:
             ):
                 parts.append(chunk)
                 text = "".join(parts)
-                placeholder.markdown(text)
+                placeholder.markdown(
+                    f'<div class="pb-bubble-assistant">{_cite_chips(text)}</div>',
+                    unsafe_allow_html=True,
+                )
                 # Persist partials so Stop/rerun never loses text (F9).
                 store.update_message(assistant_id, content=text, partial=True)
             final_text = "".join(parts) or result.text
@@ -1354,7 +1407,10 @@ def _handle_user_message(user_text: str, personas: list) -> None:
                     "prompt_inspector": inspector,
                 },
             )
-            placeholder.markdown(final_text)
+            placeholder.markdown(
+                f'<div class="pb-bubble-assistant pb-fade">\n\n{_cite_chips(final_text)}\n</div>',
+                unsafe_allow_html=True,
+            )
             _render_meta(result)
             if context_chunks:
                 with st.expander(t("label.sources")):
@@ -1373,7 +1429,8 @@ def _handle_user_message(user_text: str, personas: list) -> None:
                 partial=True,
             )
             with st.chat_message("assistant"):
-                st.markdown(result.text)
+                _role_marker("assistant")
+                _render_assistant_body(result.text)
                 st.caption(t("status.partial_saved"))
                 _render_error(exc)
             return
@@ -1410,6 +1467,7 @@ def _handle_user_message(user_text: str, personas: list) -> None:
             partial=False,
         )
         with st.chat_message("assistant"):
+            _role_marker("assistant")
             _render_error(exc)
     except Exception as exc:  # noqa: BLE001 — show Thai card, never traceback
         store.update_message(
@@ -1418,8 +1476,9 @@ def _handle_user_message(user_text: str, personas: list) -> None:
             partial=bool(result.text),
         )
         with st.chat_message("assistant"):
+            _role_marker("assistant")
             if result.text:
-                st.markdown(result.text)
+                _render_assistant_body(result.text)
                 st.caption(t("status.partial_saved"))
             _render_error(exc)
 
@@ -1465,10 +1524,13 @@ def run() -> None:
         st.session_state.knowledge_only_mode = True
 
     if not st.session_state.privacy_ack:
-        st.markdown(
-            progress_markup(wizard_step(has_key=True, privacy_ack=False)),
-            unsafe_allow_html=True,
-        )
+        # Wizard 1–2–3 strip only on true first-run before a path is chosen.
+        # Once entry_path is set (welcome finished), hide sticky wizard chrome.
+        if st.session_state.get("entry_path") not in {"api", "knowledge"}:
+            st.markdown(
+                progress_markup(wizard_step(has_key=True, privacy_ack=False)),
+                unsafe_allow_html=True,
+            )
         st.info(t("privacy.notice"))
         if st.button(t("action.got_it"), key="privacy_ack_btn"):
             st.session_state.privacy_ack = True
@@ -1501,17 +1563,17 @@ def run() -> None:
         if msg.role not in {"user", "assistant"}:
             continue
         with st.chat_message(msg.role):
+            _role_marker(msg.role)
             content = strip_context_from_content(msg.content) if msg.role == "user" else msg.content
-            st.markdown(content or "…")
+            if msg.role == "user":
+                _render_user_body(content or "")
+            else:
+                _render_assistant_body(content or "…")
             if msg.partial:
                 st.caption(t("status.partial_saved"))
             if msg.meta and msg.role == "assistant":
                 if msg.meta.get("knowledge_only"):
-                    st.markdown(
-                        f'<span class="pb-badge knowledge">'
-                        f"{t('label.knowledge_only_badge')}</span>",
-                        unsafe_allow_html=True,
-                    )
+                    _render_knowledge_badge()
                 else:
                     fake = StreamResult(
                         model=str(msg.meta.get("model") or ""),
