@@ -161,16 +161,48 @@ def custom_css() -> str:
     font-size: {tokens.FONT_SIZE_BODY_PX}px;
     margin: 0 0 {tokens.SPACE_MD_PX}px 0;
   }}
+  /* Soft 2D float + tilt/parallax (CSS only — no WebGL / .glb) */
+  @keyframes pb-welcome-float {{
+    0%, 100% {{
+      transform: translateY(0) translateX(0) rotate(0deg);
+    }}
+    40% {{
+      transform: translateY(-10px) translateX(3px) rotate(-0.6deg);
+    }}
+    70% {{
+      transform: translateY(-4px) translateX(-2px) rotate(0.4deg);
+    }}
+  }}
+  @keyframes pb-welcome-shadow-pulse {{
+    0%, 100% {{
+      box-shadow: {tokens.SHADOW_SOFT};
+    }}
+    50% {{
+      box-shadow: 0 18px 40px rgba(37, 99, 235, 0.18);
+    }}
+  }}
   .pb-welcome-hero {{
     width: 100%;
-    border-radius: {tokens.RADIUS_LG_PX}px;
-    overflow: hidden;
-    margin: {tokens.SPACE_MD_PX}px 0;
-    box-shadow: {tokens.SHADOW_SOFT};
+    margin: {tokens.SPACE_MD_PX}px 0 {tokens.SPACE_LG_PX}px 0;
+    padding: 6px 2px 14px 2px;
+    animation: pb-welcome-shadow-pulse 5s ease-in-out infinite;
   }}
   .pb-welcome-hero img {{
     width: 100%;
     display: block;
+    border-radius: {tokens.RADIUS_LG_PX}px;
+    transform-origin: center center;
+    will-change: transform;
+    box-shadow: {tokens.SHADOW_SOFT};
+    animation: pb-welcome-float 5s ease-in-out infinite;
+  }}
+  @media (prefers-reduced-motion: reduce) {{
+    .pb-welcome-hero,
+    .pb-welcome-hero img {{
+      animation: none;
+      transform: none;
+      will-change: auto;
+    }}
   }}
   .pb-path-row {{
     display: flex;

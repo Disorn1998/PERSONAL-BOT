@@ -11,6 +11,8 @@ All notable changes are documented here. This project follows
   with owner hero (`persona_bot/static/illustrations/welcome-hero.jpg`) and
   local SVG icons. Entry path persists under `data/entry_path` and can be
   changed later in Settings.
+- Welcome hero soft **2D** CSS motion: gentle 5s float/parallax tilt and shadow
+  pulse on `.pb-welcome-hero` (no WebGL/`.glb`; respects `prefers-reduced-motion`).
 
 ### Changed
 
