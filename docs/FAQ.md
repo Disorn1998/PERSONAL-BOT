@@ -44,6 +44,10 @@ Nothing is uploaded to a persona-bot server; only Groq receives chat prompts whe
 ข้อมูลอยู่ใต้ `data/personas/<id>/knowledge/` บนเครื่องคุณเท่านั้น  
 ทาง zip สำรอง: ส่งออก → ใส่ไฟล์ใน `knowledge/` → นำเข้า (เปลี่ยนชื่อถ้า id ซ้ำ)
 
+ตัวอย่างในแกลเลอรี: `pdf-handbook-demo` (strict) มี PDF สมมติเล็ก ๆ พร้อม citations —
+ลองเลือกแพ็กนี้แล้วถามเรื่อง membership / PPE เพื่อดูแหล่ง `[n]`  
+Gallery demo: pick `pdf-handbook-demo` to see bundled PDF ingest + citations.
+
 ## Windows: `uv` / SmartScreen / long paths
 
 - **`uv` not found:** `start.bat` เติม PATH ชั่วคราวเท่านั้น — เปิดเทอร์มินัลใหม่แล้วรัน  

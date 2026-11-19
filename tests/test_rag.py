@@ -133,6 +133,75 @@ def test_index_retrieve_and_strict_short_circuit(tmp_path: Path) -> None:
         )
 
 
+def test_pdf_handbook_demo_ingest_and_citations(tmp_path: Path) -> None:
+    """Example pack ships real PDFs — prove load + index + citation formatting."""
+    examples = Path("personas/examples")
+    persona = load_persona_yaml(examples / "pdf-handbook-demo" / "persona.yaml")
+    assert persona.config.answer_mode == "strict"
+    kdir = knowledge_dir_for_persona(
+        examples_dir=examples,
+        personas_dir=tmp_path / "personas",
+        persona_id=persona.id,
+    )
+    pdfs = [p for p in iter_knowledge_files(kdir) if p.suffix.lower() == ".pdf"]
+    assert len(pdfs) >= 2
+    for pdf in pdfs:
+        text = load_text_file(pdf)
+        assert "Cedarvale" in text
+        assert "FICTIONAL" in text
+
+    embedder = FakeEmbedder(dim=32, model_name="fake:pdf-handbook")
+    store = VectorStore(data_dir=tmp_path / "data", embedder=embedder)
+    manifest = ensure_index(store, persona=persona, knowledge_dir=kdir, force=True)
+    assert manifest.chunk_count > 0
+
+    sources = [
+        {
+            "text": "Day Pass and Steward membership tiers",
+            "source": "maker-space-overview.pdf",
+            "score": 0.91,
+        },
+        {
+            "text": "No PVC or vinyl on the laser cutter",
+            "source": "workshop-safety.pdf",
+            "score": 0.88,
+        },
+    ]
+    md = format_sources_markdown(sources)
+    assert "`maker-space-overview.pdf`" in md
+    assert "`workshop-safety.pdf`" in md
+    report = validate_citations("See [1] and [2] for handbook rules.", sources)
+    assert report["ok"] is True
+    assert report["valid"] == [1, 2]
+
+    with pytest.raises(KnowledgeNotFoundError):
+        build_messages(
+            persona,
+            history=[],
+            user_text="What is the real Cedarvale street address?",
+            context_chunks=[{"text": "nope", "score": 0.0, "source": "x"}],
+            min_score=0.9,
+        )
+
+
+def test_en_study_coach_loads_and_indexes(tmp_path: Path) -> None:
+    examples = Path("personas/examples")
+    persona = load_persona_yaml(examples / "en-study-coach" / "persona.yaml")
+    assert persona.config.answer_mode == "balanced"
+    assert persona.metadata.get("language") == "en"
+    kdir = knowledge_dir_for_persona(
+        examples_dir=examples,
+        personas_dir=tmp_path / "personas",
+        persona_id=persona.id,
+    )
+    files = iter_knowledge_files(kdir)
+    assert any(p.name == "spaced-repetition.md" for p in files)
+    embedder = FakeEmbedder(dim=32, model_name="fake:en-study")
+    store = VectorStore(data_dir=tmp_path / "data", embedder=embedder)
+    manifest = ensure_index(store, persona=persona, knowledge_dir=kdir, force=True)
+    assert manifest.chunk_count > 0
+
+
 def test_retrieval_query_uses_previous() -> None:
     q = build_retrieval_query(latest="ล่าสุด", previous_user="ก่อนหน้า")
     assert q == "ก่อนหน้า\nล่าสุด"

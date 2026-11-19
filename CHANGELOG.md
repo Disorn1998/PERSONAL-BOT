@@ -10,6 +10,8 @@ All notable changes are documented here. This project follows
 - Phased **core coverage ≥80%** CI gate (`coverage.core.toml`) omitting Streamlit
   shell (`main.py`), `ui/*`, eval harness, and backup/cli/versioning helpers;
   overall gate stays **≥60%**.
+- Example personas: `pdf-handbook-demo` (strict, tiny fictional PDFs + disclaimer)
+  and `en-study-coach` (balanced, English-first study notes).
 
 ## [0.2.0] — 2026-11-18
 

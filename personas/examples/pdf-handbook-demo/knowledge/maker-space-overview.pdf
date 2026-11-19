@@ -1,0 +1,52 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792]
+/Contents 4 0 R /Resources<< /Font<< /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 984 >>
+stream
+BT
+/F1 11 Tf
+50 720 Td (Cedarvale Maker Space Handbook \(FICTIONAL DEMO\)) Tj
+0 -16 Td (Version 1.0 - self-authored sample for persona-bot PDF ingest.) Tj
+0 -16 Td () Tj
+0 -16 Td (1. What we are) Tj
+0 -16 Td (Cedarvale Maker Space is a fictional community workshop in the town of) Tj
+0 -16 Td (Cedarvale. Members share tools for woodworking, electronics, and 3D printing.) Tj
+0 -16 Td () Tj
+0 -16 Td (2. Membership tiers) Tj
+0 -16 Td (- Day Pass: access common benches for one calendar day.) Tj
+0 -16 Td (- Standard: evenings Mon-Thu plus weekend mornings.) Tj
+0 -16 Td (- Steward: Standard plus keyholder training after 20 logged hours.) Tj
+0 -16 Td () Tj
+0 -16 Td (3. Booking tools) Tj
+0 -16 Td (Reserve the laser cutter and CNC on the wall tablet. Max slot is 90 minutes.) Tj
+0 -16 Td (Cancel at least 2 hours ahead so the next member can take the slot.) Tj
+0 -16 Td () Tj
+0 -16 Td (4. Contact \(demo only\)) Tj
+0 -16 Td (Front desk demo email: desk@cedarvale-makers.example) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000239 00000 n 
+0000001274 00000 n 
+trailer<< /Size 6 /Root 1 0 R >>
+startxref
+1344
+%%EOF
