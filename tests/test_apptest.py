@@ -58,7 +58,24 @@ def _click_label(at, label: str) -> None:  # noqa: ANN001
 def _enter_knowledge_only(at) -> None:  # noqa: ANN001
     at.run()
     assert not at.exception, at.exception
+    assert "welcome_choose_knowledge" in _button_keys(at)
+    at.button("welcome_choose_knowledge").click().run()
+    assert not at.exception, at.exception
     at.button("welcome_knowledge_only").click().run()
+    assert not at.exception, at.exception
+    if "privacy_ack_btn" in _button_keys(at):
+        at.button("privacy_ack_btn").click().run()
+        assert not at.exception, at.exception
+
+
+def _enter_api_path(at, *, key: str = "gsk_test_welcome_key") -> None:  # noqa: ANN001
+    at.run()
+    assert not at.exception, at.exception
+    assert "welcome_choose_api" in _button_keys(at)
+    at.button("welcome_choose_api").click().run()
+    assert not at.exception, at.exception
+    at.text_input("welcome_key").set_value(key).run()
+    at.button("welcome_save").click().run()
     assert not at.exception, at.exception
     if "privacy_ack_btn" in _button_keys(at):
         at.button("privacy_ack_btn").click().run()
@@ -71,17 +88,36 @@ def test_streamlit_app_loads(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
     at.run()
     # Welcome / shell should render without an uncaught exception.
     assert not at.exception, at.exception
+    assert "welcome_choose_api" in _button_keys(at)
+    assert "welcome_choose_knowledge" in _button_keys(at)
+
+
+def test_apptest_welcome_path_a_api(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Welcome gate → Add API key → save → privacy → chat shell."""
+    data = _configure_env(monkeypatch, tmp_path)
+    _patch_fake_embedder(monkeypatch)
+    at = _apptest()
+    _enter_api_path(at)
+    assert at.session_state["entry_path"] == "api"
+    assert at.session_state["knowledge_only_mode"] is False
+    assert at.session_state["wizard_done"] is True
+    assert at.session_state["privacy_ack"] is True
+    assert at.session_state["api_key"] == "gsk_test_welcome_key"
+    assert (data / "entry_path").read_text(encoding="utf-8").strip() == "api"
+    assert at.chat_input, "expected chat input after API path"
 
 
 def test_apptest_knowledge_only_ready_path(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    """Welcome → knowledge-only → privacy → chat shell (no Groq)."""
-    _configure_env(monkeypatch, tmp_path)
+    """Welcome gate → Upload knowledge → Ready → privacy → chat (no Groq)."""
+    data = _configure_env(monkeypatch, tmp_path)
     _patch_fake_embedder(monkeypatch)
     at = _apptest()
     _enter_knowledge_only(at)
+    assert at.session_state["entry_path"] == "knowledge"
     assert at.session_state["knowledge_only_mode"] is True
     assert at.session_state["wizard_done"] is True
     assert at.session_state["privacy_ack"] is True
+    assert (data / "entry_path").read_text(encoding="utf-8").strip() == "knowledge"
     assert at.chat_input, "expected chat input after knowledge-only continue"
 
 

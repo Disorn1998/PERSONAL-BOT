@@ -1,5 +1,5 @@
 # persona-bot Streamlit config
-# Theme tokens aligned with persona_bot/ui/tokens.py (§17.2: warm cream + #6A5ACD).
+# Theme tokens aligned with persona_bot/ui/tokens.py (electric blue soft-3D).
 
 [browser]
 gatherUsageStats = false
@@ -13,8 +13,8 @@ toolbarMode = "minimal"
 
 [theme]
 base = "light"
-primaryColor = "#6A5ACD"
-backgroundColor = "#F4F1EA"
-secondaryBackgroundColor = "#EBE6DC"
-textColor = "#1A1D21"
+primaryColor = "#2563EB"
+backgroundColor = "#F7FAFF"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#0F172A"
 font = "sans-serif"

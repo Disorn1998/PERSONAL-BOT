@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from persona_bot.i18n import set_locale
 from persona_bot.ui.wizard import (
+    load_entry_path,
     overwrite_confirm_required,
     progress_markup,
+    save_entry_path,
     wizard_step,
 )
 
@@ -29,3 +33,11 @@ def test_progress_markup_marks_active_step() -> None:
     assert "pb-wizard-step active" in html
     assert "pb-wizard-step done" in html
     assert "Privacy" in html
+
+
+def test_entry_path_persist_roundtrip(tmp_path: Path) -> None:
+    assert load_entry_path(tmp_path) is None
+    save_entry_path(tmp_path, "api")
+    assert load_entry_path(tmp_path) == "api"
+    save_entry_path(tmp_path, "knowledge")
+    assert load_entry_path(tmp_path) == "knowledge"

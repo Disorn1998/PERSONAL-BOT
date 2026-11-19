@@ -5,8 +5,17 @@ All notable changes are documented here. This project follows
 
 ## [Unreleased]
 
+### Added
+
+- Blue soft-3D welcome gate: choose **Add API key** or **Upload knowledge**,
+  with owner hero (`persona_bot/static/illustrations/welcome-hero.jpg`) and
+  local SVG icons. Entry path persists under `data/entry_path` and can be
+  changed later in Settings.
+
 ### Changed
 
+- Design tokens / Streamlit theme: electric blue (`#2563EB`) on `#F7FAFF`
+  (replaces cream + purple). Larger radius, soft card shadows, chat bubbles.
 - Beginner sidebar: default shows language, persona, chat, knowledge, and
   「ตั้งค่า」; usage / version / persona editor / backup / health / Advanced labs
   live under collapsed「ตั้งค่าเพิ่มเติม」. Shorter TH/EN labels; version display
