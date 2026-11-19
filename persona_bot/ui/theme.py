@@ -331,6 +331,99 @@ def custom_css() -> str:
     padding-bottom: 2rem;
     max-width: 880px;
   }}
+  /* Guided tour — coach card + soft spotlight (CSS only, no WebGL) */
+  .pb-tour-anchor {{
+    height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }}
+  .pb-tour-coach {{
+    border: 1px solid {tokens.COLOR_ACCENT_SOFT};
+    border-radius: {tokens.RADIUS_LG_PX}px;
+    padding: {tokens.SPACE_MD_PX}px;
+    margin: 0 0 {tokens.SPACE_MD_PX}px 0;
+    background: linear-gradient(
+      180deg, {tokens.COLOR_ACCENT_WASH} 0%, {tokens.COLOR_SECONDARY_BACKGROUND} 70%);
+    box-shadow: {tokens.SHADOW_SOFT};
+  }}
+  .pb-tour-coach-row {{
+    display: flex;
+    align-items: flex-start;
+    gap: {tokens.SPACE_MD_PX}px;
+  }}
+  .pb-tour-mascot {{
+    flex: 0 0 auto;
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    border: 1px solid {tokens.COLOR_ACCENT_SOFT};
+    background: {tokens.COLOR_SECONDARY_BACKGROUND};
+    box-shadow: {tokens.SHADOW_SOFT};
+    object-fit: cover;
+  }}
+  .pb-tour-coach-copy {{
+    flex: 1 1 auto;
+    min-width: 0;
+  }}
+  .pb-tour-progress {{
+    margin: 0 0 4px 0;
+    color: {tokens.COLOR_PRIMARY_DEEP};
+    font-size: {tokens.FONT_SIZE_SMALL_PX}px;
+    font-weight: 600;
+  }}
+  .pb-tour-body {{
+    margin: 0;
+    color: {tokens.COLOR_TEXT};
+    font-size: {tokens.FONT_SIZE_BODY_PX}px;
+    line-height: 1.45;
+  }}
+  /* Soft spotlight rings for the active tour target */
+  body:has(.pb-tour-coach[data-tour-step="welcome"]) .pb-welcome,
+  body:has(.pb-tour-coach[data-tour-step="path"]) .pb-welcome {{
+    outline: 3px solid {tokens.COLOR_PRIMARY};
+    outline-offset: 4px;
+    box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.12), {tokens.SHADOW_SOFT};
+  }}
+  body:has(.pb-tour-coach[data-tour-step="persona"])
+    [data-testid="stSidebar"] [data-testid="stSelectbox"]:first-of-type {{
+    outline: 3px solid {tokens.COLOR_PRIMARY};
+    outline-offset: 4px;
+    border-radius: {tokens.RADIUS_MD_PX}px;
+    box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.12);
+  }}
+  body:has(.pb-tour-coach[data-tour-step="knowledge"]) .pb-tour-spot-knowledge {{
+    min-height: 8px;
+    margin-bottom: 6px;
+    border-radius: {tokens.RADIUS_MD_PX}px;
+    outline: 3px solid {tokens.COLOR_PRIMARY};
+    outline-offset: 4px;
+    box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.12);
+  }}
+  body:has(.pb-tour-coach[data-tour-step="knowledge"])
+    [data-testid="stSidebar"] [data-testid="stExpander"][aria-expanded="true"] {{
+    outline: 3px solid {tokens.COLOR_PRIMARY};
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.12);
+  }}
+  body:has(.pb-tour-coach[data-tour-step="chat"]) [data-testid="stChatInput"] {{
+    outline: 3px solid {tokens.COLOR_PRIMARY};
+    outline-offset: 4px;
+    box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.12), {tokens.SHADOW_SOFT};
+  }}
+  body:has(.pb-tour-coach[data-tour-step="path"])
+    div.stButton > button[kind="primary"],
+  body:has(.pb-tour-coach[data-tour-step="path"])
+    div.stButton > button[data-testid="baseButton-primary"] {{
+    outline: 3px solid {tokens.COLOR_PRIMARY};
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.14), {tokens.SHADOW_SOFT};
+  }}
+  @media (prefers-reduced-motion: reduce) {{
+    .pb-tour-coach {{
+      transition: none;
+    }}
+  }}
   @media (max-width: 400px) {{
     .block-container {{
       padding-left: 0.6rem;
@@ -338,6 +431,10 @@ def custom_css() -> str:
     }}
     .pb-welcome-brand {{
       font-size: 28px;
+    }}
+    .pb-tour-mascot {{
+      width: 44px;
+      height: 44px;
     }}
     div[data-testid="stChatMessage"]:has(.pb-role-user),
     div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {{

@@ -71,6 +71,13 @@ from persona_bot.services import (
 from persona_bot.ui.assets import icon_path, welcome_hero_data_uri, welcome_hero_path
 from persona_bot.ui.errors import error_from_exception, format_error_card
 from persona_bot.ui.theme import custom_css
+from persona_bot.ui.tour import (
+    current_tour_step,
+    init_tour_state,
+    render_tour_coach,
+    restart_tour,
+    tour_anchor_markup,
+)
 from persona_bot.ui.wizard import (
     EntryPath,
     clear_entry_path,
@@ -481,7 +488,15 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
 def _sidebar_knowledge(persona: PersonaPack) -> None:
     """Simple knowledge panel — status + upload/paste only."""
     settings = get_settings()
-    with st.sidebar.expander(t("label.knowledge"), expanded=False):
+    if current_tour_step() == "knowledge":
+        st.sidebar.markdown(
+            '<div class="pb-tour-spot-knowledge">' + tour_anchor_markup("knowledge") + "</div>",
+            unsafe_allow_html=True,
+        )
+    with st.sidebar.expander(
+        t("label.knowledge"),
+        expanded=current_tour_step() == "knowledge",
+    ):
         try:
             cache_key = f"rag::{persona.id}::{persona.config.embedding_preset}"
             if cache_key not in st.session_state:
@@ -851,6 +866,13 @@ def _sidebar_more(
         with st.expander(t("label.advanced"), expanded=False):
             _sidebar_advanced_labs(persona, settings)
 
+        if st.button(t("action.tour_restart"), key="tour_restart_btn"):
+            restart_tour(
+                settings.data_dir,
+                wizard_done=bool(st.session_state.get("wizard_done")),
+            )
+            st.rerun()
+
 
 def _sidebar(personas: list) -> None:
     settings = get_settings()
@@ -890,6 +912,8 @@ def _sidebar(personas: list) -> None:
     if current not in persona_ids and persona_ids:
         current = persona_ids[0]
         st.session_state.persona_id = current
+    if current_tour_step() == "persona":
+        st.sidebar.markdown(tour_anchor_markup("persona"), unsafe_allow_html=True)
     selected = st.sidebar.selectbox(
         t("label.persona"),
         options=persona_ids,
@@ -951,6 +975,9 @@ def _sidebar(personas: list) -> None:
 
 def _welcome_gate() -> None:
     """First viewport: brand + short copy + hero + two path choices."""
+    step = current_tour_step()
+    if step in {"welcome", "path"}:
+        st.markdown(tour_anchor_markup(step), unsafe_allow_html=True)
     hero_uri = welcome_hero_data_uri()
     hero_block = ""
     if hero_uri:
@@ -1505,6 +1532,10 @@ def run() -> None:
     ensure_data_version(settings.data_dir)
     setup_logging(settings.log_level, api_key=st.session_state.api_key or settings.groq_api_key)
     _restore_entry_path_from_disk()
+    init_tour_state(
+        settings.data_dir,
+        wizard_done=bool(st.session_state.get("wizard_done")),
+    )
 
     try:
         personas = load_available_personas(settings)
@@ -1521,6 +1552,9 @@ def run() -> None:
     if settings.app_password and not st.session_state.password_ok:
         st.info(t("error.hint.password"))
         return
+
+    # Guided tour coach (Next / Skip / Start using) — short beginner overlay.
+    render_tour_coach(settings.data_dir)
 
     has_key = bool(st.session_state.api_key or settings.groq_api_key)
     # Gate until the user finishes path A (key) or path B (Ready).
@@ -1590,6 +1624,8 @@ def run() -> None:
                     fake.usage.total_tokens = int(msg.meta.get("tokens") or 0)
                     _render_meta(fake)
 
+    if current_tour_step() == "chat":
+        st.markdown(tour_anchor_markup("chat"), unsafe_allow_html=True)
     prompt = st.chat_input(t("chat.placeholder"))
     if prompt:
         _handle_user_message(prompt.strip(), personas)

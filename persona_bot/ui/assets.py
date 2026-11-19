@@ -38,3 +38,12 @@ def welcome_hero_data_uri() -> str | None:
 def icon_path(name: str) -> Path:
     """Return path to a local SVG icon (``name`` without extension)."""
     return _ICONS / f"{name}.svg"
+
+
+def icon_data_uri(name: str) -> str | None:
+    """SVG data URI for an illustration icon (inline HTML coach / empty state)."""
+    path = icon_path(name)
+    if not path.is_file():
+        return None
+    payload = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:image/svg+xml;base64,{payload}"
