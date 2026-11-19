@@ -51,9 +51,7 @@ def test_load_example_personas() -> None:
     assert by_id["pdf-handbook-demo"].greeting
     assert by_id["en-study-coach"].greeting
     assert by_id["en-study-coach"].metadata.get("language") == "en"
-    assert any(
-        str(p).endswith(".pdf") for p in by_id["pdf-handbook-demo"].knowledge_files
-    )
+    assert any(str(p).endswith(".pdf") for p in by_id["pdf-handbook-demo"].knowledge_files)
     assert len({p.id for p in packs}) == len(packs)
 
 
