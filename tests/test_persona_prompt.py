@@ -28,6 +28,8 @@ def test_load_example_personas() -> None:
         "thai-tax-advisor",
         "company-faq-bot",
         "meeting-notes",
+        "pdf-handbook-demo",
+        "en-study-coach",
     }
     packs = [load_persona_yaml(p / "persona.yaml") for p in dirs]
     by_id = {p.id: p for p in packs}
@@ -37,12 +39,21 @@ def test_load_example_personas() -> None:
     assert by_id["thai-tax-advisor"].config.answer_mode == "strict"
     assert by_id["company-faq-bot"].config.answer_mode == "strict"
     assert by_id["meeting-notes"].config.answer_mode == "balanced"
+    assert by_id["pdf-handbook-demo"].config.answer_mode == "strict"
+    assert by_id["en-study-coach"].config.answer_mode == "balanced"
     assert by_id["meeting-notes"].greeting
     assert by_id["thai-tax-advisor"].greeting
     assert by_id["thai-tax-advisor"].starter_questions
     assert by_id["thai-tax-advisor"].metadata.get("disclaimer_required") is True
     assert "min_score_note" in by_id["thai-tax-advisor"].metadata
     assert by_id["company-faq-bot"].icon
+    assert by_id["pdf-handbook-demo"].metadata.get("disclaimer_required") is True
+    assert by_id["pdf-handbook-demo"].greeting
+    assert by_id["en-study-coach"].greeting
+    assert by_id["en-study-coach"].metadata.get("language") == "en"
+    assert any(
+        str(p).endswith(".pdf") for p in by_id["pdf-handbook-demo"].knowledge_files
+    )
     assert len({p.id for p in packs}) == len(packs)
 
 

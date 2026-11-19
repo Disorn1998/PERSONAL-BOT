@@ -2,7 +2,7 @@
 
 Bundled under `personas/examples/` (read-only in Docker image).
 
-| Id | Name (TH) | Answer mode | Knowledge |
+| Id | Name | Answer mode | Knowledge |
 |---|---|---|---|
 | `study-buddy` | เพื่อนติว | balanced | photosynthesis + study tips |
 | `tech-explainer` | อธิบายเทค | **strict** | HTTP basics + RAG overview |
@@ -10,9 +10,13 @@ Bundled under `personas/examples/` (read-only in Docker image).
 | `thai-tax-advisor` | ที่ปรึกษาภาษีตัวอย่าง | **strict** | fictional VAT + PIT overview + disclaimer (`min_score` placeholder) |
 | `company-faq-bot` | FAQ บริษัทโนวาสมาร์ท | **strict** | fictional company overview / leave / IT |
 | `meeting-notes` | จดบันทึกประชุม | balanced | fictional demo meeting + note template |
+| `pdf-handbook-demo` | PDF Handbook Demo | **strict** | fictional Cedarvale Maker Space PDFs + disclaimer |
+| `en-study-coach` | EN Study Coach | balanced | EN spaced-repetition + exam-week plan (md) |
 
 All example packs include `icon`, `greeting`, `starter_questions`, and `metadata`.
-Tax/FAQ knowledge is **self-written fictional demo content** — not legal advice.
+Tax/FAQ/handbook knowledge is **self-written fictional demo content** — not legal or safety advice.
+`pdf-handbook-demo` ships tiny self-authored PDFs so clones can verify PDF ingest + citations.
+`en-study-coach` is English-first for international onboarding (complements TH `study-buddy`).
 
 ## Share your pack
 

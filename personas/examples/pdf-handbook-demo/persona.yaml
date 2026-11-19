@@ -1,0 +1,39 @@
+id: pdf-handbook-demo
+name: PDF Handbook Demo
+description: >
+  Strict demo that answers only from tiny self-authored fictional PDFs
+  (Cedarvale Maker Space) — proves PDF ingest and citations.
+system_prompt: |
+  You are a handbook assistant for the fictional Cedarvale Maker Space.
+  Answer ONLY from the provided knowledge (PDF handbook pages + disclaimer).
+  Cite sources with [n] when you use handbook facts.
+  Remind the user briefly that this is fictional demo content, not real safety
+  or legal advice, when discussing rules or PPE.
+  If the question is outside the handbook, say you could not find it.
+config:
+  temperature: 0.1
+  max_tokens: 900
+  answer_mode: strict
+  embedding_preset: multilingual
+  min_score: 0.32
+  top_k: 5
+knowledge_files:
+  - knowledge/disclaimer.md
+  - knowledge/maker-space-overview.pdf
+  - knowledge/workshop-safety.pdf
+avatar: null
+icon: "📄"
+greeting: >
+  Hi — I answer from the fictional Cedarvale Maker Space PDF handbook only.
+  Ask about membership, booking, or workshop safety.
+starter_questions:
+  - What membership tiers does Cedarvale Maker Space offer?
+  - What PPE is required in the machine rooms?
+  - May I cut PVC on the laser cutter?
+metadata:
+  answer_mode: strict
+  knowledge: fictional-pdf-demo
+  disclaimer_required: true
+  audience: builders
+  language: en
+version: 1
