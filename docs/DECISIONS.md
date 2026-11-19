@@ -3,6 +3,17 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Editable answer-mode prompt rules (2026-11-19) — **DECISION**
+
+- Built-in ``strict`` / ``balanced`` / ``open`` rules stay in ``prompt.py`` as
+  defaults. User packs may override per mode via ``config.answer_rules`` in
+  ``persona.yaml`` (empty key = default).
+- Beginner UI under More settings → Edit persona: soft-3D rules panel + expander
+  to pick a mode, edit text, Save, or reset to default. Examples stay read-only
+  until Duplicate. Saving the persona form preserves ``answer_rules``.
+- Strict short-circuit (no qualifying knowledge → Thai not-found) remains
+  code-enforced; custom rules are LLM instructions only.
+
 ## Knowledge file list + edit/delete (2026-11-19) — **DECISION**
 
 - User packs: sidebar Knowledge shows a soft-3D file list (select + meta size).

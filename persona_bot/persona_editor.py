@@ -520,6 +520,7 @@ def build_persona_config(
     top_k: int | None = None,
     min_score: float | None = None,
     chunk_chars: int | None = None,
+    answer_rules: dict[str, str] | None = None,
 ) -> PersonaConfig:
     return PersonaConfig(
         answer_mode=answer_mode,
@@ -529,7 +530,40 @@ def build_persona_config(
         top_k=top_k,
         min_score=min_score,
         chunk_chars=chunk_chars,
+        answer_rules=dict(answer_rules or {}),
     )
+
+
+def set_persona_answer_rules(
+    pack: PersonaPack,
+    *,
+    mode: AnswerMode,
+    rules_text: str,
+) -> PersonaPack:
+    """Return a copy with ``answer_rules[mode]`` set (or cleared when blank)."""
+    rules = dict(pack.config.answer_rules)
+    text = rules_text.strip()
+    if text:
+        rules[mode] = text if text.endswith("\n") else f"{text}\n"
+    else:
+        rules.pop(mode, None)
+    config = pack.config.model_copy(update={"answer_rules": rules})
+    return pack.model_copy(update={"config": config})
+
+
+def clear_persona_answer_rules(
+    pack: PersonaPack,
+    *,
+    mode: AnswerMode | None = None,
+) -> PersonaPack:
+    """Clear one mode override, or all overrides when ``mode`` is None."""
+    if mode is None:
+        config = pack.config.model_copy(update={"answer_rules": {}})
+        return pack.model_copy(update={"config": config})
+    rules = dict(pack.config.answer_rules)
+    rules.pop(mode, None)
+    config = pack.config.model_copy(update={"answer_rules": rules})
+    return pack.model_copy(update={"config": config})
 
 
 def index_status_key(*, needs_rebuild: bool, file_count: int) -> str:

@@ -41,6 +41,7 @@ from persona_bot.persona_editor import (
     add_knowledge_bytes,
     add_knowledge_paste,
     build_persona_config,
+    clear_persona_answer_rules,
     create_user_persona,
     delete_knowledge_file,
     duplicate_persona_to_user,
@@ -49,6 +50,7 @@ from persona_bot.persona_editor import (
     list_knowledge_files,
     read_knowledge_text,
     save_user_persona,
+    set_persona_answer_rules,
     update_knowledge_text,
 )
 from persona_bot.persona_pack_io import (
@@ -57,7 +59,7 @@ from persona_bot.persona_pack_io import (
     import_persona_zip,
     preview_persona_zip,
 )
-from persona_bot.prompt import build_messages, strip_context_from_content
+from persona_bot.prompt import build_messages, resolve_answer_rules, strip_context_from_content
 from persona_bot.rag.citations import format_sources_markdown, validate_citations
 from persona_bot.rag.embeddings import FakeEmbedder
 from persona_bot.rag.prompt_inspector import inspect_messages
@@ -269,6 +271,73 @@ def _optional_float(raw: str) -> float | None:
     return float(text)
 
 
+def _render_answer_rules_editor(persona: PersonaPack, settings: Any) -> None:
+    """Edit per-mode prompt rules (strict / balanced / open) for a user pack."""
+    st.markdown(
+        f'<div class="pb-rules-panel"><p class="pb-rules-title">'
+        f"{html.escape(t('label.answer_rules'))}</p>"
+        f'<p class="pb-rules-hint">{html.escape(t("label.answer_rules_hint"))}</p></div>',
+        unsafe_allow_html=True,
+    )
+    with st.expander(t("label.answer_rules_edit"), expanded=False):
+        modes = ["strict", "balanced", "open"]
+        rule_mode = st.selectbox(
+            t("label.answer_rules_mode"),
+            options=modes,
+            index=modes.index(persona.config.answer_mode),
+            format_func=_answer_mode_label,
+            key=f"rules_mode_{persona.id}",
+        )
+        mode_key = cast(Any, rule_mode)
+        has_custom = mode_key in persona.config.answer_rules
+        st.caption(
+            t("status.answer_rules_custom") if has_custom else t("status.answer_rules_default")
+        )
+        text_key = f"rules_text_{persona.id}_{mode_key}"
+        if text_key not in st.session_state:
+            st.session_state[text_key] = resolve_answer_rules(persona, answer_mode=mode_key)
+        st.text_area(
+            t("label.answer_rules_body"),
+            key=text_key,
+            height=160,
+        )
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button(
+                t("action.save_answer_rules"),
+                key=f"save_rules_{persona.id}",
+                use_container_width=True,
+            ):
+                try:
+                    updated = set_persona_answer_rules(
+                        persona,
+                        mode=mode_key,
+                        rules_text=str(st.session_state.get(text_key) or ""),
+                    )
+                    save_user_persona(personas_dir=settings.personas_dir, pack=updated)
+                    if text_key in st.session_state:
+                        del st.session_state[text_key]
+                    st.success(t("status.answer_rules_saved"))
+                    st.rerun()
+                except Exception as exc:  # noqa: BLE001
+                    _render_error(exc)
+        with c2:
+            if st.button(
+                t("action.reset_answer_rules"),
+                key=f"reset_rules_{persona.id}",
+                use_container_width=True,
+            ):
+                try:
+                    updated = clear_persona_answer_rules(persona, mode=mode_key)
+                    save_user_persona(personas_dir=settings.personas_dir, pack=updated)
+                    if text_key in st.session_state:
+                        del st.session_state[text_key]
+                    st.success(t("status.answer_rules_reset"))
+                    st.rerun()
+                except Exception as exc:  # noqa: BLE001
+                    _render_error(exc)
+
+
 def _render_persona_editor(persona: PersonaPack | None) -> None:
     """Create / edit user packs; examples stay read-only with Duplicate.
 
@@ -324,6 +393,7 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
                 format_func=_answer_mode_label,
                 key=f"edit_mode_{persona.id}",
             )
+            _render_answer_rules_editor(persona, settings)
             temperature = float(persona.config.temperature)
             max_tokens = int(persona.config.max_tokens)
             embedding_preset = persona.config.embedding_preset
@@ -399,6 +469,7 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
                                 top_k=_optional_int(top_k_raw),
                                 min_score=_optional_float(min_score_raw),
                                 chunk_chars=_optional_int(chunk_raw),
+                                answer_rules=persona.config.answer_rules,
                             ),
                         }
                     )

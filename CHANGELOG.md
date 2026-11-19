@@ -7,6 +7,9 @@ All notable changes are documented here. This project follows
 
 ### Added
 
+- Editable answer-mode prompt rules (user packs): override built-in
+  strict / balanced / open rule text under Edit persona; Save or reset to
+  defaults; stored in ``config.answer_rules``. Soft-3D rules panel.
 - Knowledge file manager (user packs): list files in the Knowledge sidebar,
   edit ``.txt``/``.md`` in place, delete with confirm + auto rebuild; PDF/DOCX
   stay delete-and-reupload. Soft-3D list panel keeps electric-blue tokens.

@@ -262,6 +262,29 @@ def custom_css() -> str:
     font-weight: 600;
     letter-spacing: {tokens.LETTER_SPACING_META};
   }}
+  /* Answer-mode rules panel — soft-3D blue wash */
+  .pb-rules-panel {{
+    margin: {tokens.SPACE_SM_PX}px 0 {tokens.SPACE_MD_PX}px 0;
+    padding: {tokens.SPACE_SM_PX}px {tokens.SPACE_MD_PX}px;
+    border: 1px solid {tokens.COLOR_ACCENT_SOFT};
+    border-radius: {tokens.RADIUS_MD_PX}px;
+    background: linear-gradient(
+      180deg, {tokens.COLOR_ACCENT_WASH} 0%, {tokens.COLOR_SECONDARY_BACKGROUND} 85%);
+    box-shadow: {tokens.SHADOW_SOFT};
+  }}
+  .pb-rules-title {{
+    margin: 0 0 4px 0;
+    color: {tokens.COLOR_PRIMARY_DEEP};
+    font-size: {tokens.FONT_SIZE_SMALL_PX}px;
+    font-weight: 600;
+    letter-spacing: {tokens.LETTER_SPACING_META};
+  }}
+  .pb-rules-hint {{
+    margin: 0;
+    color: {tokens.COLOR_MUTED_TEXT};
+    font-size: {tokens.FONT_SIZE_META_PX}px;
+    line-height: {tokens.LINE_HEIGHT_META};
+  }}
   .pb-empty {{
     text-align: center;
     padding: {tokens.SPACE_LG_PX}px {tokens.SPACE_MD_PX}px;

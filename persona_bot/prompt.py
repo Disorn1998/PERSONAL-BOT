@@ -9,8 +9,9 @@ from persona_bot.persona import AnswerMode, PersonaPack
 
 Role = Literal["system", "user", "assistant"]
 
-# Fixed rules blocks — byte-stable across turns (prompt-caching friendly).
-_RULES: dict[AnswerMode, str] = {
+# Built-in rules blocks — byte-stable defaults (prompt-caching friendly).
+# User packs may override per mode via ``config.answer_rules``.
+DEFAULT_ANSWER_RULES: dict[AnswerMode, str] = {
     "strict": (
         "### Fixed rules (strict)\n"
         "- Answer ONLY using the numbered <context> snippets when present.\n"
@@ -34,14 +35,41 @@ _RULES: dict[AnswerMode, str] = {
     ),
 }
 
+# Back-compat alias used by older tests / imports.
+_RULES = DEFAULT_ANSWER_RULES
 
-def fixed_rules_block(answer_mode: AnswerMode) -> str:
-    return _RULES[answer_mode]
+
+def default_rules_block(answer_mode: AnswerMode) -> str:
+    """Built-in rules text for ``answer_mode`` (always available)."""
+    return DEFAULT_ANSWER_RULES[answer_mode]
+
+
+def fixed_rules_block(
+    answer_mode: AnswerMode,
+    *,
+    custom_rules: str | None = None,
+) -> str:
+    """Rules block for a mode — custom override when non-empty, else built-in."""
+    text = (custom_rules or "").strip()
+    if text:
+        return text if text.endswith("\n") else f"{text}\n"
+    return default_rules_block(answer_mode)
+
+
+def resolve_answer_rules(
+    persona: PersonaPack,
+    *,
+    answer_mode: AnswerMode | None = None,
+) -> str:
+    """Effective rules for a persona (override from ``config.answer_rules`` or default)."""
+    mode: AnswerMode = answer_mode or persona.config.answer_mode
+    custom = persona.config.answer_rules.get(mode)
+    return fixed_rules_block(mode, custom_rules=custom)
 
 
 def stable_system_message(persona: PersonaPack) -> dict[str, str]:
     """System message that must stay byte-identical every turn for a persona."""
-    body = persona.system_prompt.rstrip() + "\n\n" + fixed_rules_block(persona.config.answer_mode)
+    body = persona.system_prompt.rstrip() + "\n\n" + resolve_answer_rules(persona)
     return {"role": "system", "content": body}
 
 
