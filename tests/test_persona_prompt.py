@@ -9,8 +9,10 @@ from persona_bot.errors import KnowledgeNotFoundError
 from persona_bot.persona import PersonaPack, list_example_persona_dirs, load_persona_yaml
 from persona_bot.prompt import (
     build_messages,
+    default_rules_block,
     fixed_rules_block,
     not_found_reply_th,
+    resolve_answer_rules,
     stable_system_message,
     strip_context_from_content,
 )
@@ -65,8 +67,25 @@ def test_stable_system_includes_rules() -> None:
     assert msg["role"] == "system"
     assert pack.system_prompt.strip() in msg["content"]
     assert fixed_rules_block("balanced") in msg["content"]
+    assert default_rules_block("balanced") in msg["content"]
     # Stability: identical across calls
     assert stable_system_message(pack) == msg
+
+
+def test_custom_answer_rules_override_defaults() -> None:
+    pack = load_persona_yaml(Path("personas/examples/study-buddy/persona.yaml"))
+    custom = "### Fixed rules (balanced)\n- Always say HELLO-RULES first.\n"
+    updated = pack.model_copy(
+        update={
+            "config": pack.config.model_copy(update={"answer_rules": {"balanced": custom}}),
+        }
+    )
+    assert resolve_answer_rules(updated) == custom
+    msg = stable_system_message(updated)
+    assert "HELLO-RULES" in msg["content"]
+    assert default_rules_block("balanced") not in msg["content"]
+    # Other modes still use defaults
+    assert resolve_answer_rules(updated, answer_mode="strict") == default_rules_block("strict")
 
 
 def test_strict_short_circuit_raises() -> None:

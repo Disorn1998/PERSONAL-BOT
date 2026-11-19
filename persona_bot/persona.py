@@ -31,6 +31,22 @@ class PersonaConfig(BaseModel):
     top_k: int | None = Field(default=None, ge=1, le=32)
     min_score: float | None = Field(default=None, ge=0.0, le=1.0)
     chunk_chars: int | None = Field(default=None, ge=100, le=4000)
+    # Optional per-mode prompt rule overrides (strict/balanced/open). Empty = built-in default.
+    answer_rules: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("answer_rules")
+    @classmethod
+    def _clean_answer_rules(cls, value: dict[str, str]) -> dict[str, str]:
+        allowed = {"strict", "balanced", "open"}
+        cleaned: dict[str, str] = {}
+        for key, raw in (value or {}).items():
+            mode = str(key).strip().lower()
+            if mode not in allowed:
+                raise ValueError(f"unsupported answer_rules key: {key}")
+            text = str(raw).strip()
+            if text:
+                cleaned[mode] = text if text.endswith("\n") else f"{text}\n"
+        return cleaned
 
     def resolved_top_k(self) -> int:
         if self.top_k is not None:
@@ -105,6 +121,7 @@ def _normalize_persona_dict(data: dict[str, Any]) -> dict[str, Any]:
         "top_k",
         "min_score",
         "chunk_chars",
+        "answer_rules",
     }
     out = dict(data)
     config = dict(out.get("config") or {})

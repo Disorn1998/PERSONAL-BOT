@@ -13,6 +13,7 @@ from persona_bot.persona_editor import (
     add_knowledge_bytes,
     add_knowledge_paste,
     assert_knowledge_within_limit,
+    clear_persona_answer_rules,
     create_user_persona,
     delete_knowledge_file,
     duplicate_persona_to_user,
@@ -21,8 +22,10 @@ from persona_bot.persona_editor import (
     list_knowledge_files,
     read_knowledge_text,
     save_user_persona,
+    set_persona_answer_rules,
     update_knowledge_text,
 )
+from persona_bot.prompt import default_rules_block, resolve_answer_rules, stable_system_message
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -254,3 +257,26 @@ def test_format_knowledge_size() -> None:
     assert format_knowledge_size(500) == "500 B"
     assert format_knowledge_size(2048).endswith("KB")
     assert format_knowledge_size(2 * 1024 * 1024).endswith("MB")
+
+
+def test_persona_answer_rules_persist(tmp_path: Path) -> None:
+    settings = _settings(tmp_path)
+    pack = create_user_persona(
+        personas_dir=settings.personas_dir,
+        persona_id="rules-bot",
+        name="Rules",
+        system_prompt="You are careful.",
+    )
+    assert resolve_answer_rules(pack) == default_rules_block("balanced")
+    custom = "### Fixed rules (balanced)\n- Prefer short Thai answers.\n"
+    updated = set_persona_answer_rules(pack, mode="balanced", rules_text=custom)
+    saved = save_user_persona(personas_dir=settings.personas_dir, pack=updated)
+    assert "Prefer short Thai answers" in resolve_answer_rules(saved)
+    assert "Prefer short Thai answers" in stable_system_message(saved)["content"]
+    reloaded = load_persona_yaml(settings.personas_dir / "rules-bot" / "persona.yaml")
+    assert reloaded.config.answer_rules["balanced"].startswith("### Fixed rules")
+
+    cleared = clear_persona_answer_rules(reloaded, mode="balanced")
+    cleared = save_user_persona(personas_dir=settings.personas_dir, pack=cleared)
+    assert cleared.config.answer_rules == {}
+    assert resolve_answer_rules(cleared) == default_rules_block("balanced")

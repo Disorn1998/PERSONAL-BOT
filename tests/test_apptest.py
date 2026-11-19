@@ -263,6 +263,60 @@ def test_apptest_editor_create_persona(monkeypatch: pytest.MonkeyPatch, tmp_path
     assert (data / "personas" / "notes-home" / "persona.yaml").is_file()
 
 
+def test_apptest_answer_rules_save_and_reset(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """User pack: edit answer-mode rules → save → reset to default."""
+    data = _configure_env(monkeypatch, tmp_path)
+    _patch_fake_embedder(monkeypatch)
+    from persona_bot.config import clear_settings_cache, get_settings
+    from persona_bot.i18n import set_locale
+    from persona_bot.persona import load_persona_yaml
+    from persona_bot.persona_editor import build_persona_config, create_user_persona
+    from persona_bot.prompt import default_rules_block
+
+    clear_settings_cache()
+    settings = get_settings()
+    create_user_persona(
+        personas_dir=settings.personas_dir,
+        persona_id="rules-ui",
+        name="Rules UI",
+        description="rules",
+        system_prompt="Be helpful.",
+        config=build_persona_config(answer_mode="balanced"),
+    )
+    (data / "privacy_ack").write_text("1", encoding="utf-8")
+    (data / "entry_path").write_text("knowledge", encoding="utf-8")
+    (data / "tour_done").write_text("1", encoding="utf-8")
+    at = _apptest()
+    at.session_state["wizard_done"] = True
+    at.session_state["knowledge_only_mode"] = True
+    at.session_state["privacy_ack"] = True
+    at.session_state["locale"] = "en"
+    at.session_state["persona_id"] = "rules-ui"
+    at.session_state["entry_path"] = "knowledge"
+    at.session_state["tour_done"] = True
+    at.session_state["tour_active"] = False
+    at.run()
+    assert not at.exception, at.exception
+
+    text_key = "rules_text_rules-ui_balanced"
+    custom = "### Fixed rules (balanced)\n- Say RULES-OK in every reply.\n"
+    at.text_area(text_key).set_value(custom).run()
+    assert not at.exception, at.exception
+    at.button("save_rules_rules-ui").click().run()
+    assert not at.exception, at.exception
+    saved = load_persona_yaml(settings.personas_dir / "rules-ui" / "persona.yaml")
+    assert "RULES-OK" in saved.config.answer_rules["balanced"]
+
+    at.button("reset_rules_rules-ui").click().run()
+    assert not at.exception, at.exception
+    reset = load_persona_yaml(settings.personas_dir / "rules-ui" / "persona.yaml")
+    assert reset.config.answer_rules == {}
+    assert default_rules_block("balanced")
+    set_locale("th")
+
+
 def test_apptest_knowledge_file_edit_and_delete(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
