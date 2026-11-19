@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "persona-bot"
-version = "0.2.0"
+version = "0.2.1"
 description = "Free BYOK personal AI chatbot with Persona Packs (Groq + local embeddings)"
 readme = "README.md"
 license = "MIT"
