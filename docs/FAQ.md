@@ -74,5 +74,7 @@ Canary รายสัปดาห์เรียกแค่ `GET /models` (ไ
 
 ## Coverage floors
 
-**LOCKED** (2026-11-18): overall ≥ **60%** hard-fail in CI (`--cov-fail-under=60`).  
-Core ≥ **80%** is a documented target until split core coverage exists.
+**LOCKED** (2026-11-18 / core split 2026-11-19): overall ≥ **60%** hard-fail in CI
+(`--cov-fail-under=60`). Core ≥ **80%** hard-fail via
+`coverage report --rcfile=coverage.core.toml` (omits Streamlit shell / UI /
+helpers — see `docs/DECISIONS.md`).

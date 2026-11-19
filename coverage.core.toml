@@ -1,0 +1,24 @@
+# Core coverage gate — omit Streamlit shell / UI chrome / non-core helpers.
+# Used by CI after the overall ≥60% pytest+cov run:
+#   uv run coverage report --rcfile=coverage.core.toml
+# See docs/DECISIONS.md ("Core coverage omitlist") and CONTRIBUTING.md.
+
+[run]
+source = ["persona_bot"]
+branch = true
+
+[report]
+fail_under = 80
+show_missing = true
+omit = [
+  # Streamlit UI shell
+  "persona_bot/main.py",
+  # UI chrome (theme/strings/wizard helpers)
+  "persona_bot/ui/*",
+  # Eval harness (offline/live eval, not product core)
+  "persona_bot/eval_harness.py",
+  # Ops / packaging helpers (not RAG/chat core)
+  "persona_bot/backup.py",
+  "persona_bot/cli.py",
+  "persona_bot/versioning.py",
+]

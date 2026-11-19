@@ -110,6 +110,7 @@ uv run ruff check .
 uv run ruff format .
 uv run mypy
 uv run pytest -m "not slow" --cov=persona_bot --cov-fail-under=60
+uv run coverage report --rcfile=coverage.core.toml   # core ≥80% (omits Streamlit shell)
 ```
 
 Owner-only live smoke (not CI): `uv run python scripts/smoke_test.py`  

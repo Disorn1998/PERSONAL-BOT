@@ -10,14 +10,14 @@ Update when the owner replies or when APIs change.
 | Eval DoD 7 in-scope hit@top_k | **≥ 0.70** | **LOCKED** |
 | Eval DoD 7 strict OOS / not-found | **≥ 0.80** | **LOCKED** |
 | Coverage CI overall | **≥ 60%** (`--cov-fail-under=60`, hard fail) | **LOCKED** |
-| Coverage CI core | **≥ 80%** target — enforce when split core coverage is feasible | **TARGET** (not yet split in CI) |
+| Coverage CI core | **≥ 80%** hard-fail via `coverage.core.toml` (omit `main.py` / `ui/*` / helpers) | **LOCKED** (2026-11-19) |
 
 ## Phase 5 notes (2026-11-18)
 
 | Item | Assumption | Status |
 |---|---|---|
 | OS matrix | Ubuntu 3.11/3.12/3.13 + Windows/macOS 3.12 (feasible subset) | Assumed |
-| Coverage CI gate | Overall hard gate `--cov-fail-under=60`; core 80% target until split exists | **LOCKED** (2026-11-18) |
+| Coverage CI gate | Overall ≥60% + core ≥80% (`coverage.core.toml` omitlist) | **LOCKED** (2026-11-19) |
 | Eval thresholds | DoD 7 locked: hit@top_k ≥ 0.70; strict OOS ≥ 0.80 | **LOCKED** (2026-11-18) |
 | Canary | Weekly `GET /models` only; maintainer `GROQ_API_KEY`; skip forks; no duplicate issues | Assumed |
 | CodeQL | Enabled when repo is public | Assumed |
@@ -77,7 +77,7 @@ Update when the owner replies or when APIs change.
 
 | Item | Assumption | Status |
 |---|---|---|
-| Coverage floors | Overall **≥ 60%** locked in CI; core **≥ 80%** target when split feasible | **LOCKED** overall (2026-11-18) |
+| Coverage floors | Overall **≥ 60%** + core **≥ 80%** (omit Streamlit shell) locked in CI | **LOCKED** (2026-11-19) |
 | Phase split (F10) | **1a / 1b** — this work is **1a only** | Assumed |
 | Package name (F1) | Importable package **`persona_bot`** (renamed from `app`) | **LOCKED** (2026-11-18) |
 | §16.8 / §18.9 | Keep provisional Appendix A / §18.9 | Open ask |
@@ -124,9 +124,10 @@ F23 contrast automated test remains later.
 
 ## Coverage
 
-**LOCKED** (2026-11-18): overall **≥ 60%** hard-fail in CI (`fail_under=60` /
-`--cov-fail-under=60`). Core **≥ 80%** remains a documented target until the
-project adds a split core-coverage gate.
+**LOCKED** (2026-11-18 / core split 2026-11-19): overall **≥ 60%** hard-fail
+(`fail_under=60` / `--cov-fail-under=60`). Core **≥ 80%** hard-fail via
+`coverage report --rcfile=coverage.core.toml` (omits Streamlit shell `main.py`,
+`ui/*`, eval harness, backup/cli/versioning helpers).
 
 ## Missing source sections (F1)
 

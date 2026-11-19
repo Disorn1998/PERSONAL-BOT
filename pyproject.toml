@@ -86,6 +86,7 @@ source = ["persona_bot"]
 branch = true
 
 [tool.coverage.report]
-# Locked 2026-11-18: overall ≥60% hard-fail. Core ≥80% target when split coverage exists.
+# Locked 2026-11-18: overall ≥60% hard-fail.
+# Core ≥80% is a separate CI step via coverage.core.toml (omit Streamlit shell / UI / helpers).
 fail_under = 60
 show_missing = true
