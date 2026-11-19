@@ -28,7 +28,7 @@ def get_app_version() -> str:
     try:
         return version("persona-bot")
     except PackageNotFoundError:
-        return "0.2.0"
+        return "0.2.1"
 
 
 def version_path(data_dir: Path) -> Path:

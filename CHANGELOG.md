@@ -5,13 +5,21 @@ All notable changes are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-11-19
+
+Patch release after `v0.2.0`: core coverage gate + two example personas.
+
 ### Added
 
 - Phased **core coverage ≥80%** CI gate (`coverage.core.toml`) omitting Streamlit
   shell (`main.py`), `ui/*`, eval harness, and backup/cli/versioning helpers;
-  overall gate stays **≥60%**.
+  overall gate stays **≥60%** (PR #19).
 - Example personas: `pdf-handbook-demo` (strict, tiny fictional PDFs + disclaimer)
-  and `en-study-coach` (balanced, English-first study notes).
+  and `en-study-coach` (balanced, English-first study notes) (PR #20).
+
+### Notes
+
+- Tag `v0.2.1` triggers the GHCR release workflow (`:v0.2.1` + `:latest`).
 
 ## [0.2.0] — 2026-11-18
 
