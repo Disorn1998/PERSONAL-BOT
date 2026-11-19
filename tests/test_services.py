@@ -25,6 +25,7 @@ def test_loads_examples_with_study_buddy_first() -> None:
     assert "meeting-notes" in ids
     assert "pdf-handbook-demo" in ids
     assert "en-study-coach" in ids
+    assert "personal-notes" in ids
     assert len(ids) == len(set(ids))
 
 

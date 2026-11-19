@@ -7,17 +7,28 @@ from typing import Final
 _TH: dict[str, str] = {
     "app.title": "persona-bot",
     "app.tagline": "แชตบอทส่วนตัวที่ตั้งบทบาท ความรู้ และค่าปรับแต่งได้",
-    "app.welcome": "ยินดีต้อนรับ — ใส่คีย์ Groq ของคุณเพื่อเริ่มใช้งาน",
+    "app.welcome": "ยินดีต้อนรับ — ใส่คีย์ Groq หรือเริ่มแบบคลังความรู้เท่านั้น",
     "app.welcome.body": (
-        "คีย์เก็บในเซสชันนี้เป็นค่าเริ่มต้น ไม่ถูกบันทึกลง data/ เลือกเพอร์โซนา แล้วพิมพ์ข้อความแรกได้ภายในไม่กี่ขั้นตอน"
+        "คีย์เก็บในเซสชันนี้เป็นค่าเริ่มต้น ไม่ถูกบันทึกลง data/ "
+        "ถ้ายังไม่มีคีย์ ก็วางโน้ตแล้วถาม-ตอบจากคลังได้ (ไม่ใช้ AI ออนไลน์)"
     ),
-    "app.onboarding.step1": "1) วาง Groq API key",
-    "app.onboarding.step2": "2) เลือกเพอร์โซนาด้านซ้าย",
-    "app.onboarding.step3": "3) พิมพ์ข้อความด้านล่าง",
+    "app.onboarding.step1": "1) (แนะนำ) วาง Groq API key — หรือข้ามไปใช้คลังความรู้",
+    "app.onboarding.step2": "2) เลือกเพอร์โซนา เช่น「โน้ตส่วนตัว」หรือ「เพื่อนติว」",
+    "app.onboarding.step3": "3) วางความรู้แล้วถาม — หรือพิมพ์ข้อความด้านล่าง",
+    "app.what_this_is": (
+        "นี่คืออะไร: บอทส่วนตัวบนเครื่องคุณ · เปิดในเบราว์เซอร์บนคอม · "
+        "ใช้คีย์ Groq ของคุณเมื่อต้องการ AI · ไม่ซิงค์ข้ามเครื่องอัตโนมัติ · "
+        "ไม่ใช่แอปมือถือ/Line — ย้ายเครื่องด้วย zip ส่งออก/นำเข้า"
+    ),
     "wizard.step1": "API key",
     "wizard.step2": "ความเป็นส่วนตัว",
     "wizard.step3": "เริ่มแชต",
-    "wizard.locked_tools": "ใส่ API key ก่อนจึงจะใช้เครื่องมือขั้นสูง (สำรอง / นำเข้า / ห้องทดลองค้นหา)",
+    "wizard.locked_tools": (
+        "เครื่องมือสำรอง/นำเข้าอยู่ใน「ขั้นสูง」หลังมีคีย์ — คลังความรู้และแชตจากโน้ตใช้ได้แม้ยังไม่มีคีย์"
+    ),
+    "wizard.knowledge_only_hint": (
+        "โหมดคลังความรู้: ตอบจากโน้ตบนเครื่อง (ไม่ใช้ AI ออนไลน์) เมื่อไม่มีคีย์ / โควตาหมด / ออฟไลน์"
+    ),
     "action.new_chat": "แชตใหม่",
     "action.clear_chat": "ล้างแชต",
     "action.confirm_clear_chat": "ยืนยันล้างแชต",
@@ -41,6 +52,9 @@ _TH: dict[str, str] = {
     "action.duplicate_persona": "ทำสำเนา",
     "action.upload_knowledge": "อัปโหลดไฟล์ความรู้",
     "action.paste_knowledge": "บันทึกข้อความที่วาง",
+    "action.make_knowledge_ready": "บันทึกความรู้ให้พร้อมใช้",
+    "action.continue_knowledge_only": "ใช้แบบคลังความรู้เท่านั้น (ไม่ใส่คีย์)",
+    "action.use_knowledge_only": "ตอบจากคลังความรู้แทน",
     "label.api_key": "Groq API key",
     "label.persona": "เพอร์โซนา",
     "label.thread": "เธรดแชต",
@@ -67,7 +81,8 @@ _TH: dict[str, str] = {
     "label.remember_key": "จำคีย์ในระบบ (keyring)",
     "label.remember_key_help": (
         "เปิดได้ด้วยช่องนี้ หรือ PERSONA_BOT_REMEMBER_KEY=1 ใน .env — "
-        "ทั้งสองแบบบันทึกและโหลดคีย์จาก OS keyring (นอก data/)"
+        "ทั้งสองแบบบันทึกและโหลดคีย์จาก OS keyring (นอก data/). "
+        "พรุ่งนี้เปิด start.bat แล้วคุยต่อได้ถ้าติ๊กจำคีย์ครั้งหนึ่ง"
     ),
     "label.language": "ภาษา",
     "label.data_tools": "ข้อมูลและการสำรอง",
@@ -83,6 +98,9 @@ _TH: dict[str, str] = {
     "label.persona_description": "คำอธิบายสั้น ๆ",
     "label.system_prompt": "พรอมต์ระบบ / บทบาท",
     "label.answer_mode": "โหมดคำตอบ",
+    "label.answer_mode.strict": "ตอบเฉพาะความรู้",
+    "label.answer_mode.balanced": "ยืดหยุ่น",
+    "label.answer_mode.open": "สไตล์อิสระ",
     "label.temperature": "อุณหภูมิ (temperature)",
     "label.max_tokens": "โทเคนสูงสุด",
     "label.embedding_preset": "ชุดฝังตัว (embedding)",
@@ -90,11 +108,17 @@ _TH: dict[str, str] = {
     "label.min_score": "คะแนนขั้นต่ำ (min_score)",
     "label.chunk_chars": "ขนาดชิ้นข้อความ (chunk_chars)",
     "label.optional_override": "ว่าง = ใช้ค่าจาก preset",
+    "label.lab_tuning": "ค่าแล็บ / ปรับแต่งดึงความรู้",
+    "label.knowledge_only_badge": "ตอบจากคลังความรู้ (ไม่ใช้ AI ออนไลน์)",
+    "label.needs_rebuild_banner": (
+        "ดัชนีความรู้ยังไม่พร้อม — อัปโหลด/วางแล้วรอ「พร้อมแล้ว」หรือกดสร้างดัชนีใหม่ก่อนถาม"
+    ),
     "action.run_search": "ค้นหา",
     "action.run_health": "ตรวจสุขภาพ",
     "first_run.body": (
-        "ทำสามขั้นตอนนี้แล้วเริ่มแชตได้: คัดลอก .env.example เป็น .env "
-        "ใส่ GROQ_API_KEY กับ GROQ_MODEL_* แล้วกดบันทึกคีย์ด้านล่าง"
+        "สำหรับคนทั่วไป: ติดตั้ง Docker Desktop หรือดับเบิลคลิก start.bat → "
+        "วางคีย์ Groq ฟรีในช่องด้านล่าง (โมเดลตั้งให้แล้วใน .env) → เริ่มแชต "
+        "หรือกด「ใช้แบบคลังความรู้เท่านั้น」ถ้ายังไม่มีคีย์"
     ),
     "status.health_ok": "ระบบพร้อม",
     "status.health_issues": "ยังไม่ครบเงื่อนไขการเริ่มใช้งาน",
@@ -109,11 +133,19 @@ _TH: dict[str, str] = {
     "status.persona_saved": "บันทึกเพอร์โซนาแล้ว",
     "status.persona_created": "สร้างเพอร์โซนาแล้ว",
     "status.persona_duplicated": "ทำสำเนาเป็นแพ็กผู้ใช้แล้ว — แก้ไขและอัปโหลดความรู้ได้",
-    "status.knowledge_uploaded": "อัปโหลดไฟล์ความรู้แล้ว — กดสร้างดัชนีใหม่ถ้ายังไม่พร้อม",
-    "status.knowledge_pasted": "บันทึกข้อความความรู้แล้ว — กดสร้างดัชนีใหม่ถ้ายังไม่พร้อม",
+    "status.knowledge_uploaded": "อัปโหลดไฟล์ความรู้แล้ว — กำลังทำให้พร้อมใช้",
+    "status.knowledge_pasted": "บันทึกข้อความความรู้แล้ว — กำลังทำให้พร้อมใช้",
+    "status.knowledge_ready_after_save": "บันทึกความรู้และสร้างดัชนีแล้ว — พร้อมใช้",
     "status.knowledge_ready": "พร้อมแล้ว",
     "status.knowledge_needs_rebuild": "ต้องสร้างดัชนีใหม่",
     "status.knowledge_empty": "ยังไม่มีไฟล์ความรู้",
+    "status.knowledge_only_empty": (
+        "ไม่พบข้อความที่เกี่ยวข้องในคลังความรู้ของคุณ — เพิ่มโน้ตแล้วรอสถานะพร้อมแล้ว หรือใส่คีย์ Groq เพื่อคุยแบบ AI"
+    ),
+    "status.knowledge_only_fallback": (
+        "ใช้คำตอบจากคลังความรู้แทน (ไม่ใช้ AI ออนไลน์) เพราะคีย์/โควตา/เครือข่ายไม่พร้อม"
+    ),
+    "status.oos_calm": "ไม่พบข้อมูลที่เกี่ยวข้องในคลังความรู้",
     "status.remember_loaded": "โหลดคีย์จาก OS keyring แล้ว — จะใช้ได้หลังรีสตาร์ท",
     "status.remember_env": "จำคีย์เปิดผ่าน PERSONA_BOT_REMEMBER_KEY — บันทึกและโหลดจาก keyring",
     "status.remember_ui": "จำคีย์เปิดจากช่องนี้ — บันทึกและโหลดจาก keyring หลังรีสตาร์ท",
@@ -145,10 +177,14 @@ _TH: dict[str, str] = {
     "error.knowledge_load": "อ่านไฟล์ความรู้ไม่สำเร็จ",
     "error.knowledge_too_large": "ขนาดคลังความรู้เกินขีดจำกัด MAX_KNOWLEDGE_MB",
     "error.hint.retry": "ลองใหม่อีกครั้ง หรือตรวจการตั้งค่า",
-    "error.hint.add_api_key": "วางคีย์จาก console.groq.com ในช่อง API key",
-    "error.hint.set_models": "ตั้ง GROQ_MODEL_PRIMARY (และ FALLBACK) ใน .env",
-    "error.hint.wait_retry": "รอตาม retry-after แล้วส่งข้อความอีกครั้ง",
-    "error.hint.wait_day": "ลดการใช้งานหรือรอจนโควตารายวันรีเซ็ต",
+    "error.hint.add_api_key": (
+        "วางคีย์จาก console.groq.com ในช่อง API key — หรือใช้โหมดคลังความรู้ถ้ามีโน้ตพร้อมแล้ว"
+    ),
+    "error.hint.set_models": (
+        "ตั้ง GROQ_MODEL_PRIMARY (และ FALLBACK) ใน .env — ค่าแนะนำมีใน .env.example แล้ว"
+    ),
+    "error.hint.wait_retry": ("รอตาม retry-after แล้วส่งอีกครั้ง — หรือใช้คำตอบจากคลังความรู้ถ้ามีผลค้นหา"),
+    "error.hint.wait_day": ("โควตารายวันเต็ม — รอรีเซ็ต หรือให้แอปตอบจากคลังความรู้ถ้ามีโน้ตตรงคำถาม"),
     "error.hint.retry_after": "ลองใหม่ได้ในประมาณ {seconds} วินาที",
     "error.hint.reset_tokens": "รีเซ็ตโทเคน: {reset} (~{seconds}s)",
     "error.hint.reset_requests": "รีเซ็ตคำขอ: {reset} (~{seconds}s)",
@@ -178,19 +214,29 @@ _TH: dict[str, str] = {
 _EN: dict[str, str] = {
     "app.title": "persona-bot",
     "app.tagline": "A personal chatbot with role, knowledge, and tuning knobs",
-    "app.welcome": "Welcome — add your Groq API key to get started",
+    "app.welcome": "Welcome — add a Groq key or start knowledge-only",
     "app.welcome.body": (
         "The key stays in this session by default and is not written under data/. "
-        "Pick a persona, then send your first message in a few steps."
+        "Without a key you can still paste notes and Q&A from your knowledge (no online AI)."
     ),
-    "app.onboarding.step1": "1) Paste your Groq API key",
-    "app.onboarding.step2": "2) Choose a persona in the sidebar",
-    "app.onboarding.step3": "3) Type a message below",
+    "app.onboarding.step1": "1) (Recommended) Paste a Groq API key — or skip for knowledge-only",
+    "app.onboarding.step2": "2) Pick a persona such as Personal notes or Study buddy",
+    "app.onboarding.step3": "3) Add knowledge, then ask — or type a message below",
+    "app.what_this_is": (
+        "What this is: a personal bot on your machine · desktop browser · "
+        "your Groq key when you want AI · no automatic multi-device sync · "
+        "not a phone/Line app — move machines via export/import zip"
+    ),
     "wizard.step1": "API key",
     "wizard.step2": "Privacy",
     "wizard.step3": "Start chat",
     "wizard.locked_tools": (
-        "Add an API key first to unlock advanced tools (backup / import / search lab)"
+        "Backup/import live under Advanced after you add a key — "
+        "Knowledge and note-based chat work even without a key"
+    ),
+    "wizard.knowledge_only_hint": (
+        "Knowledge-only mode: answers from local notes (no online AI) "
+        "when there is no key / quota is exhausted / you are offline"
     ),
     "action.new_chat": "New chat",
     "action.clear_chat": "Clear chat",
@@ -215,6 +261,9 @@ _EN: dict[str, str] = {
     "action.duplicate_persona": "Duplicate",
     "action.upload_knowledge": "Upload knowledge file",
     "action.paste_knowledge": "Save pasted text",
+    "action.make_knowledge_ready": "Save knowledge & make ready",
+    "action.continue_knowledge_only": "Continue with knowledge only (no key)",
+    "action.use_knowledge_only": "Answer from knowledge instead",
     "label.api_key": "Groq API key",
     "label.persona": "Persona",
     "label.thread": "Chat thread",
@@ -241,7 +290,8 @@ _EN: dict[str, str] = {
     "label.remember_key": "Remember key in OS keyring",
     "label.remember_key_help": (
         "Enable via this checkbox or PERSONA_BOT_REMEMBER_KEY=1 in .env — "
-        "either mode saves and loads the key from the OS keyring (outside data/)"
+        "either mode saves and loads the key from the OS keyring (outside data/). "
+        "Tick once so tomorrow you can open start.bat and keep chatting."
     ),
     "label.language": "Language",
     "label.data_tools": "Data & backup",
@@ -257,6 +307,9 @@ _EN: dict[str, str] = {
     "label.persona_description": "Short description",
     "label.system_prompt": "System prompt / role",
     "label.answer_mode": "Answer mode",
+    "label.answer_mode.strict": "Knowledge only",
+    "label.answer_mode.balanced": "Flexible",
+    "label.answer_mode.open": "Free style",
     "label.temperature": "Temperature",
     "label.max_tokens": "Max tokens",
     "label.embedding_preset": "Embedding preset",
@@ -264,11 +317,17 @@ _EN: dict[str, str] = {
     "label.min_score": "Min score",
     "label.chunk_chars": "Chunk size (chars)",
     "label.optional_override": "Leave blank to use the preset default",
+    "label.lab_tuning": "Lab / retrieval tuning",
+    "label.knowledge_only_badge": "Answer from your knowledge (no online AI)",
+    "label.needs_rebuild_banner": (
+        "Knowledge index is not ready — wait for Ready after upload/paste, or rebuild before asking"
+    ),
     "action.run_search": "Search",
     "action.run_health": "Run health check",
     "first_run.body": (
-        "Do these three steps, then chat: copy .env.example to .env, "
-        "set GROQ_API_KEY and GROQ_MODEL_*, then save the key below."
+        "For everyone: install Docker Desktop or double-click start.bat → "
+        "paste a free Groq key below (models are prefilled in .env) → chat. "
+        "Or click Continue with knowledge only if you have no key yet."
     ),
     "status.health_ok": "System ready",
     "status.health_issues": "Setup requirements are incomplete",
@@ -285,11 +344,20 @@ _EN: dict[str, str] = {
     "status.persona_saved": "Persona saved",
     "status.persona_created": "Persona created",
     "status.persona_duplicated": "Duplicated as a user pack — you can edit and upload knowledge",
-    "status.knowledge_uploaded": "Knowledge file uploaded — rebuild the index if needed",
-    "status.knowledge_pasted": "Pasted knowledge saved — rebuild the index if needed",
+    "status.knowledge_uploaded": "Knowledge file uploaded — making it ready",
+    "status.knowledge_pasted": "Pasted knowledge saved — making it ready",
+    "status.knowledge_ready_after_save": "Knowledge saved and indexed — ready to use",
     "status.knowledge_ready": "Ready",
     "status.knowledge_needs_rebuild": "Rebuild the index",
     "status.knowledge_empty": "No knowledge files yet",
+    "status.knowledge_only_empty": (
+        "No matching notes in your knowledge — "
+        "add notes and wait for Ready, or add a Groq key for AI chat"
+    ),
+    "status.knowledge_only_fallback": (
+        "Using a knowledge-only answer (no online AI) because key/quota/network is unavailable"
+    ),
+    "status.oos_calm": "No relevant knowledge found in the pack",
     "status.remember_loaded": "Loaded key from OS keyring — available after restart",
     "status.remember_env": (
         "Remember enabled via PERSONA_BOT_REMEMBER_KEY — save and load from keyring"
@@ -327,10 +395,19 @@ _EN: dict[str, str] = {
     "error.knowledge_load": "Could not read a knowledge file",
     "error.knowledge_too_large": "Knowledge size exceeds the MAX_KNOWLEDGE_MB limit",
     "error.hint.retry": "Try again or check your settings",
-    "error.hint.add_api_key": "Paste a key from console.groq.com into the API key field",
-    "error.hint.set_models": "Set GROQ_MODEL_PRIMARY (and FALLBACK) in .env",
-    "error.hint.wait_retry": "Wait for retry-after, then send again",
-    "error.hint.wait_day": "Reduce usage or wait for the daily quota reset",
+    "error.hint.add_api_key": (
+        "Paste a key from console.groq.com into the API key field — "
+        "or use knowledge-only mode when notes are ready"
+    ),
+    "error.hint.set_models": (
+        "Set GROQ_MODEL_PRIMARY (and FALLBACK) in .env — defaults are in .env.example"
+    ),
+    "error.hint.wait_retry": (
+        "Wait for retry-after, then send again — or use a knowledge-only answer if hits exist"
+    ),
+    "error.hint.wait_day": (
+        "Daily quota exhausted — wait for reset, or answer from knowledge when notes match"
+    ),
     "error.hint.retry_after": "Retry in about {seconds} seconds",
     "error.hint.reset_tokens": "Token reset: {reset} (~{seconds}s)",
     "error.hint.reset_requests": "Request reset: {reset} (~{seconds}s)",

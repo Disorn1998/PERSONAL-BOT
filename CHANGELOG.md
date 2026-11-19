@@ -5,6 +5,21 @@ All notable changes are documented here. This project follows
 
 ## [Unreleased]
 
+### Added
+
+- Everyday beginner UX: 「สำหรับคนทั่วไป」 docs path; simple persona editor with lab
+  knobs under Advanced; plain answer-mode labels; auto-rebuild after
+  upload/paste (「บันทึกความรู้ให้พร้อมใช้」); calm strict OOS; search lab / prompt
+  inspector buried under Advanced.
+- Knowledge-only answers when no Groq key, quota exhausted (429), or network fails:
+  extractive Thai+EN replies labeled 「ตอบจากคลังความรู้ (ไม่ใช้ AI ออนไลน์)」.
+- Example persona `personal-notes` /「โน้ตส่วนตัว」guided template (fictional sample).
+
+### Docs
+
+- README / FIRST_RUN / FAQ: what this is/isn’t, zip multi-device, honest offline
+  and token limits; Docker Desktop as non-dev path A.
+
 ## [0.2.1] — 2026-11-19
 
 Patch release after `v0.2.0`: core coverage gate + two example personas.

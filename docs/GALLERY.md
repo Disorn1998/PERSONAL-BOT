@@ -12,11 +12,14 @@ Bundled under `personas/examples/` (read-only in Docker image).
 | `meeting-notes` | จดบันทึกประชุม | balanced | fictional demo meeting + note template |
 | `pdf-handbook-demo` | PDF Handbook Demo | **strict** | fictional Cedarvale Maker Space PDFs + disclaimer |
 | `en-study-coach` | EN Study Coach | balanced | EN spaced-repetition + exam-week plan (md) |
+| `personal-notes` | โน้ตส่วนตัว | **strict** | guided personal-notes template + fictional sample notes |
 
 All example packs include `icon`, `greeting`, `starter_questions`, and `metadata`.
 Tax/FAQ/handbook knowledge is **self-written fictional demo content** — not legal or safety advice.
 `pdf-handbook-demo` ships tiny self-authored PDFs so clones can verify PDF ingest + citations.
 `en-study-coach` is English-first for international onboarding (complements TH `study-buddy`).
+`personal-notes` teaches the everyday loop: duplicate → paste your notes → Ready → chat
+(works with knowledge-only mode when there is no Groq key/quota).
 
 ## Share your pack
 
