@@ -68,7 +68,7 @@ from persona_bot.services import (
     persona_dir_for,
     usage_path,
 )
-from persona_bot.ui.assets import icon_path, welcome_hero_path
+from persona_bot.ui.assets import icon_path, welcome_hero_data_uri, welcome_hero_path
 from persona_bot.ui.errors import error_from_exception, format_error_card
 from persona_bot.ui.theme import custom_css
 from persona_bot.ui.wizard import (
@@ -951,19 +951,27 @@ def _sidebar(personas: list) -> None:
 
 def _welcome_gate() -> None:
     """First viewport: brand + short copy + hero + two path choices."""
+    hero_uri = welcome_hero_data_uri()
+    hero_block = ""
+    if hero_uri:
+        alt = html.escape(t("app.title"))
+        hero_block = (
+            f'<div class="pb-welcome-hero"><img src="{hero_uri}" alt="{alt}" width="100%" /></div>'
+        )
     st.markdown(
         f"""
 <div class="pb-welcome">
   <p class="pb-welcome-brand">{t("app.title")}</p>
   <h1>{t("app.welcome.headline")}</h1>
   <p class="pb-welcome-sub">{t("app.welcome.sub")}</p>
+  {hero_block}
 </div>
 """,
         unsafe_allow_html=True,
     )
-    hero = welcome_hero_path()
-    if hero.is_file():
-        st.image(str(hero), width="stretch")
+    # Path-only fallback when data URI unavailable (missing file → skip).
+    if not hero_uri and welcome_hero_path().is_file():
+        st.image(str(welcome_hero_path()), width="stretch")
     c1, c2 = st.columns(2)
     with c1:
         if st.button(

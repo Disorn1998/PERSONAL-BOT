@@ -3,6 +3,14 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Welcome hero motion (2026-11-19) — **DECISION**
+
+- Soft **2D CSS-only** float (~5s) + subtle tilt/parallax (`translate` +
+  `rotate`) + shadow pulse on `.pb-welcome-hero` / img. No WebGL / Three.js /
+  `.glb`. Hero inlined as JPEG data URI so the class wraps the image under
+  Streamlit. `prefers-reduced-motion: reduce` disables animation. Guided tour
+  is a later task after this merges.
+
 ## Chat interior polish (2026-11-19) — **DECISION**
 
 - Chat column matches welcome electric-blue soft-3D: user/assistant bubbles,
