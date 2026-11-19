@@ -263,6 +263,75 @@ def test_apptest_editor_create_persona(monkeypatch: pytest.MonkeyPatch, tmp_path
     assert (data / "personas" / "notes-home" / "persona.yaml").is_file()
 
 
+def test_apptest_knowledge_file_edit_and_delete(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """User pack: list → edit text → delete with confirm (FakeEmbedder)."""
+    data = _configure_env(monkeypatch, tmp_path)
+    _patch_fake_embedder(monkeypatch)
+    from persona_bot.config import clear_settings_cache, get_settings
+    from persona_bot.persona_editor import (
+        add_knowledge_paste,
+        build_persona_config,
+        create_user_persona,
+        list_knowledge_files,
+    )
+
+    clear_settings_cache()
+    settings = get_settings()
+    create_user_persona(
+        personas_dir=settings.personas_dir,
+        persona_id="kb-crud",
+        name="KB CRUD",
+        description="file manager",
+        system_prompt="Use knowledge.",
+        config=build_persona_config(answer_mode="strict"),
+    )
+    add_knowledge_paste(
+        settings=settings,
+        persona_id="kb-crud",
+        text="wifi is maple-42",
+        filename="notes.md",
+    )
+
+    (data / "privacy_ack").write_text("1", encoding="utf-8")
+    (data / "entry_path").write_text("knowledge", encoding="utf-8")
+    (data / "tour_done").write_text("1", encoding="utf-8")
+    at = _apptest()
+    at.session_state["wizard_done"] = True
+    at.session_state["knowledge_only_mode"] = True
+    at.session_state["privacy_ack"] = True
+    at.session_state["locale"] = "en"
+    at.session_state["persona_id"] = "kb-crud"
+    at.session_state["entry_path"] = "knowledge"
+    at.session_state["tour_done"] = True
+    at.session_state["tour_active"] = False
+    at.run()
+    assert not at.exception, at.exception
+
+    edit_key = "knowledge_edit_kb-crud_notes.md"
+    at.text_area(edit_key).set_value("wifi is cedar-99").run()
+    assert not at.exception, at.exception
+    at.button("knowledge_save_btn_kb-crud").click().run()
+    assert not at.exception, at.exception
+    from persona_bot.persona_editor import read_knowledge_text
+
+    assert (
+        read_knowledge_text(settings=settings, persona_id="kb-crud", relative_path="notes.md")
+        == "wifi is cedar-99"
+    )
+
+    at.button("knowledge_delete_btn_kb-crud").click().run()
+    assert not at.exception, at.exception
+    assert at.session_state.get("confirm_delete_knowledge_path") == "notes.md"
+    at.button("knowledge_confirm_delete_btn_kb-crud").click().run()
+    assert not at.exception, at.exception
+    assert list_knowledge_files(settings=settings, persona_id="kb-crud") == []
+    from persona_bot.i18n import set_locale
+
+    set_locale("th")
+
+
 def test_apptest_make_knowledge_ready_paste(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

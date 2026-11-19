@@ -7,6 +7,9 @@ All notable changes are documented here. This project follows
 
 ### Added
 
+- Knowledge file manager (user packs): list files in the Knowledge sidebar,
+  edit ``.txt``/``.md`` in place, delete with confirm + auto rebuild; PDF/DOCX
+  stay delete-and-reupload. Soft-3D list panel keeps electric-blue tokens.
 - Blue soft-3D welcome gate: choose **Add API key** or **Upload knowledge**,
   with owner hero (`persona_bot/static/illustrations/welcome-hero.jpg`) and
   local SVG icons. Entry path persists under `data/entry_path` and can be

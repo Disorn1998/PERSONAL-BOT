@@ -14,9 +14,14 @@ from persona_bot.persona_editor import (
     add_knowledge_paste,
     assert_knowledge_within_limit,
     create_user_persona,
+    delete_knowledge_file,
     duplicate_persona_to_user,
+    format_knowledge_size,
     index_status_key,
+    list_knowledge_files,
+    read_knowledge_text,
     save_user_persona,
+    update_knowledge_text,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -165,3 +170,87 @@ def test_create_rejects_bad_id(tmp_path: Path) -> None:
             name="x",
             system_prompt="y",
         )
+
+
+def test_knowledge_list_edit_delete(tmp_path: Path) -> None:
+    settings = _settings(tmp_path)
+    create_user_persona(
+        personas_dir=settings.personas_dir,
+        persona_id="crud-bot",
+        name="CRUD",
+        system_prompt="hi",
+    )
+    add_knowledge_paste(
+        settings=settings,
+        persona_id="crud-bot",
+        text="alpha note",
+        filename="a.md",
+    )
+    add_knowledge_bytes(
+        settings=settings,
+        persona_id="crud-bot",
+        filename="b.txt",
+        data=b"bravo",
+    )
+    listed = list_knowledge_files(settings=settings, persona_id="crud-bot")
+    assert {f.relative_path for f in listed} == {"a.md", "b.txt"}
+    assert all(f.editable for f in listed)
+    assert read_knowledge_text(settings=settings, persona_id="crud-bot", relative_path="a.md") == (
+        "alpha note"
+    )
+
+    update_knowledge_text(
+        settings=settings,
+        persona_id="crud-bot",
+        relative_path="a.md",
+        text="alpha updated",
+    )
+    assert (
+        read_knowledge_text(settings=settings, persona_id="crud-bot", relative_path="a.md")
+        == "alpha updated"
+    )
+    yaml_files = load_persona_yaml(settings.personas_dir / "crud-bot" / "persona.yaml")
+    assert any(name.endswith("a.md") for name in yaml_files.knowledge_files)
+
+    delete_knowledge_file(settings=settings, persona_id="crud-bot", relative_path="b.txt")
+    remaining = list_knowledge_files(settings=settings, persona_id="crud-bot")
+    assert [f.relative_path for f in remaining] == ["a.md"]
+    assert not (settings.personas_dir / "crud-bot" / "knowledge" / "b.txt").exists()
+
+    with pytest.raises(PersonaEditorError):
+        read_knowledge_text(settings=settings, persona_id="crud-bot", relative_path="../x.md")
+    with pytest.raises(PersonaEditorError):
+        delete_knowledge_file(settings=settings, persona_id="crud-bot", relative_path="missing.md")
+    with pytest.raises(PersonaEditorError):
+        list_knowledge_files(settings=settings, persona_id="study-buddy")
+
+
+def test_knowledge_binary_not_text_editable(tmp_path: Path) -> None:
+    settings = _settings(tmp_path)
+    create_user_persona(
+        personas_dir=settings.personas_dir,
+        persona_id="bin-bot",
+        name="Bin",
+        system_prompt="hi",
+    )
+    # Minimal PDF header bytes — not editable as text, but deletable.
+    pdf = b"%PDF-1.1\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n"
+    add_knowledge_bytes(
+        settings=settings,
+        persona_id="bin-bot",
+        filename="scan.pdf",
+        data=pdf,
+    )
+    infos = list_knowledge_files(settings=settings, persona_id="bin-bot")
+    assert len(infos) == 1
+    assert infos[0].editable is False
+    with pytest.raises(PersonaEditorError):
+        read_knowledge_text(settings=settings, persona_id="bin-bot", relative_path="scan.pdf")
+    delete_knowledge_file(settings=settings, persona_id="bin-bot", relative_path="scan.pdf")
+    assert list_knowledge_files(settings=settings, persona_id="bin-bot") == []
+
+
+def test_format_knowledge_size() -> None:
+    assert format_knowledge_size(500) == "500 B"
+    assert format_knowledge_size(2048).endswith("KB")
+    assert format_knowledge_size(2 * 1024 * 1024).endswith("MB")

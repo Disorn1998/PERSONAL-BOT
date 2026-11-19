@@ -42,9 +42,14 @@ from persona_bot.persona_editor import (
     add_knowledge_paste,
     build_persona_config,
     create_user_persona,
+    delete_knowledge_file,
     duplicate_persona_to_user,
+    format_knowledge_size,
     index_status_key,
+    list_knowledge_files,
+    read_knowledge_text,
     save_user_persona,
+    update_knowledge_text,
 )
 from persona_bot.persona_pack_io import (
     delete_user_persona,
@@ -112,6 +117,7 @@ def _init_state() -> None:
     ss.setdefault("import_bytes", None)
     ss.setdefault("confirm_delete_all", False)
     ss.setdefault("confirm_delete_persona", False)
+    ss.setdefault("confirm_delete_knowledge_path", "")
     ss.setdefault("confirm_clear_chat", False)
     ss.setdefault("confirm_overwrite_import", False)
     ss.setdefault("remember_loaded", False)
@@ -490,8 +496,109 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
                 _render_error(exc)
 
 
+def _sidebar_knowledge_file_manager(persona: PersonaPack, settings: Any) -> None:
+    """Per-file list + edit/delete for user packs (beginner sidebar)."""
+    files = list_knowledge_files(settings=settings, persona_id=persona.id)
+    st.markdown(
+        f'<div class="pb-knowledge-files"><p class="pb-knowledge-files-title">'
+        f"{html.escape(t('label.knowledge_file_list'))}</p></div>",
+        unsafe_allow_html=True,
+    )
+    if not files:
+        st.caption(t("status.knowledge_empty"))
+        return
+
+    paths = [f.relative_path for f in files]
+    by_path = {f.relative_path: f for f in files}
+    pick_key = f"knowledge_pick_{persona.id}"
+    if st.session_state.get(pick_key) not in paths:
+        st.session_state[pick_key] = paths[0]
+
+    def _file_label(rel: str) -> str:
+        info = by_path[rel]
+        return t(
+            "label.knowledge_file_meta",
+            name=info.name,
+            size=format_knowledge_size(info.size_bytes),
+        )
+
+    chosen = st.selectbox(
+        t("label.knowledge_pick_file"),
+        options=paths,
+        format_func=_file_label,
+        key=pick_key,
+    )
+    info = by_path[str(chosen)]
+    path_key = info.relative_path.replace("/", "__")
+    edit_key = f"knowledge_edit_{persona.id}_{path_key}"
+    if info.editable:
+        if edit_key not in st.session_state:
+            st.session_state[edit_key] = read_knowledge_text(
+                settings=settings,
+                persona_id=persona.id,
+                relative_path=info.relative_path,
+            )
+        st.text_area(
+            t("label.knowledge_edit"),
+            key=edit_key,
+            height=140,
+        )
+        if st.button(
+            t("action.save_knowledge_file"),
+            key=f"knowledge_save_btn_{persona.id}",
+            use_container_width=True,
+        ):
+            try:
+                update_knowledge_text(
+                    settings=settings,
+                    persona_id=persona.id,
+                    relative_path=info.relative_path,
+                    text=str(st.session_state.get(edit_key) or ""),
+                )
+                _clear_rag_cache(persona.id)
+                _rebuild_persona_index(persona)
+                st.session_state.confirm_delete_knowledge_path = ""
+                st.success(t("status.knowledge_saved_file"))
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
+    else:
+        st.caption(t("status.knowledge_binary_readonly"))
+
+    if st.button(
+        t("action.delete_knowledge_file"),
+        key=f"knowledge_delete_btn_{persona.id}",
+        use_container_width=True,
+    ):
+        st.session_state.confirm_delete_knowledge_path = info.relative_path
+    if st.session_state.get("confirm_delete_knowledge_path") == info.relative_path:
+        st.warning(t("warn.delete_knowledge_file"))
+        if st.button(
+            t("action.confirm_delete_knowledge"),
+            key=f"knowledge_confirm_delete_btn_{persona.id}",
+            use_container_width=True,
+        ):
+            try:
+                delete_knowledge_file(
+                    settings=settings,
+                    persona_id=persona.id,
+                    relative_path=info.relative_path,
+                )
+                if edit_key in st.session_state:
+                    del st.session_state[edit_key]
+                st.session_state.confirm_delete_knowledge_path = ""
+                if pick_key in st.session_state:
+                    del st.session_state[pick_key]
+                _clear_rag_cache(persona.id)
+                _rebuild_persona_index(persona)
+                st.success(t("status.knowledge_deleted_file"))
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
+
+
 def _sidebar_knowledge(persona: PersonaPack) -> None:
-    """Simple knowledge panel — status + upload/paste only."""
+    """Simple knowledge panel — status, file CRUD, upload/paste."""
     settings = get_settings()
     if current_tour_step() == "knowledge":
         st.sidebar.markdown(
@@ -525,6 +632,7 @@ def _sidebar_knowledge(persona: PersonaPack) -> None:
             if health.needs_rebuild:
                 st.warning(t("label.needs_rebuild_banner"))
             if is_user_persona(persona.id, settings):
+                _sidebar_knowledge_file_manager(persona, settings)
                 uploaded_knowledge = st.file_uploader(
                     t("action.upload_knowledge"),
                     type=["txt", "md", "pdf", "docx"],
@@ -541,6 +649,7 @@ def _sidebar_knowledge(persona: PersonaPack) -> None:
                             filename=uploaded_knowledge.name,
                             data=uploaded_knowledge.getvalue(),
                         )
+                        st.session_state.confirm_delete_knowledge_path = ""
                         _clear_rag_cache(persona.id)
                         _rebuild_persona_index(persona)
                         st.success(f"{t('status.knowledge_ready_after_save')} ({dest.name})")
@@ -568,6 +677,7 @@ def _sidebar_knowledge(persona: PersonaPack) -> None:
                             text=paste_text,
                             filename=paste_name,
                         )
+                        st.session_state.confirm_delete_knowledge_path = ""
                         _clear_rag_cache(persona.id)
                         _rebuild_persona_index(persona)
                         st.success(f"{t('status.knowledge_ready_after_save')} ({dest.name})")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import shutil
+from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO
 
@@ -24,9 +25,24 @@ _FILENAME_SAFE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._ -]*$")
 
 # Keep in sync with zip import whitelist (persona_pack_io).
 ALLOWED_KNOWLEDGE_SUFFIXES = {".txt", ".md", ".pdf", ".docx"}
+# In-app text edit (PDF/DOCX: delete + re-upload only).
+EDITABLE_KNOWLEDGE_SUFFIXES = {".txt", ".md", ".markdown"}
 
 # Single-file upload cap (bytes) — also bounded by MAX_KNOWLEDGE_MB total.
 DEFAULT_MAX_UPLOAD_BYTES = 40 * 1024 * 1024
+
+
+@dataclass(frozen=True)
+class KnowledgeFileInfo:
+    """One knowledge file under a user pack ``knowledge/`` tree."""
+
+    relative_path: str
+    size_bytes: int
+    editable: bool
+
+    @property
+    def name(self) -> str:
+        return Path(self.relative_path).name
 
 
 class PersonaEditorError(AppError):
@@ -333,6 +349,166 @@ def add_knowledge_paste(
         filename=name,
         data=body.encode("utf-8"),
     )
+
+
+def _user_pack_dir(settings: Settings, persona_id: str) -> Path:
+    if not is_user_persona(persona_id, settings):
+        raise PersonaEditorError(
+            "examples are read-only — duplicate first",
+            details={"id": persona_id},
+        )
+    pack_dir = settings.personas_dir / persona_id
+    if not (pack_dir / "persona.yaml").exists():
+        raise PersonaEditorError("user persona not found", details={"id": persona_id})
+    return pack_dir
+
+
+def _resolve_knowledge_file(kdir: Path, relative_path: str) -> Path:
+    """Resolve a knowledge-relative path; reject traversal / symlinks / bad types."""
+    raw = (relative_path or "").strip().replace("\\", "/")
+    if not raw or raw.startswith("/") or raw.startswith("../") or "/../" in f"/{raw}/":
+        raise PersonaEditorError("invalid knowledge path", details={"path": relative_path})
+    rel = Path(raw)
+    if rel.is_absolute() or ".." in rel.parts or any(part.startswith(".") for part in rel.parts):
+        raise PersonaEditorError("invalid knowledge path", details={"path": relative_path})
+    # Each path segment must be a safe filename fragment.
+    for part in rel.parts:
+        if not _FILENAME_SAFE.match(part):
+            raise PersonaEditorError("invalid knowledge path", details={"path": relative_path})
+    suffix = rel.suffix.lower()
+    if suffix not in ALLOWED_KNOWLEDGE_SUFFIXES and suffix not in SUPPORTED_SUFFIXES:
+        raise PersonaEditorError(
+            "unsupported knowledge type",
+            details={"path": relative_path, "suffix": suffix},
+        )
+    kdir_resolved = kdir.resolve()
+    dest = (kdir / rel).resolve()
+    try:
+        dest.relative_to(kdir_resolved)
+    except ValueError as exc:
+        raise PersonaEditorError(
+            "invalid knowledge path",
+            details={"path": relative_path},
+        ) from exc
+    if dest.is_symlink():
+        raise PersonaEditorError("refusing symlink knowledge file", details={"path": relative_path})
+    return dest
+
+
+def list_knowledge_files(
+    *,
+    settings: Settings,
+    persona_id: str,
+) -> list[KnowledgeFileInfo]:
+    """List knowledge files for a **user** pack (empty list for missing dir)."""
+    pack_dir = _user_pack_dir(settings, persona_id)
+    kdir = pack_dir / "knowledge"
+    infos: list[KnowledgeFileInfo] = []
+    for path in iter_knowledge_files(kdir):
+        if path.is_symlink():
+            continue
+        rel = path.relative_to(kdir).as_posix()
+        suffix = path.suffix.lower()
+        infos.append(
+            KnowledgeFileInfo(
+                relative_path=rel,
+                size_bytes=int(path.stat().st_size),
+                editable=suffix in EDITABLE_KNOWLEDGE_SUFFIXES,
+            )
+        )
+    return infos
+
+
+def read_knowledge_text(
+    *,
+    settings: Settings,
+    persona_id: str,
+    relative_path: str,
+) -> str:
+    """Read UTF-8 text of an editable knowledge file (``.txt`` / ``.md``)."""
+    pack_dir = _user_pack_dir(settings, persona_id)
+    dest = _resolve_knowledge_file(pack_dir / "knowledge", relative_path)
+    if not dest.is_file():
+        raise PersonaEditorError("knowledge file not found", details={"path": relative_path})
+    if dest.suffix.lower() not in EDITABLE_KNOWLEDGE_SUFFIXES:
+        raise PersonaEditorError(
+            "knowledge file is not editable as text",
+            details={"path": relative_path, "suffix": dest.suffix.lower()},
+        )
+    return dest.read_text(encoding="utf-8")
+
+
+def update_knowledge_text(
+    *,
+    settings: Settings,
+    persona_id: str,
+    relative_path: str,
+    text: str,
+    max_upload_bytes: int = DEFAULT_MAX_UPLOAD_BYTES,
+) -> Path:
+    """Overwrite an editable knowledge file; sync ``persona.yaml`` knowledge list."""
+    body = text if text.endswith("\n") or text == "" else text
+    data = body.encode("utf-8")
+    if len(data) <= 0:
+        raise PersonaEditorError("empty knowledge text", details={"path": relative_path})
+    if len(data) > max_upload_bytes:
+        raise PersonaEditorError(
+            "upload too large",
+            details={"size": len(data), "max": max_upload_bytes},
+        )
+    pack_dir = _user_pack_dir(settings, persona_id)
+    kdir = _knowledge_dir(pack_dir)
+    dest = _resolve_knowledge_file(kdir, relative_path)
+    if not dest.is_file():
+        raise PersonaEditorError("knowledge file not found", details={"path": relative_path})
+    if dest.suffix.lower() not in EDITABLE_KNOWLEDGE_SUFFIXES:
+        raise PersonaEditorError(
+            "knowledge file is not editable as text",
+            details={"path": relative_path},
+        )
+    old_size = dest.stat().st_size
+    delta = max(0, len(data) - old_size)
+    _assert_within_knowledge_budget(
+        kdir,
+        incoming_bytes=delta,
+        max_knowledge_mb=settings.max_knowledge_mb,
+    )
+    dest.write_text(body, encoding="utf-8")
+    pack = load_persona_yaml(pack_dir / "persona.yaml")
+    _sync_knowledge_files(pack, pack_dir)
+    return dest
+
+
+def delete_knowledge_file(
+    *,
+    settings: Settings,
+    persona_id: str,
+    relative_path: str,
+) -> None:
+    """Delete one knowledge file from a user pack and sync ``persona.yaml``."""
+    pack_dir = _user_pack_dir(settings, persona_id)
+    kdir = pack_dir / "knowledge"
+    dest = _resolve_knowledge_file(kdir, relative_path)
+    if not dest.is_file():
+        raise PersonaEditorError("knowledge file not found", details={"path": relative_path})
+    dest.unlink()
+    # Drop empty parent dirs under knowledge/ (never remove knowledge itself).
+    parent = dest.parent
+    while parent != kdir and parent.is_dir() and not any(parent.iterdir()):
+        parent.rmdir()
+        parent = parent.parent
+    pack = load_persona_yaml(pack_dir / "persona.yaml")
+    _sync_knowledge_files(pack, pack_dir)
+
+
+def format_knowledge_size(size_bytes: int) -> str:
+    """Human-readable size for sidebar captions."""
+    n = max(0, int(size_bytes))
+    if n < 1024:
+        return f"{n} B"
+    if n < 1024 * 1024:
+        return f"{n / 1024:.1f} KB"
+    return f"{n / (1024 * 1024):.1f} MB"
 
 
 def build_persona_config(

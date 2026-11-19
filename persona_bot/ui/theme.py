@@ -246,6 +246,22 @@ def custom_css() -> str:
     gap: {tokens.SPACE_MD_PX}px;
     margin: {tokens.SPACE_MD_PX}px 0;
   }}
+  /* Knowledge file list — soft panel inside sidebar expander */
+  .pb-knowledge-files {{
+    margin: {tokens.SPACE_SM_PX}px 0 {tokens.SPACE_MD_PX}px 0;
+    padding: {tokens.SPACE_SM_PX}px {tokens.SPACE_MD_PX}px;
+    border: 1px solid {tokens.COLOR_BORDER};
+    border-radius: {tokens.RADIUS_MD_PX}px;
+    background: {tokens.COLOR_ACCENT_WASH};
+    box-shadow: {tokens.SHADOW_SOFT};
+  }}
+  .pb-knowledge-files-title {{
+    margin: 0;
+    color: {tokens.COLOR_PRIMARY_DEEP};
+    font-size: {tokens.FONT_SIZE_SMALL_PX}px;
+    font-weight: 600;
+    letter-spacing: {tokens.LETTER_SPACING_META};
+  }}
   .pb-empty {{
     text-align: center;
     padding: {tokens.SPACE_LG_PX}px {tokens.SPACE_MD_PX}px;
