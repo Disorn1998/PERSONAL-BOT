@@ -5,6 +5,12 @@ All notable changes are documented here. This project follows
 
 ## [Unreleased]
 
+### Added
+
+- Phased **core coverage ≥80%** CI gate (`coverage.core.toml`) omitting Streamlit
+  shell (`main.py`), `ui/*`, eval harness, and backup/cli/versioning helpers;
+  overall gate stays **≥60%**.
+
 ## [0.2.0] — 2026-11-18
 
 Minor release: in-app persona editor + public-readiness P1/P2 polish after `v0.1.1`.

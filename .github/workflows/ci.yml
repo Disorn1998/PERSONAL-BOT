@@ -61,11 +61,14 @@ jobs:
       - name: Mypy
         run: uv run mypy
 
-      - name: Pytest + coverage (hard — overall ≥60%; core ≥80% when split exists)
+      - name: Pytest + coverage (hard — overall ≥60%)
         run: >
           uv run pytest -m "not slow"
           --cov=persona_bot --cov-report=term-missing
           --cov-fail-under=60
+
+      - name: Core coverage gate (≥80%; omits Streamlit shell / UI / helpers)
+        run: uv run coverage report --rcfile=coverage.core.toml
 
   docker-e2e:
     name: docker e2e (fake Groq)

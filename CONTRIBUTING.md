@@ -9,6 +9,7 @@
    uv run ruff format --check .
    uv run mypy
    uv run pytest -m "not slow" --cov=persona_bot --cov-fail-under=60
+   uv run coverage report --rcfile=coverage.core.toml
    ```
 
 4. Never commit `.env`, `data/`, or API keys.
@@ -28,7 +29,16 @@
 | `canary.yml` | Weekly `GET /models` vs `.env.example` |
 | `release.yml` | Tag `v*` → GHCR image |
 
-Coverage: overall **≥ 60%** hard-fail; core **≥ 80%** target when split coverage exists.
+Coverage gates (both hard-fail in CI):
+
+| Gate | Floor | How |
+|---|---|---|
+| Overall `persona_bot` | **≥ 60%** | `pytest --cov=persona_bot --cov-fail-under=60` |
+| Core (omit Streamlit shell) | **≥ 80%** | `coverage report --rcfile=coverage.core.toml` |
+
+Core omitlist (see `coverage.core.toml` / `docs/DECISIONS.md`): `main.py`, `ui/*`,
+`eval_harness.py`, `backup.py`, `cli.py`, `versioning.py`. Do not require `main.py`
+or overall ≥80% — Streamlit AppTest coverage is still thin.
 
 ## Adding an example persona
 

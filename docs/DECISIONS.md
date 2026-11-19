@@ -48,12 +48,29 @@ before locking. Format: date · status · decision.
 - `tests/eval/baseline.json` sets `provisional: false`.
 - No longer provisional; treat DoD 7 numerics as final until a future owner revision.
 
-### Coverage CI gates — **LOCKED** (overall) / **TARGET** (core)
+### Coverage CI gates — **LOCKED** (overall + core split)
 
 - Overall **≥ 60%**: hard fail via `pyproject.toml` `fail_under = 60` and CI
   `--cov-fail-under=60` (not soft).
-- Core **≥ 80%**: documented target to enforce when the project adds split core
-  coverage; not wired as a separate CI gate yet (no split support today).
+- Core **≥ 80%**: hard fail via `coverage report --rcfile=coverage.core.toml`
+  (omit Streamlit shell / UI chrome / non-core helpers). See omitlist below.
+  Do **not** raise overall `fail_under` above 60 until `main.py` is thinned or
+  has meaningful AppTest coverage.
+
+### Core coverage omitlist — **DECISION** (2026-11-19)
+
+Modules **omitted** from the core ≥80% gate (still counted toward overall ≥60%):
+
+| Path | Why omitted |
+|---|---|
+| `persona_bot/main.py` | Streamlit UI shell monolith |
+| `persona_bot/ui/*` | UI chrome (theme/strings/wizard) |
+| `persona_bot/eval_harness.py` | Offline/live eval harness |
+| `persona_bot/backup.py` | Ops helper |
+| `persona_bot/cli.py` | Packaging / entrypoint helper |
+| `persona_bot/versioning.py` | Version display helper |
+
+Config file: `coverage.core.toml`. CI step runs after the overall cov job.
 
 ### Release tag — **AUTHORIZED**
 
@@ -69,9 +86,9 @@ before locking. Format: date · status · decision.
 - Canary workflow: weekly `GET /models` vs `.env.example`; never `chat/completions`
 - Release workflow: tag `v*` → GHCR
 
-### Coverage — **LOCKED** (2026-11-18)
+### Coverage — **LOCKED** (2026-11-18; core split 2026-11-19)
 
-- Overall ≥60% hard-fail; core ≥80% target until split coverage exists.
+- Overall ≥60% hard-fail; core ≥80% hard-fail via `coverage.core.toml` omitlist.
 
 ### Eval thresholds — **LOCKED** (2026-11-18)
 
@@ -236,4 +253,4 @@ before locking. Format: date · status · decision.
 5. ~~Lock or revise Phase 4 eval numbers?~~ → **LOCKED** 2026-11-18 (0.70 / 0.80)
 6. Add maintainer secret `GROQ_API_KEY` for weekly canary (optional but recommended)
 7. Verify embedding model licences on Hugging Face cards (clear TODO(verify) in THIRD_PARTY_NOTICES)
-8. When to add split core-coverage CI gate (≥80%)? — still open (overall ~67–70%; `main.py` UI drag)
+8. ~~When to add split core-coverage CI gate (≥80%)?~~ → **DONE** 2026-11-19 (`coverage.core.toml`)
