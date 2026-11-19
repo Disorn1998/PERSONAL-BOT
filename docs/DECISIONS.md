@@ -3,6 +3,15 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Knowledge file list + edit/delete (2026-11-19) — **DECISION**
+
+- User packs: sidebar Knowledge shows a soft-3D file list (select + meta size).
+  Editable ``.txt`` / ``.md`` open in a text area with Save; PDF/DOCX are
+  delete-and-reupload only. Delete requires confirm, then auto-rebuild index.
+- APIs in ``persona_editor``: ``list_knowledge_files``, ``read_knowledge_text``,
+  ``update_knowledge_text``, ``delete_knowledge_file`` (path-safe, user packs
+  only). Examples stay read-only until Duplicate.
+
 ## First-run guided tour (2026-11-19) — **DECISION**
 
 - Interactive 6-step coach overlay (welcome paths → path cue → persona →
