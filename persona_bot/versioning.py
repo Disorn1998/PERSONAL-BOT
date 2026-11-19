@@ -12,6 +12,9 @@ from typing import Any
 # Bump when on-disk data layout changes (chat schema, manifests, …).
 DATA_SCHEMA_VERSION = 1
 
+# Keep in sync with pyproject.toml [project].version (UI + data/version.json).
+APP_VERSION = "0.2.2"
+
 
 @dataclass(slots=True)
 class VersionInfo:
@@ -25,10 +28,17 @@ class VersionInfo:
 
 
 def get_app_version() -> str:
+    """Return the app version shown in UI / written to data/version.json.
+
+    Prefer the source constant so a stale installed wheel cannot show an old
+    number (e.g. 0.2.0) when running a newer checkout.
+    """
     try:
-        return version("persona-bot")
+        installed = version("persona-bot")
     except PackageNotFoundError:
-        return "0.2.2"
+        return APP_VERSION
+    # If metadata matches the checkout constant, use it; otherwise trust source.
+    return installed if installed == APP_VERSION else APP_VERSION
 
 
 def version_path(data_dir: Path) -> Path:
