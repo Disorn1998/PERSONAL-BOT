@@ -76,3 +76,22 @@ def format_token_usage(*, total_tokens: int, daily_limit: int | None) -> str:
     if daily_limit is None or daily_limit <= 0:
         return str(total_tokens)
     return f"{total_tokens} / {daily_limit}"
+
+
+def usage_percent(*, total_tokens: int, daily_limit: int | None) -> float | None:
+    """Return 0–100 display percent, or ``None`` when the daily limit is unset."""
+    if daily_limit is None or daily_limit <= 0:
+        return None
+    pct = (max(0, int(total_tokens)) / float(daily_limit)) * 100.0
+    return min(100.0, pct)
+
+
+def usage_energy_band(pct: float) -> str:
+    """Threshold bands: ``<50`` green, ``<75`` yellow, ``<90`` orange, else red."""
+    if pct < 50:
+        return "green"
+    if pct < 75:
+        return "yellow"
+    if pct < 90:
+        return "orange"
+    return "red"

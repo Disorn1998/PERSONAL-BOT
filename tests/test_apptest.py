@@ -137,6 +137,74 @@ def test_apptest_api_path_no_sticky_wizard(monkeypatch: pytest.MonkeyPatch, tmp_
     assert not any('class="pb-wizard"' in str(blob) for blob in markdown_blobs)
 
 
+def test_apptest_privacy_notice_is_quiet_caption(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Privacy gate uses muted .pb-privacy, not a loud st.info banner."""
+    _configure_env(monkeypatch, tmp_path)
+    _patch_fake_embedder(monkeypatch)
+    at = _apptest()
+    at.run()
+    at.button("welcome_choose_knowledge").click().run()
+    at.button("welcome_knowledge_only").click().run()
+    assert not at.exception, at.exception
+    assert "privacy_ack_btn" in _button_keys(at)
+    markdown_blobs = [getattr(m, "value", "") or "" for m in at.markdown]
+    assert any('class="pb-privacy"' in str(blob) for blob in markdown_blobs)
+    info_blobs = [str(getattr(i, "value", "") or "") for i in at.info]
+    assert not any("Groq" in blob or "data/" in blob for blob in info_blobs)
+
+
+def test_apptest_usage_energy_bar_when_limit_set(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """With DAILY_TOKEN_LIMIT, latest model meta shows .pb-energy bar."""
+    data = _configure_env(monkeypatch, tmp_path)
+    monkeypatch.setenv("DAILY_TOKEN_LIMIT", "1000")
+    from persona_bot.chat_store import ChatStore
+    from persona_bot.config import clear_settings_cache
+    from persona_bot.llm import StreamResult, TokenUsage
+    from persona_bot.usage import UsageTracker
+
+    clear_settings_cache()
+    _patch_fake_embedder(monkeypatch)
+
+    store = ChatStore(data / "chat.sqlite3")
+    thread = store.create_thread(persona_id="study-buddy", title="energy")
+    store.add_message(thread_id=thread.id, role="user", content="hi")
+    store.add_message(
+        thread_id=thread.id,
+        role="assistant",
+        content="hello [1]",
+        meta={"model": "openai/gpt-oss-20b", "tokens": 40, "used_fallback": False},
+    )
+    store.close()
+    UsageTracker(data / "usage.json").record(
+        StreamResult(
+            model="openai/gpt-oss-20b",
+            usage=TokenUsage(prompt_tokens=10, completion_tokens=30, total_tokens=40),
+        )
+    )
+
+    (data / "privacy_ack").write_text("1", encoding="utf-8")
+    (data / "entry_path").write_text("api", encoding="utf-8")
+    at = _apptest()
+    at.session_state["wizard_done"] = True
+    at.session_state["knowledge_only_mode"] = False
+    at.session_state["privacy_ack"] = True
+    at.session_state["locale"] = "en"
+    at.session_state["persona_id"] = "study-buddy"
+    at.session_state["thread_id"] = thread.id
+    at.session_state["api_key"] = "gsk_test"
+    at.session_state["entry_path"] = "api"
+    at.run()
+    assert not at.exception, at.exception
+    markdown_blobs = [getattr(m, "value", "") or "" for m in at.markdown]
+    assert any('class="pb-energy"' in str(blob) for blob in markdown_blobs)
+    assert any("pb-energy-fill green" in str(blob) for blob in markdown_blobs)
+    assert any('class="pb-cite"' in str(blob) for blob in markdown_blobs)
+
+
 def test_apptest_clear_chat_confirm(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     data = _configure_env(monkeypatch, tmp_path)
     _patch_fake_embedder(monkeypatch)
