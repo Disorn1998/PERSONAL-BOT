@@ -6,12 +6,11 @@ from typing import Final
 
 _TH: dict[str, str] = {
     "app.title": "persona-bot",
-    "app.tagline": "แชตบอทส่วนตัวที่ตั้งบทบาท ความรู้ และค่าปรับแต่งได้",
-    "app.welcome": "ยินดีต้อนรับ — ใส่คีย์ Groq หรือเริ่มแบบคลังความรู้เท่านั้น",
-    "app.welcome.body": (
-        "คีย์เก็บในเซสชันนี้เป็นค่าเริ่มต้น ไม่ถูกบันทึกลง data/ "
-        "ถ้ายังไม่มีคีย์ ก็วางโน้ตแล้วถาม-ตอบจากคลังได้ (ไม่ใช้ AI ออนไลน์)"
-    ),
+    "app.tagline": "เพื่อน AI บนโต๊ะทำงานของคุณ",
+    "app.welcome": "เลือกวิธีเริ่มต้น",
+    "app.welcome.body": "ใส่คีย์ API หรืออัปโหลดความรู้ — เปลี่ยนทีหลังได้ในตั้งค่า",
+    "app.welcome.headline": "เพื่อน AI บนโต๊ะทำงานของคุณ",
+    "app.welcome.sub": "เลือกวิธีเริ่มต้นสั้น ๆ แล้วเริ่มถามได้เลย",
     "app.onboarding.step1": "1) (แนะนำ) วาง Groq API key — หรือข้ามไปใช้คลังความรู้",
     "app.onboarding.step2": "2) เลือกเพอร์โซนา เช่น「โน้ตส่วนตัว」หรือ「เพื่อนติว」",
     "app.onboarding.step3": "3) วางความรู้แล้วถาม — หรือพิมพ์ข้อความด้านล่าง",
@@ -27,6 +26,10 @@ _TH: dict[str, str] = {
     "wizard.knowledge_only_hint": (
         "ตอบจากโน้ตบนเครื่อง (ไม่ใช้ AI ออนไลน์) เมื่อไม่มีคีย์ / โควตาหมด / ออฟไลน์"
     ),
+    "welcome.change_later": "เปลี่ยนทีหลังได้ในตั้งค่า",
+    "welcome.env_key_found": "พบคีย์ใน .env แล้ว — เริ่มแชต",
+    "welcome.knowledge_hint": "ใส่ไฟล์หรือวางข้อความ แล้วกดพร้อมใช้",
+    "welcome.api_hint": "วางคีย์ Groq หรือใช้คีย์จาก .env",
     "action.new_chat": "แชตใหม่",
     "action.clear_chat": "ล้างแชต",
     "action.confirm_clear_chat": "ยืนยันล้างแชต",
@@ -51,8 +54,12 @@ _TH: dict[str, str] = {
     "action.upload_knowledge": "อัปโหลดไฟล์",
     "action.paste_knowledge": "บันทึกข้อความที่วาง",
     "action.make_knowledge_ready": "บันทึกให้พร้อมใช้",
-    "action.continue_knowledge_only": "ใช้แบบความรู้เท่านั้น (ไม่ใส่คีย์)",
+    "action.continue_knowledge_only": "พร้อมใช้",
     "action.use_knowledge_only": "ตอบจากความรู้แทน",
+    "action.choose_api": "ใส่คีย์ API",
+    "action.choose_knowledge": "อัปโหลดความรู้",
+    "action.start_chat": "เริ่มแชต",
+    "action.back_welcome": "กลับไปเลือกใหม่",
     "label.api_key": "คีย์ Groq",
     "label.persona": "เพอร์โซนา",
     "label.thread": "แชต",
@@ -106,15 +113,14 @@ _TH: dict[str, str] = {
     "label.chunk_chars": "ขนาดชิ้นข้อความ",
     "label.optional_override": "ว่าง = ใช้ค่าเริ่มต้น",
     "label.lab_tuning": "ค่าแล็บ",
-    "label.knowledge_only_badge": "ตอบจากความรู้ (ไม่ใช้ AI ออนไลน์)",
+    "label.knowledge_only_badge": "จากคลังความรู้",
+    "label.entry_path": "วิธีเริ่มต้น",
+    "label.entry_path.api": "ใส่คีย์ API",
+    "label.entry_path.knowledge": "อัปโหลดความรู้",
     "label.needs_rebuild_banner": ("ความรู้ยังไม่พร้อม — กดบันทึกให้พร้อมใช้ หรือสร้างดัชนีใหม่ก่อนถาม"),
     "action.run_search": "ค้นหา",
     "action.run_health": "ตรวจสุขภาพ",
-    "first_run.body": (
-        "สำหรับคนทั่วไป: ติดตั้ง Docker Desktop หรือดับเบิลคลิก start.bat → "
-        "วางคีย์ Groq ฟรีในช่องด้านล่าง (โมเดลตั้งให้แล้วใน .env) → เริ่มแชต "
-        "หรือกด「ใช้แบบคลังความรู้เท่านั้น」ถ้ายังไม่มีคีย์"
-    ),
+    "first_run.body": ("เลือกใส่คีย์ API หรืออัปโหลดความรู้ — เปลี่ยนทีหลังได้ในตั้งค่า"),
     "status.health_ok": "ระบบพร้อม",
     "status.health_issues": "ยังไม่ครบเงื่อนไขการเริ่มใช้งาน",
     "status.import_ok": "นำเข้าเพอร์โซนาสำเร็จ",
@@ -147,7 +153,7 @@ _TH: dict[str, str] = {
     "status.remember_session_only": "คีย์อยู่ในเซสชันนี้เท่านั้น — ไม่โหลดอัตโนมัติหลังรีสตาร์ท",
     "status.daily_limit_unset": "ยังไม่ตั้งลิมิตต่อวัน",
     "chat.placeholder": "พิมพ์ข้อความ…",
-    "chat.empty": "ยังไม่มีข้อความ — เริ่มคุยกับเพอร์โซนาได้เลย",
+    "chat.empty": "ถามอะไรก็ได้เกี่ยวกับความรู้ของคุณ",
     "label.starter_questions": "คำถามเริ่มต้น",
     "status.ready": "พร้อมใช้งาน",
     "status.thinking": "กำลังคิด…",
@@ -208,12 +214,11 @@ _TH: dict[str, str] = {
 
 _EN: dict[str, str] = {
     "app.title": "persona-bot",
-    "app.tagline": "A personal chatbot with role, knowledge, and tuning knobs",
-    "app.welcome": "Welcome — add a Groq key or start knowledge-only",
-    "app.welcome.body": (
-        "The key stays in this session by default and is not written under data/. "
-        "Without a key you can still paste notes and Q&A from your knowledge (no online AI)."
-    ),
+    "app.tagline": "Your desk-side AI companion",
+    "app.welcome": "Choose how to start",
+    "app.welcome.body": "Add an API key or upload knowledge — change later in Settings",
+    "app.welcome.headline": "Your desk-side AI companion",
+    "app.welcome.sub": "Pick a short path, then start asking",
     "app.onboarding.step1": "1) (Recommended) Paste a Groq API key — or skip for knowledge-only",
     "app.onboarding.step2": "2) Pick a persona such as Personal notes or Study buddy",
     "app.onboarding.step3": "3) Add knowledge, then ask — or type a message below",
@@ -233,6 +238,10 @@ _EN: dict[str, str] = {
         "Answers from local notes (no online AI) "
         "when there is no key / quota is exhausted / you are offline"
     ),
+    "welcome.change_later": "You can change this later in Settings",
+    "welcome.env_key_found": "Found a key in .env — start chatting",
+    "welcome.knowledge_hint": "Add a file or paste text, then tap Ready",
+    "welcome.api_hint": "Paste a Groq key or use the key from .env",
     "action.new_chat": "New chat",
     "action.clear_chat": "Clear chat",
     "action.confirm_clear_chat": "Confirm clear chat",
@@ -257,8 +266,12 @@ _EN: dict[str, str] = {
     "action.upload_knowledge": "Upload file",
     "action.paste_knowledge": "Save pasted text",
     "action.make_knowledge_ready": "Save & make ready",
-    "action.continue_knowledge_only": "Continue with knowledge only (no key)",
+    "action.continue_knowledge_only": "Ready",
     "action.use_knowledge_only": "Answer from knowledge instead",
+    "action.choose_api": "Add API key",
+    "action.choose_knowledge": "Upload knowledge",
+    "action.start_chat": "Start chat",
+    "action.back_welcome": "Back to choices",
     "label.api_key": "Groq key",
     "label.persona": "Persona",
     "label.thread": "Chat",
@@ -314,17 +327,16 @@ _EN: dict[str, str] = {
     "label.chunk_chars": "Chunk size",
     "label.optional_override": "Leave blank for defaults",
     "label.lab_tuning": "Lab tuning",
-    "label.knowledge_only_badge": "Answer from knowledge (no online AI)",
+    "label.knowledge_only_badge": "From your knowledge",
+    "label.entry_path": "How to start",
+    "label.entry_path.api": "Add API key",
+    "label.entry_path.knowledge": "Upload knowledge",
     "label.needs_rebuild_banner": (
         "Knowledge not ready — save to make ready, or rebuild before asking"
     ),
     "action.run_search": "Search",
     "action.run_health": "Run health check",
-    "first_run.body": (
-        "For everyone: install Docker Desktop or double-click start.bat → "
-        "paste a free Groq key below (models are prefilled in .env) → chat. "
-        "Or click Continue with knowledge only if you have no key yet."
-    ),
+    "first_run.body": ("Choose Add API key or Upload knowledge — change later in Settings"),
     "status.health_ok": "System ready",
     "status.health_issues": "Setup requirements are incomplete",
     "status.import_ok": "Persona imported",
@@ -366,7 +378,7 @@ _EN: dict[str, str] = {
     ),
     "status.daily_limit_unset": "No daily limit set",
     "chat.placeholder": "Type a message…",
-    "chat.empty": "No messages yet — start chatting with the persona",
+    "chat.empty": "Ask anything about your knowledge",
     "label.starter_questions": "Starter questions",
     "status.ready": "Ready",
     "status.thinking": "Thinking…",

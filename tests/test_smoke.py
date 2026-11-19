@@ -13,8 +13,8 @@ def test_import_package() -> None:
     assert cli.main is not None
     assert i18n.DEFAULT_LOCALE == "th"
     assert "th" in strings.STRINGS
-    assert tokens.COLOR_PRIMARY == "#6A5ACD"
-    assert tokens.COLOR_BACKGROUND == "#F4F1EA"
+    assert tokens.COLOR_PRIMARY == "#2563EB"
+    assert tokens.COLOR_BACKGROUND == "#F7FAFF"
 
 
 def test_cli_launches_streamlit(monkeypatch: pytest.MonkeyPatch) -> None:
