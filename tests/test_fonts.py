@@ -40,5 +40,7 @@ def test_font_face_css_embeds_woff2_data_uris() -> None:
     assert "pb-energy-fill" in theme
     assert "pb-knowledge-files" in theme
     assert "pb-rules-panel" in theme
+    assert "pb-persona-panel" in theme
+    assert "pb-persona-kind" in theme
     assert "line-height: 1.55" in theme
     assert '[data-testid="stChatInput"]' in theme

@@ -256,11 +256,60 @@ def test_apptest_editor_create_persona(monkeypatch: pytest.MonkeyPatch, tmp_path
 
     at.text_input("create_persona_id").set_value("notes-home").run()
     at.text_input("create_persona_name").set_value("Home Notes").run()
+    at.text_input("create_persona_greeting").set_value("Hi from home notes").run()
+    at.text_area("create_persona_starters").set_value("What is the wifi?\nWhere are keys?").run()
     at.text_area("create_persona_prompt").set_value("Answer from my notes only.").run()
     at.button("create_persona_btn").click().run()
     assert not at.exception, at.exception
     assert at.session_state["persona_id"] == "notes-home"
     assert (data / "personas" / "notes-home" / "persona.yaml").is_file()
+    from persona_bot.persona import load_persona_yaml
+
+    pack = load_persona_yaml(data / "personas" / "notes-home" / "persona.yaml")
+    assert pack.greeting == "Hi from home notes"
+    assert pack.starter_questions == ["What is the wifi?", "Where are keys?"]
+
+
+def test_apptest_editor_delete_user_persona(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Delete lives under Edit persona (not Backup) with confirm."""
+    data = _configure_env(monkeypatch, tmp_path)
+    _patch_fake_embedder(monkeypatch)
+    from persona_bot.config import clear_settings_cache, get_settings
+    from persona_bot.i18n import set_locale
+    from persona_bot.persona_editor import create_user_persona
+
+    clear_settings_cache()
+    settings = get_settings()
+    create_user_persona(
+        personas_dir=settings.personas_dir,
+        persona_id="to-delete",
+        name="Temp",
+        system_prompt="temp",
+    )
+    (data / "privacy_ack").write_text("1", encoding="utf-8")
+    (data / "entry_path").write_text("knowledge", encoding="utf-8")
+    (data / "tour_done").write_text("1", encoding="utf-8")
+    at = _apptest()
+    at.session_state["wizard_done"] = True
+    at.session_state["knowledge_only_mode"] = True
+    at.session_state["privacy_ack"] = True
+    at.session_state["locale"] = "en"
+    at.session_state["persona_id"] = "to-delete"
+    at.session_state["entry_path"] = "knowledge"
+    at.session_state["tour_done"] = True
+    at.session_state["tour_active"] = False
+    at.run()
+    assert not at.exception, at.exception
+    assert "delete_persona_btn" in {getattr(b, "key", None) for b in at.button}
+    at.button("delete_persona_btn").click().run()
+    assert at.session_state.get("confirm_delete_persona_id") == "to-delete"
+    at.button("confirm_delete_persona_btn").click().run()
+    assert not at.exception, at.exception
+    assert not (data / "personas" / "to-delete" / "persona.yaml").exists()
+    assert at.session_state["persona_id"] == "study-buddy"
+    set_locale("th")
 
 
 def test_apptest_answer_rules_save_and_reset(

@@ -3,6 +3,14 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Persona CRUD UX completeness (2026-11-19) — **DECISION**
+
+- Beginner soft-3D manage panel under More settings → Edit persona: example vs
+  user-pack badge, Duplicate first for examples, create/edit/delete in one place.
+- Delete moved out of Backup into the persona editor (id-scoped confirm). Optional
+  greeting + starter questions (one line each) on create/edit. Lab knobs stay
+  under Advanced; answer-rules panel unchanged.
+
 ## Editable answer-mode prompt rules (2026-11-19) — **DECISION**
 
 - Built-in ``strict`` / ``balanced`` / ``open`` rules stay in ``prompt.py`` as
