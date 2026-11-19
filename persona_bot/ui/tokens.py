@@ -20,9 +20,9 @@ COLOR_WARNING: Final[str] = "#B45309"
 COLOR_ERROR: Final[str] = "#B91C1C"
 COLOR_INFO: Final[str] = "#1D4ED8"
 
-# Typography
-FONT_FAMILY_UI: Final[str] = "sans-serif"
-FONT_FAMILY_MONO: Final[str] = "monospace"
+# Typography — Inter (Latin) + Noto Sans Thai from persona_bot/static/fonts/
+FONT_FAMILY_UI: Final[str] = '"Inter", "Noto Sans Thai", sans-serif'
+FONT_FAMILY_MONO: Final[str] = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
 FONT_SIZE_BODY_PX: Final[int] = 16
 FONT_SIZE_SMALL_PX: Final[int] = 13
 FONT_SIZE_TITLE_PX: Final[int] = 22

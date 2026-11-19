@@ -5,6 +5,10 @@ All notable changes are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-11-19
+
+Patch release after `v0.2.1`: everyday offline UX (#22) + soft polish (fonts, AppTest).
+
 ### Added
 
 - Everyday beginner UX: 「สำหรับคนทั่วไป」 docs path; simple persona editor with lab
@@ -14,11 +18,20 @@ All notable changes are documented here. This project follows
 - Knowledge-only answers when no Groq key, quota exhausted (429), or network fails:
   extractive Thai+EN replies labeled 「ตอบจากคลังความรู้ (ไม่ใช้ AI ออนไลน์)」.
 - Example persona `personal-notes` /「โน้ตส่วนตัว」guided template (fictional sample).
+- Bundled OFL UI fonts under `persona_bot/static/fonts/` (Inter + Noto Sans Thai
+  woff2); theme injects base64 `@font-face` (no CDN). Licences in
+  `THIRD_PARTY_NOTICES.md`.
+- Deeper Streamlit AppTest: knowledge-only continue, clear-chat confirm, create
+  persona, and paste→「บันทึกความรู้ให้พร้อมใช้」with FakeEmbedder (no Groq).
 
 ### Docs
 
 - README / FIRST_RUN / FAQ: what this is/isn’t, zip multi-device, honest offline
   and token limits; Docker Desktop as non-dev path A.
+
+### Notes
+
+- Tag `v0.2.2` triggers the GHCR release workflow (`:v0.2.2` + `:latest`).
 
 ## [0.2.1] — 2026-11-19
 

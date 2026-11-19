@@ -6,9 +6,15 @@ redistribution.
 
 ## UI fonts
 
-- Status: **not bundled yet** (Streamlit / system sans-serif).
-- When fonts are added under `persona_bot/static/fonts/`, list family, source URL, and
-  licence file path here.
+Self-hosted under `persona_bot/static/fonts/` (OFL 1.1). Injected via
+`persona_bot/ui/theme.py` as base64 `@font-face` data URIs — **no CDN** at runtime.
+
+| Family | Files | Licence | Source |
+|---|---|---|---|
+| **Inter** | `Inter-Regular.woff2`, `Inter-SemiBold.woff2` | `OFL-Inter.txt` | [rsms/inter](https://github.com/rsms/inter) (latin subsets via `@fontsource/inter@5.2.5`) |
+| **Noto Sans Thai** | `NotoSansThai-Regular.woff2`, `NotoSansThai-Bold.woff2` | `OFL-NotoSansThai.txt` | [notofonts/thai](https://github.com/notofonts/thai) (thai subsets via `@fontsource/noto-sans-thai@5.2.5`) |
+
+See `persona_bot/static/fonts/README.md` for refresh notes.
 
 ## Embedding models (fastembed / ONNX) — licence table
 

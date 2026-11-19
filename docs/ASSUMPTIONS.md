@@ -71,7 +71,7 @@ Update when the owner replies or when APIs change.
 | Stop button | Streamlit rerun interrupts stream; partials flushed to sqlite each chunk (F9) |
 | RAG context | Empty in 1b; strict personas short-circuit to not-found without LLM |
 | Privacy ack | Flag file `data/privacy_ack` (F19) |
-| No external fonts/scripts | Theme CSS uses system/sans-serif from Streamlit config only |
+| Bundled UI fonts (no CDN) | Inter + Noto Sans Thai OFL woff2 under `persona_bot/static/fonts/`; theme embeds base64 `@font-face` |
 
 ## Phase 1a defaults (owner unanswered; 2026-11-18)
 

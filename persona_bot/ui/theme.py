@@ -1,14 +1,20 @@
-"""Inline CSS for chat bubbles / layout — no external fonts or scripts (§17)."""
+"""Inline CSS for chat bubbles / layout — bundled OFL fonts only (no CDN §17)."""
 
 from __future__ import annotations
 
 from persona_bot.ui import tokens
+from persona_bot.ui.fonts import font_face_css
 
 
 def custom_css() -> str:
-    """CSS injected once; uses design tokens only."""
+    """CSS injected once; uses design tokens + self-hosted ``@font-face``."""
+    faces = font_face_css()
     return f"""
 <style>
+{faces}
+  html, body, .stApp, [data-testid="stSidebar"], .pb-welcome, .pb-meta, .pb-error {{
+    font-family: {tokens.FONT_FAMILY_UI};
+  }}
   .stApp {{
     background: {tokens.COLOR_BACKGROUND};
   }}
