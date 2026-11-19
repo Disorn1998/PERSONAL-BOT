@@ -9,6 +9,8 @@ from persona_bot.ui.fonts import font_face_css
 def custom_css() -> str:
     """CSS injected once; uses design tokens + self-hosted ``@font-face``."""
     faces = font_face_css()
+    r_lg = tokens.RADIUS_LG_PX
+    r_sm = tokens.SPACE_SM_PX
     return f"""
 <style>
 {faces}
@@ -26,7 +28,14 @@ def custom_css() -> str:
     border-right: 1px solid {tokens.COLOR_BORDER};
     box-shadow: {tokens.SHADOW_SOFT};
   }}
-  /* Chat bubbles — soft 3D */
+  [data-testid="stSidebar"] [data-testid="stExpander"] {{
+    border: 1px solid {tokens.COLOR_BORDER};
+    border-radius: {tokens.RADIUS_MD_PX}px;
+    background: {tokens.COLOR_SECONDARY_BACKGROUND};
+    box-shadow: {tokens.SHADOW_SOFT};
+    margin-bottom: {tokens.SPACE_SM_PX}px;
+  }}
+  /* Chat bubbles — soft 3D (selector + reliable class markers) */
   div[data-testid="stChatMessage"] {{
     border-radius: {tokens.RADIUS_LG_PX}px;
     padding: {tokens.SPACE_SM_PX}px {tokens.SPACE_MD_PX}px;
@@ -36,32 +45,95 @@ def custom_css() -> str:
     margin-bottom: {tokens.SPACE_SM_PX}px;
   }}
   div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]),
-  div[data-testid="stChatMessage"]:has(img[alt="user"]) {{
+  div[data-testid="stChatMessage"]:has(img[alt="user"]),
+  div[data-testid="stChatMessage"]:has(.pb-role-user) {{
     background: {tokens.COLOR_USER_BUBBLE};
     border-color: {tokens.COLOR_PRIMARY_DEEP};
     color: {tokens.COLOR_USER_BUBBLE_TEXT};
+    margin-left: 12%;
+    border-radius: {r_lg}px {r_lg}px {r_sm}px {r_lg}px;
   }}
   div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) p,
   div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) span,
   div[data-testid="stChatMessage"]:has(img[alt="user"]) p,
-  div[data-testid="stChatMessage"]:has(img[alt="user"]) span {{
+  div[data-testid="stChatMessage"]:has(img[alt="user"]) span,
+  div[data-testid="stChatMessage"]:has(.pb-role-user) p,
+  div[data-testid="stChatMessage"]:has(.pb-role-user) span {{
     color: {tokens.COLOR_USER_BUBBLE_TEXT};
   }}
-  /* Fallback class toggled via markdown wrapper */
+  div[data-testid="stChatMessage"]:has(.pb-role-assistant),
+  div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]),
+  div[data-testid="stChatMessage"]:has(img[alt="assistant"]) {{
+    background: {tokens.COLOR_ASSISTANT_BUBBLE};
+    border-color: {tokens.COLOR_BORDER};
+    margin-right: 8%;
+    border-radius: {r_lg}px {r_lg}px {r_lg}px {r_sm}px;
+  }}
+  /* Soft blue circular assistant avatar */
+  div[data-testid="stChatMessage"] [data-testid="stChatMessageAvatarAssistant"],
+  div[data-testid="stChatMessage"] img[alt="assistant"] {{
+    background: {tokens.COLOR_ACCENT_WASH} !important;
+    border: 1px solid {tokens.COLOR_ACCENT_SOFT};
+    border-radius: 999px;
+    box-shadow: none;
+  }}
+  div[data-testid="stChatMessage"] [data-testid="stChatMessageAvatarUser"],
+  div[data-testid="stChatMessage"] img[alt="user"] {{
+    background: {tokens.COLOR_PRIMARY_DEEP} !important;
+    border-radius: 999px;
+  }}
+  /* Reliable markdown wrappers (Windows-safe when :has is flaky) */
   .pb-bubble-user {{
-    background: {tokens.COLOR_USER_BUBBLE};
+    background: transparent;
     color: {tokens.COLOR_USER_BUBBLE_TEXT};
-    border-radius: {tokens.RADIUS_LG_PX}px;
-    padding: {tokens.SPACE_MD_PX}px;
-    box-shadow: {tokens.SHADOW_SOFT};
+    border-radius: {r_lg}px {r_lg}px {r_sm}px {r_lg}px;
+    padding: 0;
   }}
   .pb-bubble-assistant {{
-    background: {tokens.COLOR_ASSISTANT_BUBBLE};
+    background: transparent;
     color: {tokens.COLOR_TEXT};
-    border: 1px solid {tokens.COLOR_BORDER};
-    border-radius: {tokens.RADIUS_LG_PX}px;
-    padding: {tokens.SPACE_MD_PX}px;
+    border-radius: {r_lg}px {r_lg}px {r_lg}px {r_sm}px;
+    padding: 0;
+  }}
+  .pb-role-user, .pb-role-assistant {{
+    display: none;
+  }}
+  /* Citation chips */
+  .pb-cite {{
+    display: inline-block;
+    padding: 0 7px;
+    margin: 0 2px;
+    border-radius: {tokens.RADIUS_MD_PX}px;
+    border: 1px solid {tokens.COLOR_ACCENT_SOFT};
+    background: {tokens.COLOR_ACCENT_WASH};
+    color: {tokens.COLOR_PRIMARY_DEEP};
+    font-size: {tokens.FONT_SIZE_SMALL_PX}px;
+    font-weight: 600;
+    line-height: 1.6;
+    vertical-align: baseline;
+  }}
+  /* New-message fade (~180ms) */
+  @keyframes pb-fade {{
+    from {{ opacity: 0; transform: translateY(4px); }}
+    to {{ opacity: 1; transform: translateY(0); }}
+  }}
+  .pb-fade {{
+    animation: pb-fade 180ms ease-out;
+  }}
+  /* Chat input — large radius, primary focus */
+  [data-testid="stChatInput"] {{
+    border-radius: {tokens.RADIUS_LG_PX}px !important;
+    background: {tokens.COLOR_SECONDARY_BACKGROUND};
     box-shadow: {tokens.SHADOW_SOFT};
+  }}
+  [data-testid="stChatInput"] textarea,
+  [data-testid="stChatInput"] div[contenteditable="true"] {{
+    border-radius: {tokens.RADIUS_LG_PX}px !important;
+    background: {tokens.COLOR_SECONDARY_BACKGROUND} !important;
+  }}
+  [data-testid="stChatInput"]:focus-within {{
+    border-color: {tokens.COLOR_PRIMARY} !important;
+    box-shadow: 0 0 0 2px {tokens.COLOR_ACCENT_WASH}, {tokens.SHADOW_SOFT};
   }}
   .pb-welcome {{
     border: 1px solid {tokens.COLOR_BORDER};
@@ -111,6 +183,10 @@ def custom_css() -> str:
     padding: {tokens.SPACE_LG_PX}px {tokens.SPACE_MD_PX}px;
     color: {tokens.COLOR_MUTED_TEXT};
   }}
+  .pb-empty p {{
+    margin: 0;
+    font-size: {tokens.FONT_SIZE_BODY_PX}px;
+  }}
   .pb-empty-icons {{
     display: flex;
     justify-content: center;
@@ -120,8 +196,18 @@ def custom_css() -> str:
   .pb-empty-icons img {{
     width: 48px;
     height: 48px;
+    padding: 10px;
+    border-radius: 999px;
+    background: {tokens.COLOR_ACCENT_WASH};
+    border: 1px solid {tokens.COLOR_ACCENT_SOFT};
+    box-shadow: {tokens.SHADOW_SOFT};
   }}
   .pb-meta {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-top: {tokens.SPACE_SM_PX}px;
     color: {tokens.COLOR_MUTED_TEXT};
     font-size: {tokens.FONT_SIZE_SMALL_PX}px;
   }}
@@ -144,8 +230,8 @@ def custom_css() -> str:
     padding: 2px 10px;
     font-size: {tokens.FONT_SIZE_SMALL_PX}px;
     color: {tokens.COLOR_MUTED_TEXT};
-    margin-right: 6px;
     background: {tokens.COLOR_SECONDARY_BACKGROUND};
+    box-shadow: none;
   }}
   .pb-badge.fallback {{
     border-color: {tokens.COLOR_WARNING};
@@ -189,7 +275,7 @@ def custom_css() -> str:
     border-color: {tokens.COLOR_SUCCESS};
     color: {tokens.COLOR_SUCCESS};
   }}
-  /* Primary buttons — soft lift */
+  /* Primary / secondary buttons — soft lift */
   div.stButton > button[kind="primary"],
   div.stButton > button[data-testid="baseButton-primary"] {{
     border-radius: {tokens.RADIUS_MD_PX}px;
@@ -197,6 +283,15 @@ def custom_css() -> str:
   }}
   div.stButton > button {{
     border-radius: {tokens.RADIUS_MD_PX}px;
+  }}
+  /* Info / success banners — wash + primary */
+  div[data-testid="stAlert"] {{
+    border-radius: {tokens.RADIUS_MD_PX}px;
+    box-shadow: {tokens.SHADOW_SOFT};
+  }}
+  div[data-testid="stAlert"][kind="info"],
+  div[data-testid="stNotification"] {{
+    border-color: {tokens.COLOR_ACCENT_SOFT};
   }}
   /* Keep primary column usable ~360px */
   .block-container {{
@@ -211,6 +306,13 @@ def custom_css() -> str:
     }}
     .pb-welcome-brand {{
       font-size: 28px;
+    }}
+    div[data-testid="stChatMessage"]:has(.pb-role-user),
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {{
+      margin-left: 4%;
+    }}
+    div[data-testid="stChatMessage"]:has(.pb-role-assistant) {{
+      margin-right: 2%;
     }}
   }}
 </style>

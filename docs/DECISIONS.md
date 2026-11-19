@@ -3,6 +3,15 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Chat interior polish (2026-11-19) — **DECISION**
+
+- Chat column matches welcome electric-blue soft-3D: user/assistant bubbles,
+  citation chips, short model/token badges, chat-input focus, light `pb-fade`.
+- Reliable role markers (`.pb-role-user` / `.pb-role-assistant`) wrap messages so
+  bubble CSS works when Streamlit `:has(avatar)` is flaky (e.g. Windows).
+- Hide 1–2–3 wizard strip once `entry_path` is set; knowledge-only replies show
+  the knowledge badge only (no token chrome).
+
 ## Simple beginner sidebar (2026-11-19) — **DECISION**
 
 - Default sidebar = language, persona, chat thread / new+clear, simple Knowledge,

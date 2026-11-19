@@ -119,6 +119,22 @@ def test_apptest_knowledge_only_ready_path(monkeypatch: pytest.MonkeyPatch, tmp_
     assert at.session_state["privacy_ack"] is True
     assert (data / "entry_path").read_text(encoding="utf-8").strip() == "knowledge"
     assert at.chat_input, "expected chat input after knowledge-only continue"
+    # Wizard 1–2–3 strip must not stick after entry_path is chosen.
+    # Match markup (class="pb-wizard"), not theme CSS (.pb-wizard { … }).
+    markdown_blobs = [getattr(m, "value", "") or "" for m in at.markdown]
+    assert not any('class="pb-wizard"' in str(blob) for blob in markdown_blobs)
+
+
+def test_apptest_api_path_no_sticky_wizard(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """After path A, chat loads and wizard progress markup is gone."""
+    _configure_env(monkeypatch, tmp_path)
+    _patch_fake_embedder(monkeypatch)
+    at = _apptest()
+    _enter_api_path(at)
+    assert at.session_state["entry_path"] == "api"
+    assert at.chat_input
+    markdown_blobs = [getattr(m, "value", "") or "" for m in at.markdown]
+    assert not any('class="pb-wizard"' in str(blob) for blob in markdown_blobs)
 
 
 def test_apptest_clear_chat_confirm(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

@@ -20,6 +20,10 @@ All notable changes are documented here. This project follows
   「ตั้งค่า」; usage / version / persona editor / backup / health / Advanced labs
   live under collapsed「ตั้งค่าเพิ่มเติม」. Shorter TH/EN labels; version display
   prefers checkout `APP_VERSION` over a stale installed wheel.
+- Chat interior polish: user/assistant soft-3D bubbles, citation chips, short
+  model/token badges (no token chrome for knowledge-only), chat-input focus,
+  `pb-fade` (~180ms) on new messages, hide 1–2–3 wizard strip after `entry_path`
+  is set; shorter chat-column copy.
 
 ## [0.2.2] — 2026-11-19
 

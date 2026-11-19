@@ -23,9 +23,7 @@ _TH: dict[str, str] = {
     "wizard.step2": "ความเป็นส่วนตัว",
     "wizard.step3": "เริ่มแชต",
     "wizard.locked_tools": ("สำรอง/นำเข้าอยู่ใน「ตั้งค่าเพิ่มเติม」หลังมีคีย์ — ความรู้และแชตจากโน้ตใช้ได้แม้ยังไม่มีคีย์"),
-    "wizard.knowledge_only_hint": (
-        "ตอบจากโน้ตบนเครื่อง (ไม่ใช้ AI ออนไลน์) เมื่อไม่มีคีย์ / โควตาหมด / ออฟไลน์"
-    ),
+    "wizard.knowledge_only_hint": "ตอบจากโน้ตบนเครื่อง (ไม่ใช้ AI ออนไลน์)",
     "welcome.change_later": "เปลี่ยนทีหลังได้ในตั้งค่า",
     "welcome.env_key_found": "พบคีย์ใน .env แล้ว — เริ่มแชต",
     "welcome.knowledge_hint": "ใส่ไฟล์หรือวางข้อความ แล้วกดพร้อมใช้",
@@ -140,12 +138,8 @@ _TH: dict[str, str] = {
     "status.knowledge_ready": "พร้อมแล้ว",
     "status.knowledge_needs_rebuild": "ต้องสร้างดัชนีใหม่",
     "status.knowledge_empty": "ยังไม่มีไฟล์ความรู้",
-    "status.knowledge_only_empty": (
-        "ไม่พบข้อความที่เกี่ยวข้องในคลังความรู้ของคุณ — เพิ่มโน้ตแล้วรอสถานะพร้อมแล้ว หรือใส่คีย์ Groq เพื่อคุยแบบ AI"
-    ),
-    "status.knowledge_only_fallback": (
-        "ใช้คำตอบจากคลังความรู้แทน (ไม่ใช้ AI ออนไลน์) เพราะคีย์/โควตา/เครือข่ายไม่พร้อม"
-    ),
+    "status.knowledge_only_empty": "ไม่พบข้อความที่เกี่ยวข้องในคลังความรู้",
+    "status.knowledge_only_fallback": "ใช้คำตอบจากคลังความรู้แทน (คีย์/โควตา/เครือข่ายไม่พร้อม)",
     "status.oos_calm": "ไม่พบข้อมูลที่เกี่ยวข้องในคลังความรู้",
     "status.remember_loaded": "โหลดคีย์จาก OS keyring แล้ว — จะใช้ได้หลังรีสตาร์ท",
     "status.remember_env": "จำคีย์เปิดผ่าน PERSONA_BOT_REMEMBER_KEY — บันทึกและโหลดจาก keyring",
@@ -234,10 +228,7 @@ _EN: dict[str, str] = {
         "Backup/import live under More settings after you add a key — "
         "Knowledge and note-based chat work even without a key"
     ),
-    "wizard.knowledge_only_hint": (
-        "Answers from local notes (no online AI) "
-        "when there is no key / quota is exhausted / you are offline"
-    ),
+    "wizard.knowledge_only_hint": "Answers from local notes (no online AI)",
     "welcome.change_later": "You can change this later in Settings",
     "welcome.env_key_found": "Found a key in .env — start chatting",
     "welcome.knowledge_hint": "Add a file or paste text, then tap Ready",
@@ -358,12 +349,9 @@ _EN: dict[str, str] = {
     "status.knowledge_ready": "Ready",
     "status.knowledge_needs_rebuild": "Rebuild the index",
     "status.knowledge_empty": "No knowledge files yet",
-    "status.knowledge_only_empty": (
-        "No matching notes in your knowledge — "
-        "add notes and wait for Ready, or add a Groq key for AI chat"
-    ),
+    "status.knowledge_only_empty": "No matching notes in your knowledge",
     "status.knowledge_only_fallback": (
-        "Using a knowledge-only answer (no online AI) because key/quota/network is unavailable"
+        "Using a knowledge-only answer (key/quota/network unavailable)"
     ),
     "status.oos_calm": "No relevant knowledge found in the pack",
     "status.remember_loaded": "Loaded key from OS keyring — available after restart",
