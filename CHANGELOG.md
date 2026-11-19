@@ -13,6 +13,9 @@ All notable changes are documented here. This project follows
   changed later in Settings.
 - Welcome hero soft **2D** CSS motion: gentle 5s float/parallax tilt and shadow
   pulse on `.pb-welcome-hero` (no WebGL/`.glb`; respects `prefers-reduced-motion`).
+- First-run guided tour: short 6-step coach (welcome → path → persona →
+  knowledge → chat → done) with blue soft-3D spotlight + mascot card; Next /
+  Skip / Start using; TH/EN; persist `data/tour_done`; replay from More settings.
 
 ### Changed
 

@@ -3,13 +3,20 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## First-run guided tour (2026-11-19) — **DECISION**
+
+- Interactive 6-step coach overlay (welcome paths → path cue → persona →
+  knowledge ready → chat input → done). CSS spotlight + coach card only — no
+  real 3D / WebGL / `.glb`. Mascot from existing illustrations (`chat.svg` /
+  welcome hero). Persist completion in `data/tour_done`; Skip or Start using
+  marks done; replay via「เปิดทัวร์อีกครั้ง」under More settings. Strings TH/EN.
+
 ## Welcome hero motion (2026-11-19) — **DECISION**
 
 - Soft **2D CSS-only** float (~5s) + subtle tilt/parallax (`translate` +
   `rotate`) + shadow pulse on `.pb-welcome-hero` / img. No WebGL / Three.js /
   `.glb`. Hero inlined as JPEG data URI so the class wraps the image under
-  Streamlit. `prefers-reduced-motion: reduce` disables animation. Guided tour
-  is a later task after this merges.
+  Streamlit. `prefers-reduced-motion: reduce` disables animation.
 
 ## Chat interior polish (2026-11-19) — **DECISION**
 
