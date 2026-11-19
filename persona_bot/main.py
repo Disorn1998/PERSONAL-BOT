@@ -87,7 +87,12 @@ from persona_bot.ui.wizard import (
     save_entry_path,
     wizard_step,
 )
-from persona_bot.usage import UsageTracker, format_token_usage
+from persona_bot.usage import (
+    UsageTracker,
+    format_token_usage,
+    usage_energy_band,
+    usage_percent,
+)
 from persona_bot.versioning import ensure_data_version, get_app_version
 
 _CITE_MARK_RE = re.compile(r"\[(\d+)\]")
@@ -1172,7 +1177,7 @@ def _welcome(personas: list) -> None:
 
 
 def _cite_chips(text: str) -> str:
-    """Turn ``[n]`` markers into soft blue citation chips (HTML)."""
+    """Turn ``[n]`` markers into compact soft-blue citation chips (HTML)."""
     return _CITE_MARK_RE.sub(r'<span class="pb-cite">[\1]</span>', text)
 
 
@@ -1216,8 +1221,35 @@ def _render_chat_empty(persona: PersonaPack | None) -> None:
         )
 
 
-def _render_meta(result: StreamResult) -> None:
-    """Short model/token badges — skipped when knowledge-only (no model/tokens)."""
+def _render_usage_energy() -> None:
+    """Soft F12 energy bar under model · tokens — display-only, not enforced."""
+    settings = get_settings()
+    limit = settings.daily_token_limit
+    used = int(_usage().snapshot.total_tokens)
+    pct = usage_percent(total_tokens=used, daily_limit=limit)
+    if pct is None:
+        st.markdown(
+            f'<p class="pb-energy-unset">{html.escape(t("status.daily_limit_unset"))}</p>',
+            unsafe_allow_html=True,
+        )
+        return
+    band = usage_energy_band(pct)
+    used_label = format_token_usage(total_tokens=used, daily_limit=limit)
+    caption = t("label.usage_energy", pct=f"{pct:.0f}", used=used_label)
+    width = f"{pct:.1f}"
+    st.markdown(
+        f'<div class="pb-energy" aria-label="usage-energy">'
+        f'<p class="pb-energy-caption">{html.escape(caption)}</p>'
+        f'<div class="pb-energy-track" role="progressbar" '
+        f'aria-valuemin="0" aria-valuemax="100" aria-valuenow="{pct:.0f}">'
+        f'<div class="pb-energy-fill {band}" style="width:{width}%"></div>'
+        f"</div></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def _render_meta(result: StreamResult, *, show_energy: bool = False) -> None:
+    """Calm model/token meta row — skipped when knowledge-only (no model/tokens)."""
     if not result.model and result.usage.total_tokens <= 0:
         return
     badge_cls = "pb-badge fallback" if result.used_fallback else "pb-badge"
@@ -1225,18 +1257,21 @@ def _render_meta(result: StreamResult) -> None:
     model = html.escape(result.model or "-")
     tokens_n = int(result.usage.total_tokens)
     st.markdown(
-        f'<div class="pb-meta">'
+        f'<div class="pb-meta" aria-label="model-meta">'
         f'<span class="{badge_cls}">{html.escape(label)} · {model}</span>'
         f'<span class="pb-badge">{html.escape(t("label.tokens"))} · {tokens_n}</span>'
         f"</div>",
         unsafe_allow_html=True,
     )
+    # Energy / calm-unset caption once under the latest model · tokens row.
+    if show_energy:
+        _render_usage_energy()
 
 
 def _render_knowledge_badge(*, fade: bool = False) -> None:
     fade_cls = " pb-fade" if fade else ""
     st.markdown(
-        f'<div class="pb-meta{fade_cls}">'
+        f'<div class="pb-meta{fade_cls}" aria-label="knowledge-meta">'
         f'<span class="pb-badge knowledge">{html.escape(t("label.knowledge_only_badge"))}</span>'
         f"</div>",
         unsafe_allow_html=True,
@@ -1446,7 +1481,9 @@ def _handle_user_message(user_text: str, personas: list) -> None:
                 f'<div class="pb-bubble-assistant pb-fade">\n\n{_cite_chips(final_text)}\n</div>',
                 unsafe_allow_html=True,
             )
-            _render_meta(result)
+            # Record before meta so the energy bar includes this turn.
+            usage.record(result)
+            _render_meta(result, show_energy=True)
             if context_chunks:
                 with st.expander(t("label.sources")):
                     st.markdown(format_sources_markdown(context_chunks))
@@ -1455,7 +1492,6 @@ def _handle_user_message(user_text: str, personas: list) -> None:
             if st.session_state.get("show_prompt_inspector"):
                 with st.expander(t("label.prompt_inspector")):
                     st.json(inspector)
-        usage.record(result)
     except AppError as exc:
         if result.text:
             store.update_message(
@@ -1573,7 +1609,13 @@ def run() -> None:
                 progress_markup(wizard_step(has_key=True, privacy_ack=False)),
                 unsafe_allow_html=True,
             )
-        st.info(t("privacy.notice"))
+        # Quiet caption — avoid loud st.info chrome for the privacy line.
+        st.markdown(
+            f'<div class="pb-privacy-wrap">'
+            f'<p class="pb-privacy">{html.escape(t("privacy.notice"))}</p>'
+            f"</div>",
+            unsafe_allow_html=True,
+        )
         if st.button(t("action.got_it"), key="privacy_ack_btn"):
             st.session_state.privacy_ack = True
             # Persist flag under data/
@@ -1601,6 +1643,16 @@ def run() -> None:
                 if cols[idx].button(question, key=f"starter_{persona.id}_{idx}"):
                     _handle_user_message(question.strip(), personas)
                     return
+    last_model_meta_id: str | None = None
+    for msg in messages:
+        if (
+            msg.role == "assistant"
+            and msg.meta
+            and not msg.meta.get("knowledge_only")
+            and (msg.meta.get("model") or int(msg.meta.get("tokens") or 0) > 0)
+        ):
+            last_model_meta_id = msg.id
+
     for msg in messages:
         if msg.role not in {"user", "assistant"}:
             continue
@@ -1622,7 +1674,10 @@ def run() -> None:
                         used_fallback=bool(msg.meta.get("used_fallback")),
                     )
                     fake.usage.total_tokens = int(msg.meta.get("tokens") or 0)
-                    _render_meta(fake)
+                    _render_meta(
+                        fake,
+                        show_energy=(msg.id == last_model_meta_id),
+                    )
 
     if current_tour_step() == "chat":
         st.markdown(tour_anchor_markup("chat"), unsafe_allow_html=True)

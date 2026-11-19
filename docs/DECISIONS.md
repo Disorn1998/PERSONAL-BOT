@@ -18,6 +18,17 @@ before locking. Format: date · status · decision.
   `.glb`. Hero inlined as JPEG data URI so the class wraps the image under
   Streamlit. `prefers-reduced-motion: reduce` disables animation.
 
+## Chat typography balance (2026-11-19) — **DECISION**
+
+- Soft scale: body 16 / line-height 1.55; meta 12 muted with letter-spacing;
+  citation chips ~0.78em weight 500 so `[n]` does not crowd the line.
+- Consistent bubble padding (12×16) and 12px gap; meta row separated with a
+  hairline + padding (not stuck to body). Privacy ack uses `.pb-privacy`
+  caption, not loud `st.info`. Keep electric-blue soft-3D (no purple/cream).
+- Under latest model · tokens: display-only F12 energy bar when
+  `DAILY_TOKEN_LIMIT` is set (green `<50` / yellow `<75` / orange `<90` /
+  red); calm caption only when unset.
+
 ## Chat interior polish (2026-11-19) — **DECISION**
 
 - Chat column matches welcome electric-blue soft-3D: user/assistant bubbles,
@@ -291,6 +302,8 @@ Config file: `coverage.core.toml`. CI step runs after the overall cov job.
 ### F12 — DAILY_TOKEN_LIMIT — **DECISION**
 
 - Display-only; documented in `.env.example`; shown in usage sidebar as `tokens / limit`.
+- Chat meta also shows a soft energy bar (% used + green→yellow→orange→red) when
+  set; calm “no daily limit” caption when unset.
 
 ### Type checker — **DECISION**
 

@@ -35,14 +35,17 @@ def custom_css() -> str:
     box-shadow: {tokens.SHADOW_SOFT};
     margin-bottom: {tokens.SPACE_SM_PX}px;
   }}
-  /* Chat bubbles — soft 3D (selector + reliable class markers) */
+  /* Chat bubbles — soft 3D + consistent rhythm (selector + class markers) */
   div[data-testid="stChatMessage"] {{
     border-radius: {tokens.RADIUS_LG_PX}px;
-    padding: {tokens.SPACE_SM_PX}px {tokens.SPACE_MD_PX}px;
+    padding: 12px {tokens.SPACE_MD_PX}px;
     border: 1px solid {tokens.COLOR_BORDER};
     background: {tokens.COLOR_ASSISTANT_BUBBLE};
     box-shadow: {tokens.SHADOW_SOFT};
-    margin-bottom: {tokens.SPACE_SM_PX}px;
+    margin-bottom: 12px;
+  }}
+  div[data-testid="stChatMessage"] [data-testid="stChatMessageContent"] {{
+    gap: 0;
   }}
   div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]),
   div[data-testid="stChatMessage"]:has(img[alt="user"]),
@@ -83,34 +86,53 @@ def custom_css() -> str:
     border-radius: 999px;
   }}
   /* Reliable markdown wrappers (Windows-safe when :has is flaky) */
-  .pb-bubble-user {{
-    background: transparent;
-    color: {tokens.COLOR_USER_BUBBLE_TEXT};
-    border-radius: {r_lg}px {r_lg}px {r_sm}px {r_lg}px;
-    padding: 0;
-  }}
+  .pb-bubble-user,
   .pb-bubble-assistant {{
     background: transparent;
+    padding: 0;
+    margin: 0;
+    font-size: {tokens.FONT_SIZE_BODY_PX}px;
+    line-height: {tokens.LINE_HEIGHT_BODY};
+    letter-spacing: {tokens.LETTER_SPACING_BODY};
+    font-weight: 400;
+  }}
+  .pb-bubble-user {{
+    color: {tokens.COLOR_USER_BUBBLE_TEXT};
+    border-radius: {r_lg}px {r_lg}px {r_sm}px {r_lg}px;
+  }}
+  .pb-bubble-assistant {{
     color: {tokens.COLOR_TEXT};
     border-radius: {r_lg}px {r_lg}px {r_lg}px {r_sm}px;
-    padding: 0;
+  }}
+  .pb-bubble-assistant p {{
+    margin: 0.4em 0;
+    line-height: {tokens.LINE_HEIGHT_BODY};
+  }}
+  .pb-bubble-assistant p:first-child {{
+    margin-top: 0;
+  }}
+  .pb-bubble-assistant p:last-child {{
+    margin-bottom: 0;
   }}
   .pb-role-user, .pb-role-assistant {{
     display: none;
   }}
-  /* Citation chips */
+  /* Citation chips — compact, sit in the line without crowding */
   .pb-cite {{
-    display: inline-block;
-    padding: 0 7px;
-    margin: 0 2px;
-    border-radius: {tokens.RADIUS_MD_PX}px;
+    display: inline;
+    padding: 0.05em 0.32em;
+    margin: 0 0.12em;
+    border-radius: {tokens.RADIUS_SM_PX}px;
     border: 1px solid {tokens.COLOR_ACCENT_SOFT};
     background: {tokens.COLOR_ACCENT_WASH};
     color: {tokens.COLOR_PRIMARY_DEEP};
-    font-size: {tokens.FONT_SIZE_SMALL_PX}px;
-    font-weight: 600;
-    line-height: 1.6;
+    font-size: 0.78em;
+    font-weight: 500;
+    line-height: inherit;
+    letter-spacing: 0.01em;
     vertical-align: baseline;
+    white-space: nowrap;
+    box-shadow: none;
   }}
   /* New-message fade (~180ms) */
   @keyframes pb-fade {{
@@ -134,6 +156,20 @@ def custom_css() -> str:
   [data-testid="stChatInput"]:focus-within {{
     border-color: {tokens.COLOR_PRIMARY} !important;
     box-shadow: 0 0 0 2px {tokens.COLOR_ACCENT_WASH}, {tokens.SHADOW_SOFT};
+  }}
+  /* Privacy caption — muted, not an alert */
+  .pb-privacy {{
+    margin: 0 0 {tokens.SPACE_SM_PX}px 0;
+    padding: 0;
+    color: {tokens.COLOR_MUTED_TEXT};
+    font-size: {tokens.FONT_SIZE_META_PX}px;
+    line-height: {tokens.LINE_HEIGHT_META};
+    letter-spacing: {tokens.LETTER_SPACING_META};
+    font-weight: 400;
+    opacity: 0.9;
+  }}
+  .pb-privacy-wrap {{
+    margin: 0 0 {tokens.SPACE_MD_PX}px 0;
   }}
   .pb-welcome {{
     border: 1px solid {tokens.COLOR_BORDER};
@@ -234,14 +270,20 @@ def custom_css() -> str:
     border: 1px solid {tokens.COLOR_ACCENT_SOFT};
     box-shadow: {tokens.SHADOW_SOFT};
   }}
+  /* Meta row — calm, separated from body (not stuck to last line) */
   .pb-meta {{
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: {tokens.SPACE_XS_PX}px {tokens.SPACE_SM_PX}px;
     align-items: center;
-    margin-top: {tokens.SPACE_SM_PX}px;
+    margin-top: 10px;
+    padding-top: {tokens.SPACE_SM_PX}px;
+    border-top: 1px solid {tokens.COLOR_BORDER};
     color: {tokens.COLOR_MUTED_TEXT};
-    font-size: {tokens.FONT_SIZE_SMALL_PX}px;
+    font-size: {tokens.FONT_SIZE_META_PX}px;
+    line-height: {tokens.LINE_HEIGHT_META};
+    letter-spacing: {tokens.LETTER_SPACING_META};
+    font-weight: 400;
   }}
   .pb-error {{
     border-left: 4px solid {tokens.COLOR_ERROR};
@@ -252,27 +294,73 @@ def custom_css() -> str:
   }}
   .pb-error .hint {{
     color: {tokens.COLOR_MUTED_TEXT};
-    font-size: {tokens.FONT_SIZE_SMALL_PX}px;
+    font-size: {tokens.FONT_SIZE_META_PX}px;
     margin-top: {tokens.SPACE_SM_PX}px;
   }}
   .pb-badge {{
     display: inline-block;
     border: 1px solid {tokens.COLOR_BORDER};
-    border-radius: {tokens.RADIUS_MD_PX}px;
-    padding: 2px 10px;
-    font-size: {tokens.FONT_SIZE_SMALL_PX}px;
+    border-radius: {tokens.RADIUS_SM_PX}px;
+    padding: 1px 8px;
+    font-size: {tokens.FONT_SIZE_META_PX}px;
+    line-height: {tokens.LINE_HEIGHT_META};
+    letter-spacing: {tokens.LETTER_SPACING_META};
+    font-weight: 500;
     color: {tokens.COLOR_MUTED_TEXT};
-    background: {tokens.COLOR_SECONDARY_BACKGROUND};
+    background: transparent;
     box-shadow: none;
   }}
   .pb-badge.fallback {{
     border-color: {tokens.COLOR_WARNING};
     color: {tokens.COLOR_WARNING};
+    background: transparent;
   }}
   .pb-badge.knowledge {{
     border-color: {tokens.COLOR_ACCENT_SOFT};
     color: {tokens.COLOR_PRIMARY_DEEP};
     background: {tokens.COLOR_ACCENT_WASH};
+    font-weight: 500;
+  }}
+  /* Daily usage energy bar — under model · tokens meta */
+  .pb-energy {{
+    margin-top: 6px;
+    width: 100%;
+    max-width: 240px;
+  }}
+  .pb-energy-caption {{
+    margin: 0 0 {tokens.SPACE_XS_PX}px 0;
+    padding: 0;
+    color: {tokens.COLOR_MUTED_TEXT};
+    font-size: {tokens.FONT_SIZE_META_PX}px;
+    line-height: {tokens.LINE_HEIGHT_META};
+    letter-spacing: {tokens.LETTER_SPACING_META};
+    font-weight: 400;
+  }}
+  .pb-energy-track {{
+    height: 6px;
+    border-radius: 999px;
+    background: {tokens.COLOR_ACCENT_WASH};
+    border: 1px solid {tokens.COLOR_BORDER};
+    overflow: hidden;
+  }}
+  .pb-energy-fill {{
+    height: 100%;
+    border-radius: 999px;
+    box-shadow: none;
+  }}
+  .pb-energy-fill.green {{ background: {tokens.COLOR_ENERGY_GREEN}; }}
+  .pb-energy-fill.yellow {{ background: {tokens.COLOR_ENERGY_YELLOW}; }}
+  .pb-energy-fill.orange {{ background: {tokens.COLOR_ENERGY_ORANGE}; }}
+  .pb-energy-fill.red {{ background: {tokens.COLOR_ENERGY_RED}; }}
+  .pb-energy-unset {{
+    margin: 6px 0 0 0;
+    padding: 0;
+    color: {tokens.COLOR_MUTED_TEXT};
+    font-size: {tokens.FONT_SIZE_META_PX}px;
+    line-height: {tokens.LINE_HEIGHT_META};
+    letter-spacing: {tokens.LETTER_SPACING_META};
+    font-weight: 400;
+    opacity: 0.85;
   }}
   .pb-wizard {{
     display: flex;
