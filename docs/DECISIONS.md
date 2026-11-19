@@ -3,6 +3,15 @@
 Proposals and provisional decisions. Items marked **ASK** need owner confirmation
 before locking. Format: date · status · decision.
 
+## Simple beginner sidebar (2026-11-19) — **DECISION**
+
+- Default sidebar = language, persona, chat thread / new+clear, simple Knowledge,
+  one「ตั้งค่า」(API key). No tagline / usage / version / health dump at top level.
+- Usage, version, persona editor, backup, health, Advanced labs live under
+  collapsed「ตั้งค่าเพิ่มเติม」. Power features kept, not deleted.
+- Short plain TH/EN labels; no `DAILY_TOKEN_LIMIT` / long help walls in the
+  default chrome. Version UI prefers checkout `APP_VERSION` over stale metadata.
+
 ## Everyday beginner UX + knowledge-only fallback (2026-11-19) — **DECISION**
 
 - **Audience docs:** README / FIRST_RUN / FAQ lead with「สำหรับคนทั่วไป」; pin what

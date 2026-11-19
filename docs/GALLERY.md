@@ -23,7 +23,7 @@ Tax/FAQ/handbook knowledge is **self-written fictional demo content** — not le
 
 ## Share your pack
 
-1. Sidebar → **Data & backup** → **Download persona (zip)** (single-click)
+1. Sidebar → **More settings** → **Backup** → **Download persona (zip)** (single-click)
 2. Import on another machine (preview first; duplicate id → reject/rename/overwrite + confirm)
 3. Never put API keys inside a pack zip
 

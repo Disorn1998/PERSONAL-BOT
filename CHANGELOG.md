@@ -5,6 +5,13 @@ All notable changes are documented here. This project follows
 
 ## [Unreleased]
 
+### Changed
+
+- Beginner sidebar: default shows language, persona, chat, knowledge, and
+  「ตั้งค่า」; usage / version / persona editor / backup / health / Advanced labs
+  live under collapsed「ตั้งค่าเพิ่มเติม」. Shorter TH/EN labels; version display
+  prefers checkout `APP_VERSION` over a stale installed wheel.
+
 ## [0.2.2] — 2026-11-19
 
 Patch release after `v0.2.1`: everyday offline UX (#22) + soft polish (fonts, AppTest).

@@ -42,7 +42,6 @@ from persona_bot.persona_editor import (
     create_user_persona,
     duplicate_persona_to_user,
     index_status_key,
-    knowledge_total_bytes,
     save_user_persona,
 )
 from persona_bot.persona_pack_io import (
@@ -211,9 +210,13 @@ def _optional_float(raw: str) -> float | None:
 
 
 def _render_persona_editor(persona: PersonaPack | None) -> None:
-    """Create / edit user packs; examples stay read-only with Duplicate."""
+    """Create / edit user packs; examples stay read-only with Duplicate.
+
+    Uses ``st.expander`` (not ``st.sidebar.expander``) so it nests under
+    「ตั้งค่าเพิ่มเติม」 instead of floating as a sibling sidebar block.
+    """
     settings = get_settings()
-    with st.sidebar.expander(t("label.persona_editor"), expanded=False):
+    with st.expander(t("label.persona_editor"), expanded=False):
         if persona is not None and st.button(
             t("action.duplicate_persona"),
             key="duplicate_persona_btn",
@@ -433,14 +436,368 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
                 _render_error(exc)
 
 
+def _sidebar_knowledge(persona: PersonaPack) -> None:
+    """Simple knowledge panel — status + upload/paste only."""
+    settings = get_settings()
+    with st.sidebar.expander(t("label.knowledge"), expanded=False):
+        try:
+            cache_key = f"rag::{persona.id}::{persona.config.embedding_preset}"
+            if cache_key not in st.session_state:
+                embedder = build_embedder(settings, persona=persona, fake=False)
+                st.session_state[cache_key] = {
+                    "embedder": embedder,
+                    "bundle": get_or_build_store(
+                        settings=settings,
+                        persona=persona,
+                        embedder=embedder,
+                        force=False,
+                    ),
+                }
+            _vstore, _manifest, _kdir, health = st.session_state[cache_key]["bundle"]
+            status_key = index_status_key(
+                needs_rebuild=bool(health.needs_rebuild),
+                file_count=int(health.file_count),
+            )
+            files_label = t("label.knowledge_files", n=int(health.file_count))
+            st.markdown(f"**{t(status_key)}** · {files_label}")
+            if health.needs_rebuild:
+                st.warning(t("label.needs_rebuild_banner"))
+            if is_user_persona(persona.id, settings):
+                uploaded_knowledge = st.file_uploader(
+                    t("action.upload_knowledge"),
+                    type=["txt", "md", "pdf", "docx"],
+                    key=f"knowledge_upload_{persona.id}",
+                )
+                if uploaded_knowledge is not None and st.button(
+                    t("action.make_knowledge_ready"),
+                    key=f"knowledge_upload_btn_{persona.id}",
+                ):
+                    try:
+                        dest = add_knowledge_bytes(
+                            settings=settings,
+                            persona_id=persona.id,
+                            filename=uploaded_knowledge.name,
+                            data=uploaded_knowledge.getvalue(),
+                        )
+                        _clear_rag_cache(persona.id)
+                        _rebuild_persona_index(persona)
+                        st.success(f"{t('status.knowledge_ready_after_save')} ({dest.name})")
+                        st.rerun()
+                    except Exception as exc:  # noqa: BLE001
+                        _render_error(exc)
+                paste_name = st.text_input(
+                    t("label.knowledge_paste_name"),
+                    value="pasted.md",
+                    key=f"knowledge_paste_name_{persona.id}",
+                )
+                paste_text = st.text_area(
+                    t("label.knowledge_paste"),
+                    key=f"knowledge_paste_{persona.id}",
+                    height=100,
+                )
+                if st.button(
+                    t("action.make_knowledge_ready"),
+                    key=f"knowledge_paste_btn_{persona.id}",
+                ):
+                    try:
+                        dest = add_knowledge_paste(
+                            settings=settings,
+                            persona_id=persona.id,
+                            text=paste_text,
+                            filename=paste_name,
+                        )
+                        _clear_rag_cache(persona.id)
+                        _rebuild_persona_index(persona)
+                        st.success(f"{t('status.knowledge_ready_after_save')} ({dest.name})")
+                        st.rerun()
+                    except Exception as exc:  # noqa: BLE001
+                        _render_error(exc)
+            else:
+                st.caption(t("status.example_edit_readonly"))
+
+            if st.button(t("label.rebuild_index"), key="rebuild_idx"):
+                _rebuild_persona_index(persona)
+                st.success(t("status.index_rebuilt"))
+                st.rerun()
+        except Exception as exc:  # noqa: BLE001
+            _render_error(exc)
+
+
+def _sidebar_settings(*, has_key: bool) -> None:
+    """Daily settings: API key only (short labels, no help walls)."""
+    expanded = not has_key
+    with st.sidebar.expander(t("label.settings"), expanded=expanded):
+        key_suffix = "preauth" if not has_key else "main"
+        key_val = st.text_input(
+            t("label.api_key"),
+            value=st.session_state.api_key,
+            type="password",
+            key=f"sidebar_key_{key_suffix}",
+        )
+        remember = st.checkbox(
+            t("label.remember_key"),
+            value=remember_enabled(),
+            key=f"remember_key_box_{key_suffix}",
+        )
+        if st.button(t("action.save_key"), key=f"save_key_btn_{key_suffix}"):
+            _apply_remember_choice(remember, key_val)
+            st.session_state.wizard_done = True
+            st.session_state.knowledge_only_mode = False
+            st.rerun()
+        if has_key and st.button(t("action.forget_key"), key="forget_key_btn"):
+            st.session_state.api_key = ""
+            st.session_state.remember_loaded = False
+            st.session_state.knowledge_only_mode = True
+            set_ui_remember_preference(False)
+            delete_api_key()
+            st.rerun()
+
+
+def _sidebar_data_tools(settings: Any) -> None:
+    """Export / import / backup — power users only."""
+    pack_dir = persona_dir_for(st.session_state.persona_id, settings)
+    if pack_dir is not None:
+        try:
+            payload = export_persona_zip(
+                pack_dir,
+                api_key=st.session_state.api_key or settings.groq_api_key,
+            )
+            st.download_button(
+                label=t("action.export_persona"),
+                data=payload,
+                file_name=f"{st.session_state.persona_id}.zip",
+                mime="application/zip",
+                key="export_download",
+            )
+        except Exception as exc:  # noqa: BLE001
+            _render_error(exc)
+
+    uploaded = st.file_uploader(
+        t("action.import_persona"),
+        type=["zip"],
+        key="import_persona_upload",
+    )
+    conflict = st.selectbox(
+        t("label.conflict_policy"),
+        options=["reject", "rename", "overwrite"],
+        format_func=lambda v: t(f"label.conflict.{v}"),
+        key="import_conflict",
+    )
+    if uploaded is not None and st.button(t("action.preview_import"), key="preview_import_btn"):
+        try:
+            raw = uploaded.getvalue()
+            st.session_state.import_bytes = raw
+            st.session_state.import_preview = preview_persona_zip(
+                raw,
+                personas_dir=settings.personas_dir,
+            ).to_dict()
+            st.session_state.confirm_overwrite_import = False
+        except Exception as exc:  # noqa: BLE001
+            st.session_state.import_preview = None
+            st.session_state.import_bytes = None
+            _render_error(exc)
+    if st.session_state.import_preview:
+        st.markdown(f"**{t('label.import_preview')}**")
+        st.json(st.session_state.import_preview)
+        needs_overwrite = overwrite_confirm_required(
+            str(conflict),
+            cast(dict[str, Any] | None, st.session_state.import_preview),
+        )
+        overwrite_ok = True
+        if needs_overwrite:
+            st.warning(t("warn.overwrite_import"))
+            overwrite_ok = st.checkbox(
+                t("action.confirm_overwrite"),
+                key="confirm_overwrite_import",
+            )
+        if st.button(
+            t("action.confirm_import"),
+            key="confirm_import_btn",
+            disabled=needs_overwrite and not overwrite_ok,
+        ):
+            try:
+                pack = import_persona_zip(
+                    cast(bytes, st.session_state.import_bytes),
+                    personas_dir=settings.personas_dir,
+                    conflict=cast(Any, conflict),
+                )
+                st.session_state.persona_id = pack.id
+                st.session_state.import_preview = None
+                st.session_state.import_bytes = None
+                st.session_state.confirm_overwrite_import = False
+                st.success(t("status.import_ok"))
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
+
+    if is_user_persona(st.session_state.persona_id, settings):
+        st.caption(t("warn.delete_persona"))
+        if st.button(t("action.delete_persona"), key="delete_persona_btn"):
+            st.session_state.confirm_delete_persona = True
+        if st.session_state.confirm_delete_persona and st.button(
+            t("action.confirm_delete"), key="confirm_delete_persona_btn"
+        ):
+            try:
+                pid = str(st.session_state.persona_id)
+                delete_user_persona(personas_dir=settings.personas_dir, persona_id=pid)
+                _wipe_persona_index(pid)
+                st.session_state.persona_id = "study-buddy"
+                st.session_state.thread_id = ""
+                st.session_state.confirm_delete_persona = False
+                st.success(t("status.delete_persona_ok"))
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
+    else:
+        st.caption(t("status.example_persona_readonly"))
+
+    if st.button(t("action.backup"), key="backup_btn"):
+        try:
+            payload, summary = create_backup(
+                settings.data_dir,
+                api_key=st.session_state.api_key or settings.groq_api_key,
+            )
+            st.session_state.backup_payload = payload
+            st.session_state.backup_summary = summary.member_count
+        except Exception as exc:  # noqa: BLE001
+            st.session_state.backup_payload = None
+            _render_error(exc)
+    if st.session_state.get("backup_payload"):
+        st.download_button(
+            label="persona-bot-backup.zip",
+            data=cast(bytes, st.session_state.backup_payload),
+            file_name="persona-bot-backup.zip",
+            mime="application/zip",
+            key="backup_download",
+        )
+        st.success(f"{t('status.backup_ok')} ({st.session_state.get('backup_summary', 0)})")
+
+    restore_file = st.file_uploader(
+        t("action.restore"),
+        type=["zip"],
+        key="restore_upload",
+    )
+    if restore_file is not None and st.button(t("action.restore"), key="restore_btn"):
+        try:
+            restore_backup(restore_file.getvalue(), data_dir=settings.data_dir)
+            st.session_state.chat_store = ChatStore(chat_db_path())
+            st.session_state.usage_tracker = UsageTracker(usage_path())
+            st.session_state.thread_id = ""
+            st.success(t("status.restore_ok"))
+            st.rerun()
+        except Exception as exc:  # noqa: BLE001
+            _render_error(exc)
+
+    st.warning(t("warn.delete_all"))
+    if st.button(t("action.delete_all_data"), key="delete_all_btn"):
+        st.session_state.confirm_delete_all = True
+    if st.session_state.confirm_delete_all and st.button(
+        t("action.confirm_delete"), key="confirm_delete_all_btn"
+    ):
+        try:
+            delete_all_data(settings.data_dir, keep_version=True)
+            st.session_state.chat_store = ChatStore(chat_db_path())
+            st.session_state.usage_tracker = UsageTracker(usage_path())
+            st.session_state.thread_id = ""
+            st.session_state.confirm_delete_all = False
+            st.success(t("status.delete_all_ok"))
+            st.rerun()
+        except Exception as exc:  # noqa: BLE001
+            _render_error(exc)
+
+
+def _sidebar_advanced_labs(persona: PersonaPack | None, settings: Any) -> None:
+    """Search lab, prompt inspector, remember-key status details."""
+    st.caption(
+        t(remember_status_key(loaded_from_keyring=bool(st.session_state.get("remember_loaded"))))
+    )
+    st.caption(t("label.remember_key_help"))
+    st.caption(t("privacy.notice"))
+    st.checkbox(
+        t("label.prompt_inspector"),
+        key="show_prompt_inspector",
+    )
+    if persona is not None:
+        st.markdown(f"**{t('label.search_lab')}**")
+        q = st.text_input(t("label.search_query"), key="search_lab_q")
+        if st.button(t("action.run_search"), key="search_lab_go") and q.strip():
+            try:
+                cache_key = f"rag::{persona.id}::{persona.config.embedding_preset}"
+                if cache_key not in st.session_state:
+                    embedder = build_embedder(settings, persona=persona, fake=False)
+                    st.session_state[cache_key] = {
+                        "embedder": embedder,
+                        "bundle": get_or_build_store(
+                            settings=settings,
+                            persona=persona,
+                            embedder=embedder,
+                            force=False,
+                        ),
+                    }
+                vstore = st.session_state[cache_key]["bundle"][0]
+                hits = run_search_lab(
+                    vstore,
+                    persona_id=persona.id,
+                    query=q.strip(),
+                    top_k=persona.config.resolved_top_k(),
+                    min_score=0.0,
+                )
+                for hit in hits:
+                    st.write(
+                        f"{float(hit['score']):.3f} · {hit.get('source')} — "
+                        f"{str(hit.get('text', ''))[:120]}"
+                    )
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
+
+
+def _sidebar_more(
+    *,
+    persona: PersonaPack | None,
+    settings: Any,
+    has_key: bool,
+) -> None:
+    """Collapsed power panel: usage, version, editor, backup, health, labs."""
+    usage = _usage()
+    with st.sidebar.expander(t("label.more_settings"), expanded=False):
+        snap = usage.snapshot
+        token_display = format_token_usage(
+            total_tokens=snap.total_tokens,
+            daily_limit=settings.daily_token_limit,
+        )
+        st.markdown(f"**{t('label.usage_today')}**")
+        st.caption(f"{t('label.tokens')}: {token_display} · n={snap.request_count}")
+        if settings.daily_token_limit is not None and settings.daily_token_limit > 0:
+            st.caption(t("label.daily_token_limit"))
+        else:
+            st.caption(t("status.daily_limit_unset"))
+
+        st.caption(f"{t('label.version')}: {get_app_version()}")
+
+        _render_persona_editor(persona)
+
+        if has_key:
+            with st.expander(t("label.data_tools"), expanded=False):
+                _sidebar_data_tools(settings)
+
+        with st.expander(t("label.health"), expanded=False):
+            report = run_health_check(
+                settings,
+                api_key=st.session_state.api_key or settings.groq_api_key,
+            )
+            st.write(t("status.health_ok") if report.ok else t("status.health_issues"))
+            st.json(report.to_dict())
+
+        with st.expander(t("label.advanced"), expanded=False):
+            _sidebar_advanced_labs(persona, settings)
+
+
 def _sidebar(personas: list) -> None:
     settings = get_settings()
     store = _store()
-    usage = _usage()
     by_id = {p.id: p for p in personas}
 
     st.sidebar.markdown(f"### {t('app.title')}")
-    st.sidebar.caption(t("app.tagline"))
 
     lang = st.sidebar.selectbox(
         t("label.language"),
@@ -485,11 +842,7 @@ def _sidebar(personas: list) -> None:
         st.rerun()
 
     persona = by_id.get(st.session_state.persona_id)
-    if persona:
-        icon = f"{persona.icon} " if persona.icon else ""
-        st.sidebar.caption(f"{icon}{persona.description}")
 
-    st.sidebar.divider()
     c1, c2 = st.sidebar.columns(2)
     if c1.button(t("action.new_chat"), use_container_width=True):
         st.session_state.confirm_clear_chat = False
@@ -528,380 +881,12 @@ def _sidebar(personas: list) -> None:
         if chosen is not None:
             st.session_state.thread_id = str(chosen)
 
-    st.sidebar.divider()
-    snap = usage.snapshot
-    token_display = format_token_usage(
-        total_tokens=snap.total_tokens,
-        daily_limit=settings.daily_token_limit,
-    )
-    st.sidebar.markdown(f"**{t('label.usage_today')}**")
-    st.sidebar.markdown(
-        f'<div class="pb-meta">{t("label.tokens")}: {token_display} · n={snap.request_count}</div>',
-        unsafe_allow_html=True,
-    )
-    if settings.daily_token_limit is not None and settings.daily_token_limit > 0:
-        st.sidebar.caption(t("label.daily_token_limit"))
-    else:
-        st.sidebar.caption(t("status.daily_limit_unset"))
+    if persona is not None:
+        _sidebar_knowledge(persona)
 
     has_key = bool(st.session_state.api_key or settings.groq_api_key)
-    if not has_key:
-        st.sidebar.info(t("wizard.knowledge_only_hint"))
-        st.sidebar.caption(t("wizard.locked_tools"))
-
-    if persona is not None:
-        with st.sidebar.expander(t("label.knowledge"), expanded=True):
-            try:
-                cache_key = f"rag::{persona.id}::{persona.config.embedding_preset}"
-                if cache_key not in st.session_state:
-                    embedder = build_embedder(settings, persona=persona, fake=False)
-                    st.session_state[cache_key] = {
-                        "embedder": embedder,
-                        "bundle": get_or_build_store(
-                            settings=settings,
-                            persona=persona,
-                            embedder=embedder,
-                            force=False,
-                        ),
-                    }
-                embedder = st.session_state[cache_key]["embedder"]
-                _vstore, manifest, kdir, health = st.session_state[cache_key]["bundle"]
-                status_key = index_status_key(
-                    needs_rebuild=bool(health.needs_rebuild),
-                    file_count=int(health.file_count),
-                )
-                st.markdown(f"**{t('label.knowledge_health')}:** {t(status_key)}")
-                if health.needs_rebuild:
-                    st.warning(t("label.needs_rebuild_banner"))
-                st.caption(
-                    f"{health.file_count} files · {manifest.chunk_count} chunks · "
-                    f"{t('label.knowledge_size')}: "
-                    f"{knowledge_total_bytes(Path(kdir)) / (1024 * 1024):.2f} / "
-                    f"{settings.max_knowledge_mb} MB"
-                )
-                if is_user_persona(persona.id, settings):
-                    uploaded_knowledge = st.file_uploader(
-                        t("action.upload_knowledge"),
-                        type=["txt", "md", "pdf", "docx"],
-                        key=f"knowledge_upload_{persona.id}",
-                    )
-                    if uploaded_knowledge is not None and st.button(
-                        t("action.make_knowledge_ready"),
-                        key=f"knowledge_upload_btn_{persona.id}",
-                    ):
-                        try:
-                            dest = add_knowledge_bytes(
-                                settings=settings,
-                                persona_id=persona.id,
-                                filename=uploaded_knowledge.name,
-                                data=uploaded_knowledge.getvalue(),
-                            )
-                            _clear_rag_cache(persona.id)
-                            _rebuild_persona_index(persona)
-                            st.success(f"{t('status.knowledge_ready_after_save')} ({dest.name})")
-                            st.rerun()
-                        except Exception as exc:  # noqa: BLE001
-                            _render_error(exc)
-                    paste_name = st.text_input(
-                        t("label.knowledge_paste_name"),
-                        value="pasted.md",
-                        key=f"knowledge_paste_name_{persona.id}",
-                    )
-                    paste_text = st.text_area(
-                        t("label.knowledge_paste"),
-                        key=f"knowledge_paste_{persona.id}",
-                        height=100,
-                    )
-                    if st.button(
-                        t("action.make_knowledge_ready"),
-                        key=f"knowledge_paste_btn_{persona.id}",
-                    ):
-                        try:
-                            dest = add_knowledge_paste(
-                                settings=settings,
-                                persona_id=persona.id,
-                                text=paste_text,
-                                filename=paste_name,
-                            )
-                            _clear_rag_cache(persona.id)
-                            _rebuild_persona_index(persona)
-                            st.success(f"{t('status.knowledge_ready_after_save')} ({dest.name})")
-                            st.rerun()
-                        except Exception as exc:  # noqa: BLE001
-                            _render_error(exc)
-                else:
-                    st.caption(t("status.example_edit_readonly"))
-
-                if st.button(t("label.rebuild_index"), key="rebuild_idx"):
-                    _rebuild_persona_index(persona)
-                    st.success(t("status.index_rebuilt"))
-                    st.rerun()
-            except Exception as exc:  # noqa: BLE001
-                _render_error(exc)
-
-    _render_persona_editor(persona)
-
-    st.sidebar.caption(f"{t('label.version')}: {get_app_version()}")
-
-    if not has_key:
-        with st.sidebar.expander(t("label.advanced"), expanded=True):
-            key_val = st.text_input(
-                t("label.api_key"),
-                value=st.session_state.api_key,
-                type="password",
-                help=t("error.hint.add_api_key"),
-                key="sidebar_key_preauth",
-            )
-            remember = st.checkbox(
-                t("label.remember_key"),
-                value=remember_enabled(),
-                key="remember_key_box_preauth",
-                help=t("label.remember_key_help"),
-            )
-            st.caption(
-                t(
-                    remember_status_key(
-                        loaded_from_keyring=bool(st.session_state.get("remember_loaded"))
-                    )
-                )
-            )
-            if st.button(t("action.save_key"), key="save_key_btn_preauth"):
-                _apply_remember_choice(remember, key_val)
-                st.session_state.wizard_done = True
-                st.session_state.knowledge_only_mode = False
-                st.rerun()
-        return
-
-    with st.sidebar.expander(t("label.data_tools"), expanded=False):
-        # Single-click Streamlit download (zip bytes ready for download_button).
-        pack_dir = persona_dir_for(st.session_state.persona_id, settings)
-        if pack_dir is not None:
-            try:
-                payload = export_persona_zip(
-                    pack_dir,
-                    api_key=st.session_state.api_key or settings.groq_api_key,
-                )
-                st.download_button(
-                    label=t("action.export_persona"),
-                    data=payload,
-                    file_name=f"{st.session_state.persona_id}.zip",
-                    mime="application/zip",
-                    key="export_download",
-                    help=t("status.export_ok"),
-                )
-            except Exception as exc:  # noqa: BLE001
-                _render_error(exc)
-
-        uploaded = st.file_uploader(
-            t("action.import_persona"),
-            type=["zip"],
-            key="import_persona_upload",
-        )
-        conflict = st.selectbox(
-            t("label.conflict_policy"),
-            options=["reject", "rename", "overwrite"],
-            format_func=lambda v: t(f"label.conflict.{v}"),
-            key="import_conflict",
-        )
-        if uploaded is not None and st.button(t("action.preview_import"), key="preview_import_btn"):
-            try:
-                raw = uploaded.getvalue()
-                st.session_state.import_bytes = raw
-                st.session_state.import_preview = preview_persona_zip(
-                    raw,
-                    personas_dir=settings.personas_dir,
-                ).to_dict()
-                st.session_state.confirm_overwrite_import = False
-            except Exception as exc:  # noqa: BLE001
-                st.session_state.import_preview = None
-                st.session_state.import_bytes = None
-                _render_error(exc)
-        if st.session_state.import_preview:
-            st.markdown(f"**{t('label.import_preview')}**")
-            st.json(st.session_state.import_preview)
-            needs_overwrite = overwrite_confirm_required(
-                str(conflict),
-                cast(dict[str, Any] | None, st.session_state.import_preview),
-            )
-            overwrite_ok = True
-            if needs_overwrite:
-                st.warning(t("warn.overwrite_import"))
-                overwrite_ok = st.checkbox(
-                    t("action.confirm_overwrite"),
-                    key="confirm_overwrite_import",
-                )
-            if st.button(
-                t("action.confirm_import"),
-                key="confirm_import_btn",
-                disabled=needs_overwrite and not overwrite_ok,
-            ):
-                try:
-                    pack = import_persona_zip(
-                        cast(bytes, st.session_state.import_bytes),
-                        personas_dir=settings.personas_dir,
-                        conflict=cast(Any, conflict),
-                    )
-                    st.session_state.persona_id = pack.id
-                    st.session_state.import_preview = None
-                    st.session_state.import_bytes = None
-                    st.session_state.confirm_overwrite_import = False
-                    st.success(t("status.import_ok"))
-                    st.rerun()
-                except Exception as exc:  # noqa: BLE001
-                    _render_error(exc)
-
-        if is_user_persona(st.session_state.persona_id, settings):
-            st.caption(t("warn.delete_persona"))
-            if st.button(t("action.delete_persona"), key="delete_persona_btn"):
-                st.session_state.confirm_delete_persona = True
-            if st.session_state.confirm_delete_persona and st.button(
-                t("action.confirm_delete"), key="confirm_delete_persona_btn"
-            ):
-                try:
-                    pid = str(st.session_state.persona_id)
-                    delete_user_persona(personas_dir=settings.personas_dir, persona_id=pid)
-                    _wipe_persona_index(pid)
-                    st.session_state.persona_id = "study-buddy"
-                    st.session_state.thread_id = ""
-                    st.session_state.confirm_delete_persona = False
-                    st.success(t("status.delete_persona_ok"))
-                    st.rerun()
-                except Exception as exc:  # noqa: BLE001
-                    _render_error(exc)
-        else:
-            st.caption(t("status.example_persona_readonly"))
-
-        if st.button(t("action.backup"), key="backup_btn"):
-            try:
-                payload, summary = create_backup(
-                    settings.data_dir,
-                    api_key=st.session_state.api_key or settings.groq_api_key,
-                )
-                st.session_state.backup_payload = payload
-                st.session_state.backup_summary = summary.member_count
-            except Exception as exc:  # noqa: BLE001
-                st.session_state.backup_payload = None
-                _render_error(exc)
-        if st.session_state.get("backup_payload"):
-            st.download_button(
-                label="persona-bot-backup.zip",
-                data=cast(bytes, st.session_state.backup_payload),
-                file_name="persona-bot-backup.zip",
-                mime="application/zip",
-                key="backup_download",
-            )
-            st.success(f"{t('status.backup_ok')} ({st.session_state.get('backup_summary', 0)})")
-
-        restore_file = st.file_uploader(
-            t("action.restore"),
-            type=["zip"],
-            key="restore_upload",
-        )
-        if restore_file is not None and st.button(t("action.restore"), key="restore_btn"):
-            try:
-                restore_backup(restore_file.getvalue(), data_dir=settings.data_dir)
-                st.session_state.chat_store = ChatStore(chat_db_path())
-                st.session_state.usage_tracker = UsageTracker(usage_path())
-                st.session_state.thread_id = ""
-                st.success(t("status.restore_ok"))
-                st.rerun()
-            except Exception as exc:  # noqa: BLE001
-                _render_error(exc)
-
-        st.warning(t("warn.delete_all"))
-        if st.button(t("action.delete_all_data"), key="delete_all_btn"):
-            st.session_state.confirm_delete_all = True
-        if st.session_state.confirm_delete_all and st.button(
-            t("action.confirm_delete"), key="confirm_delete_all_btn"
-        ):
-            try:
-                delete_all_data(settings.data_dir, keep_version=True)
-                st.session_state.chat_store = ChatStore(chat_db_path())
-                st.session_state.usage_tracker = UsageTracker(usage_path())
-                st.session_state.thread_id = ""
-                st.session_state.confirm_delete_all = False
-                st.success(t("status.delete_all_ok"))
-                st.rerun()
-            except Exception as exc:  # noqa: BLE001
-                _render_error(exc)
-
-    with st.sidebar.expander(t("label.health")):
-        report = run_health_check(
-            settings,
-            api_key=st.session_state.api_key or settings.groq_api_key,
-        )
-        st.write(t("status.health_ok") if report.ok else t("status.health_issues"))
-        st.json(report.to_dict())
-
-    with st.sidebar.expander(t("label.advanced")):
-        key_val = st.text_input(
-            t("label.api_key"),
-            value=st.session_state.api_key,
-            type="password",
-            help=t("error.hint.add_api_key"),
-        )
-        remember = st.checkbox(
-            t("label.remember_key"),
-            value=remember_enabled(),
-            key="remember_key_box",
-            help=t("label.remember_key_help"),
-        )
-        st.caption(
-            t(
-                remember_status_key(
-                    loaded_from_keyring=bool(st.session_state.get("remember_loaded"))
-                )
-            )
-        )
-        if st.button(t("action.save_key"), key="save_key_btn"):
-            _apply_remember_choice(remember, key_val)
-            st.session_state.knowledge_only_mode = False
-            st.rerun()
-        if st.button(t("action.forget_key"), key="forget_key_btn"):
-            st.session_state.api_key = ""
-            st.session_state.remember_loaded = False
-            st.session_state.knowledge_only_mode = True
-            set_ui_remember_preference(False)
-            delete_api_key()
-            st.rerun()
-        st.caption(t("privacy.notice"))
-        st.checkbox(
-            t("label.prompt_inspector"),
-            key="show_prompt_inspector",
-            help=t("label.lab_tuning"),
-        )
-        if persona is not None:
-            st.caption(t("label.search_lab"))
-            q = st.text_input(t("label.search_query"), key="search_lab_q")
-            if st.button(t("action.run_search"), key="search_lab_go") and q.strip():
-                try:
-                    cache_key = f"rag::{persona.id}::{persona.config.embedding_preset}"
-                    if cache_key not in st.session_state:
-                        embedder = build_embedder(settings, persona=persona, fake=False)
-                        st.session_state[cache_key] = {
-                            "embedder": embedder,
-                            "bundle": get_or_build_store(
-                                settings=settings,
-                                persona=persona,
-                                embedder=embedder,
-                                force=False,
-                            ),
-                        }
-                    vstore = st.session_state[cache_key]["bundle"][0]
-                    hits = run_search_lab(
-                        vstore,
-                        persona_id=persona.id,
-                        query=q.strip(),
-                        top_k=persona.config.resolved_top_k(),
-                        min_score=0.0,
-                    )
-                    for hit in hits:
-                        st.write(
-                            f"{float(hit['score']):.3f} · {hit.get('source')} — "
-                            f"{str(hit.get('text', ''))[:120]}"
-                        )
-                except Exception as exc:  # noqa: BLE001
-                    _render_error(exc)
+    _sidebar_settings(has_key=has_key)
+    _sidebar_more(persona=persona, settings=settings, has_key=has_key)
 
 
 def _welcome() -> None:
