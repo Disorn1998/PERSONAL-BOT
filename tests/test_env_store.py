@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import stat
 from pathlib import Path
 
 import pytest
@@ -35,6 +37,10 @@ def test_upsert_groq_api_key_mock_write(tmp_path: Path, monkeypatch: pytest.Monk
     body = env.read_text(encoding="utf-8")
     assert body.count("GROQ_API_KEY=") == 1
     assert "gsk_test_other" in body
+    # Owner-only bits when the platform supports POSIX modes.
+    if os.name == "posix":
+        mode = stat.S_IMODE(env.stat().st_mode)
+        assert mode == 0o600
 
 
 def test_upsert_rejects_empty_key(tmp_path: Path) -> None:

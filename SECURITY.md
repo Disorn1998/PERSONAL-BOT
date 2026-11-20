@@ -9,6 +9,9 @@ Do not file public issues that include live API keys or personal chat logs.
 ## Practices
 
 - Bring your own Groq key (BYOK). Keys stay in session by default.
+- First-run wizard may upsert `GROQ_API_KEY` into a local `.env` (owner-only mode
+  when the OS allows) so beginners match a hand-edited file — never logged;
+  never under `data/` / backups / export zips (`persona_bot/env_store.py`).
 - Optional OS keyring (`PERSONA_BOT_REMEMBER_KEY=1` **or** the UI “remember key” checkbox)
   stores the key **outside** `data/` and enables both save and load across restarts.
 - Never commit `.env` or anything under `data/`.
