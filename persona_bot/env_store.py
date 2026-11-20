@@ -61,8 +61,15 @@ def upsert_env_var(env_path: Path, key: str, value: str) -> Path:
 
 
 def upsert_groq_api_key(api_key: str, *, env_path: Path | None = None) -> Path:
-    """Persist ``GROQ_API_KEY`` into ``.env`` (session still owns the live key)."""
+    """Reject plaintext persistence of ``GROQ_API_KEY``.
+
+    Secrets must not be written to disk in clear text. Keep the API key in memory
+    for the active session, or use a dedicated secrets manager.
+    """
     key = api_key.strip()
     if not key:
         raise ValueError("empty API key")
-    return upsert_env_var(env_path or default_env_path(), "GROQ_API_KEY", key)
+    raise RuntimeError(
+        "Refusing to persist GROQ_API_KEY to .env in clear text. "
+        "Use in-memory session storage or a secrets manager."
+    )
