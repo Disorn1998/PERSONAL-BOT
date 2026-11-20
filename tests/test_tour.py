@@ -67,6 +67,7 @@ def _configure_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
     monkeypatch.setenv("GROQ_MODEL_FALLBACK", "openai/gpt-oss-20b")
     monkeypatch.setenv("APP_PASSWORD", "")
     monkeypatch.setenv("PERSONA_BOT_REMEMBER_KEY", "0")
+    monkeypatch.setenv("PERSONA_BOT_ENV_FILE", str(tmp_path / ".env"))
     return data
 
 
@@ -90,27 +91,56 @@ def _button_keys(at) -> set[str]:  # noqa: ANN001
     return {getattr(b, "key", None) for b in at.button if getattr(b, "key", None)}
 
 
-def test_apptest_tour_shows_first_run(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_apptest_tour_hidden_during_gate(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Tour stays inactive on the full-screen gate (starts only after chat-ready)."""
     data = _configure_env(monkeypatch, tmp_path)
     _patch_fake_embedder(monkeypatch)
     at = _apptest()
     at.session_state["locale"] = "en"
     at.run()
     assert not at.exception, at.exception
+    assert at.session_state.get("wizard_done") is False
+    assert at.session_state.get("tour_active") is False
+    assert "tour_next_btn" not in _button_keys(at)
+    assert "tour_skip_btn" not in _button_keys(at)
+    assert not (data / "tour_done").exists()
+
+
+def test_apptest_tour_shows_after_chat_ready(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """After wizard_done, tour coach appears (persona step)."""
+    data = _configure_env(monkeypatch, tmp_path)
+    _patch_fake_embedder(monkeypatch)
+    (data / "privacy_ack").write_text("1", encoding="utf-8")
+    (data / "entry_path").write_text("knowledge", encoding="utf-8")
+    at = _apptest()
+    at.session_state["locale"] = "en"
+    at.session_state["wizard_done"] = True
+    at.session_state["knowledge_only_mode"] = True
+    at.session_state["privacy_ack"] = True
+    at.session_state["entry_path"] = "knowledge"
+    at.run()
+    assert not at.exception, at.exception
     assert at.session_state.get("tour_active") is True
-    assert at.session_state.get("tour_step") == "welcome"
+    assert at.session_state.get("tour_step") == "persona"
     assert "tour_next_btn" in _button_keys(at)
     assert "tour_skip_btn" in _button_keys(at)
     markdown_blobs = [getattr(m, "value", "") or "" for m in at.markdown]
     assert any("pb-tour-coach" in str(blob) for blob in markdown_blobs)
-    assert not (data / "tour_done").exists()
 
 
 def test_apptest_tour_skip_persists(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     data = _configure_env(monkeypatch, tmp_path)
     _patch_fake_embedder(monkeypatch)
+    (data / "privacy_ack").write_text("1", encoding="utf-8")
+    (data / "entry_path").write_text("knowledge", encoding="utf-8")
     at = _apptest()
     at.session_state["locale"] = "en"
+    at.session_state["wizard_done"] = True
+    at.session_state["knowledge_only_mode"] = True
+    at.session_state["privacy_ack"] = True
+    at.session_state["entry_path"] = "knowledge"
     at.run()
     assert "tour_skip_btn" in _button_keys(at)
     at.button("tour_skip_btn").click().run()
@@ -122,6 +152,10 @@ def test_apptest_tour_skip_persists(monkeypatch: pytest.MonkeyPatch, tmp_path: P
     # Reload: tour stays hidden
     at2 = _apptest()
     at2.session_state["locale"] = "en"
+    at2.session_state["wizard_done"] = True
+    at2.session_state["knowledge_only_mode"] = True
+    at2.session_state["privacy_ack"] = True
+    at2.session_state["entry_path"] = "knowledge"
     at2.run()
     assert not at2.exception, at2.exception
     assert at2.session_state.get("tour_active") is False

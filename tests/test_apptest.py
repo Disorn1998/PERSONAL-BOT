@@ -21,6 +21,8 @@ def _configure_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
     monkeypatch.setenv("GROQ_MODEL_FALLBACK", "openai/gpt-oss-20b")
     monkeypatch.setenv("APP_PASSWORD", "")
     monkeypatch.setenv("PERSONA_BOT_REMEMBER_KEY", "0")
+    # Keep wizard .env writes inside the temp tree (never touch repo .env).
+    monkeypatch.setenv("PERSONA_BOT_ENV_FILE", str(tmp_path / ".env"))
     return data
 
 
@@ -55,6 +57,21 @@ def _click_label(at, label: str) -> None:  # noqa: ANN001
     raise AssertionError(f"button with label {label!r} not found; have {labels}")
 
 
+def _complete_role_create(at, *, name: str = "Test Buddy") -> None:  # noqa: ANN001
+    """Role step → create persona → chat-ready."""
+    assert at.session_state.get("welcome_stage") == "role"
+    assert "onboarding_role_create" in _button_keys(at)
+    at.text_input("onboarding_role_name").set_value(name).run()
+    at.button("onboarding_role_create").click().run()
+    assert not at.exception, at.exception
+
+
+def _ack_privacy(at) -> None:  # noqa: ANN001
+    if "privacy_ack_btn" in _button_keys(at):
+        at.button("privacy_ack_btn").click().run()
+        assert not at.exception, at.exception
+
+
 def _enter_knowledge_only(at) -> None:  # noqa: ANN001
     at.run()
     assert not at.exception, at.exception
@@ -63,9 +80,8 @@ def _enter_knowledge_only(at) -> None:  # noqa: ANN001
     assert not at.exception, at.exception
     at.button("welcome_knowledge_only").click().run()
     assert not at.exception, at.exception
-    if "privacy_ack_btn" in _button_keys(at):
-        at.button("privacy_ack_btn").click().run()
-        assert not at.exception, at.exception
+    _complete_role_create(at)
+    _ack_privacy(at)
 
 
 def _enter_api_path(at, *, key: str = "gsk_test_welcome_key") -> None:  # noqa: ANN001
@@ -77,9 +93,8 @@ def _enter_api_path(at, *, key: str = "gsk_test_welcome_key") -> None:  # noqa: 
     at.text_input("welcome_key").set_value(key).run()
     at.button("welcome_save").click().run()
     assert not at.exception, at.exception
-    if "privacy_ack_btn" in _button_keys(at):
-        at.button("privacy_ack_btn").click().run()
-        assert not at.exception, at.exception
+    _complete_role_create(at)
+    _ack_privacy(at)
 
 
 def test_streamlit_app_loads(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -92,8 +107,23 @@ def test_streamlit_app_loads(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
     assert "welcome_choose_knowledge" in _button_keys(at)
 
 
+def test_apptest_gate_hides_sidebar(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Full-screen gate: no chat input and no sidebar tour/settings chrome."""
+    _configure_env(monkeypatch, tmp_path)
+    at = _apptest()
+    at.run()
+    assert not at.exception, at.exception
+    assert at.session_state.get("wizard_done") is False
+    assert not at.chat_input
+    keys = _button_keys(at)
+    assert "welcome_choose_api" in keys
+    assert "tour_restart_btn" not in keys
+    assert "tour_next_btn" not in keys
+    assert at.session_state.get("tour_active") is False
+
+
 def test_apptest_welcome_path_a_api(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    """Welcome gate → Add API key → save → privacy → chat shell."""
+    """Welcome gate → API key → role → privacy → chat shell."""
     data = _configure_env(monkeypatch, tmp_path)
     _patch_fake_embedder(monkeypatch)
     at = _apptest()
@@ -105,10 +135,13 @@ def test_apptest_welcome_path_a_api(monkeypatch: pytest.MonkeyPatch, tmp_path: P
     assert at.session_state["api_key"] == "gsk_test_welcome_key"
     assert (data / "entry_path").read_text(encoding="utf-8").strip() == "api"
     assert at.chat_input, "expected chat input after API path"
+    env_file = tmp_path / ".env"
+    assert env_file.is_file()
+    assert "GROQ_API_KEY=gsk_test_welcome_key" in env_file.read_text(encoding="utf-8")
 
 
 def test_apptest_knowledge_only_ready_path(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    """Welcome gate → Upload knowledge → Ready → privacy → chat (no Groq)."""
+    """Welcome gate → Upload knowledge → role → privacy → chat (no Groq)."""
     data = _configure_env(monkeypatch, tmp_path)
     _patch_fake_embedder(monkeypatch)
     at = _apptest()
@@ -147,12 +180,40 @@ def test_apptest_privacy_notice_is_quiet_caption(
     at.run()
     at.button("welcome_choose_knowledge").click().run()
     at.button("welcome_knowledge_only").click().run()
+    _complete_role_create(at)
     assert not at.exception, at.exception
     assert "privacy_ack_btn" in _button_keys(at)
     markdown_blobs = [getattr(m, "value", "") or "" for m in at.markdown]
     assert any('class="pb-privacy"' in str(blob) for blob in markdown_blobs)
     info_blobs = [str(getattr(i, "value", "") or "") for i in at.info]
     assert not any("Groq" in blob or "data/" in blob for blob in info_blobs)
+
+
+def test_apptest_continue_with_user_pack(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Gate shows Continue when a user pack exists → chat without API/upload."""
+    from persona_bot.config import Settings, clear_settings_cache
+    from persona_bot.persona_editor import create_user_persona
+
+    data = _configure_env(monkeypatch, tmp_path)
+    clear_settings_cache()
+    settings = Settings()
+    create_user_persona(
+        personas_dir=settings.personas_dir,
+        persona_id="home-notes",
+        name="Home notes",
+        system_prompt="Be helpful.",
+    )
+    _patch_fake_embedder(monkeypatch)
+    at = _apptest()
+    at.run()
+    assert not at.exception, at.exception
+    assert "welcome_continue" in _button_keys(at)
+    at.button("welcome_continue").click().run()
+    assert not at.exception, at.exception
+    _ack_privacy(at)
+    assert at.session_state["wizard_done"] is True
+    assert (data / "entry_path").is_file()
+    assert at.chat_input
 
 
 def test_apptest_usage_energy_bar_when_limit_set(
@@ -412,7 +473,7 @@ def test_apptest_knowledge_file_edit_and_delete(
     at.run()
     assert not at.exception, at.exception
 
-    edit_key = "knowledge_edit_kb-crud_notes.md"
+    edit_key = "knowledge_edit_kb-crud_text__notes.md"
     at.text_area(edit_key).set_value("wifi is cedar-99").run()
     assert not at.exception, at.exception
     at.button("knowledge_save_btn_kb-crud").click().run()
@@ -420,13 +481,13 @@ def test_apptest_knowledge_file_edit_and_delete(
     from persona_bot.persona_editor import read_knowledge_text
 
     assert (
-        read_knowledge_text(settings=settings, persona_id="kb-crud", relative_path="notes.md")
+        read_knowledge_text(settings=settings, persona_id="kb-crud", relative_path="text/notes.md")
         == "wifi is cedar-99"
     )
 
     at.button("knowledge_delete_btn_kb-crud").click().run()
     assert not at.exception, at.exception
-    assert at.session_state.get("confirm_delete_knowledge_path") == "notes.md"
+    assert at.session_state.get("confirm_delete_knowledge_path") == "text/notes.md"
     at.button("knowledge_confirm_delete_btn_kb-crud").click().run()
     assert not at.exception, at.exception
     assert list_knowledge_files(settings=settings, persona_id="kb-crud") == []
@@ -476,5 +537,6 @@ def test_apptest_make_knowledge_ready_paste(
     ).run()
     at.button("knowledge_paste_btn_kb-demo").click().run()
     assert not at.exception, at.exception
-    saved = list((data / "personas" / "kb-demo" / "knowledge").glob("*.md"))
+    saved = list((data / "personas" / "kb-demo" / "knowledge").rglob("*.md"))
     assert saved, "expected pasted knowledge file on disk"
+    assert any(p.parent.name == "text" for p in saved)

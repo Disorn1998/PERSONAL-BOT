@@ -75,8 +75,13 @@ from persona_bot.services import (
     persona_dir_for,
     usage_path,
 )
-from persona_bot.ui.assets import icon_path, welcome_hero_data_uri, welcome_hero_path
+from persona_bot.ui.assets import icon_path
 from persona_bot.ui.errors import error_from_exception, format_error_card
+from persona_bot.ui.onboarding import (
+    apply_entry_path,
+    is_chat_ready,
+    render_onboarding,
+)
 from persona_bot.ui.theme import custom_css
 from persona_bot.ui.tour import (
     current_tour_step,
@@ -87,11 +92,9 @@ from persona_bot.ui.tour import (
 )
 from persona_bot.ui.wizard import (
     EntryPath,
-    clear_entry_path,
     load_entry_path,
     overwrite_confirm_required,
     progress_markup,
-    save_entry_path,
     wizard_step,
 )
 from persona_bot.usage import (
@@ -126,7 +129,8 @@ def _init_state() -> None:
     ss.setdefault("knowledge_only_mode", False)
     ss.setdefault("show_prompt_inspector", False)
     ss.setdefault("entry_path", None)
-    ss.setdefault("welcome_stage", "gate")  # gate | api | knowledge
+    ss.setdefault("welcome_stage", "gate")  # gate | api | knowledge | role
+    ss.setdefault("onboarding_pending_files", [])
     set_locale(str(ss["locale"]))
     if not ss["api_key"] and remember_enabled():
         stored = load_api_key()
@@ -136,18 +140,8 @@ def _init_state() -> None:
 
 
 def _apply_entry_path(entry: EntryPath, *, finish: bool = False) -> None:
-    """Set session path; persist + mark wizard done only when finishing."""
-    st.session_state.entry_path = entry
-    st.session_state.welcome_stage = entry
-    # Keep Settings radio in sync so it cannot override the welcome choice.
-    st.session_state.settings_entry_path = entry
-    if entry == "knowledge":
-        st.session_state.knowledge_only_mode = True
-    else:
-        st.session_state.knowledge_only_mode = False
-    if finish:
-        save_entry_path(get_settings().data_dir, entry)
-        st.session_state.wizard_done = True
+    """Settings radio helper — delegates to onboarding state machine."""
+    apply_entry_path(entry, finish=finish)
 
 
 def _restore_entry_path_from_disk() -> None:
@@ -800,7 +794,7 @@ def _sidebar_knowledge(persona: PersonaPack) -> None:
                 _sidebar_knowledge_file_manager(persona, settings)
                 uploaded_knowledge = st.file_uploader(
                     t("action.upload_knowledge"),
-                    type=["txt", "md", "pdf", "docx"],
+                    type=["txt", "md", "pdf", "docx", "xlsx", "xls", "png", "jpg", "jpeg", "webp"],
                     key=f"knowledge_upload_{persona.id}",
                 )
                 if uploaded_knowledge is not None and st.button(
@@ -1234,204 +1228,6 @@ def _sidebar(personas: list) -> None:
     _sidebar_more(persona=persona, settings=settings, has_key=has_key)
 
 
-def _welcome_gate() -> None:
-    """First viewport: brand + short copy + hero + two path choices."""
-    step = current_tour_step()
-    if step in {"welcome", "path"}:
-        st.markdown(tour_anchor_markup(step), unsafe_allow_html=True)
-    hero_uri = welcome_hero_data_uri()
-    hero_block = ""
-    if hero_uri:
-        alt = html.escape(t("app.title"))
-        hero_block = (
-            f'<div class="pb-welcome-hero"><img src="{hero_uri}" alt="{alt}" width="100%" /></div>'
-        )
-    st.markdown(
-        f"""
-<div class="pb-welcome">
-  <p class="pb-welcome-brand">{t("app.title")}</p>
-  <h1>{t("app.welcome.headline")}</h1>
-  <p class="pb-welcome-sub">{t("app.welcome.sub")}</p>
-  {hero_block}
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-    # Path-only fallback when data URI unavailable (missing file → skip).
-    if not hero_uri and welcome_hero_path().is_file():
-        st.image(str(welcome_hero_path()), width="stretch")
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button(
-            t("action.choose_api"),
-            key="welcome_choose_api",
-            type="primary",
-            use_container_width=True,
-        ):
-            _apply_entry_path("api", finish=False)
-            st.rerun()
-    with c2:
-        if st.button(
-            t("action.choose_knowledge"),
-            key="welcome_choose_knowledge",
-            use_container_width=True,
-        ):
-            _apply_entry_path("knowledge", finish=False)
-            st.rerun()
-    st.caption(t("welcome.change_later"))
-
-
-def _welcome_api_path() -> None:
-    """Path A — paste Groq key or start with .env key."""
-    settings = get_settings()
-    env_key = (settings.groq_api_key or "").strip()
-    st.markdown(
-        f"""
-<div class="pb-welcome">
-  <p class="pb-welcome-brand">{t("app.title")}</p>
-  <h1>{t("action.choose_api")}</h1>
-  <p class="pb-welcome-sub">{t("welcome.api_hint")}</p>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-    if env_key and not st.session_state.api_key:
-        st.success(t("welcome.env_key_found"))
-        if st.button(t("action.start_chat"), key="welcome_start_env", type="primary"):
-            st.session_state.api_key = env_key
-            _apply_entry_path("api", finish=True)
-            st.rerun()
-    key_val = st.text_input(t("label.api_key"), type="password", key="welcome_key")
-    remember = st.checkbox(
-        t("label.remember_key"),
-        value=remember_enabled(),
-        key="welcome_remember",
-        help=t("label.remember_key_help"),
-    )
-    st.caption(
-        t(remember_status_key(loaded_from_keyring=bool(st.session_state.get("remember_loaded"))))
-    )
-    if st.button(t("action.save_key"), key="welcome_save", type="primary"):
-        _apply_remember_choice(remember, key_val)
-        _apply_entry_path("api", finish=True)
-        st.rerun()
-    if st.button(t("action.back_welcome"), key="welcome_back_api"):
-        clear_entry_path(settings.data_dir)
-        st.session_state.entry_path = None
-        st.session_state.welcome_stage = "gate"
-        st.session_state.wizard_done = False
-        st.rerun()
-    st.caption(t("welcome.change_later"))
-
-
-def _welcome_knowledge_path(personas: list) -> None:
-    """Path B — short upload/paste then Ready (knowledge-only)."""
-    settings = get_settings()
-    st.markdown(
-        f"""
-<div class="pb-welcome">
-  <p class="pb-welcome-brand">{t("app.title")}</p>
-  <h1>{t("action.choose_knowledge")}</h1>
-  <p class="pb-welcome-sub">{t("welcome.knowledge_hint")}</p>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-    by_id = {p.id: p for p in personas}
-    persona_ids = [p.id for p in personas]
-    labels = {p.id: p.name for p in personas}
-    current = st.session_state.persona_id
-    if current not in persona_ids and persona_ids:
-        current = persona_ids[0]
-        st.session_state.persona_id = current
-    selected = st.selectbox(
-        t("label.persona"),
-        options=persona_ids,
-        format_func=lambda i: labels.get(i, i),
-        index=persona_ids.index(current) if current in persona_ids else 0,
-        key="welcome_persona",
-    )
-    if selected != st.session_state.persona_id:
-        st.session_state.persona_id = selected
-    persona = by_id.get(st.session_state.persona_id)
-    if persona is not None and is_user_persona(persona.id, settings):
-        uploaded = st.file_uploader(
-            t("action.upload_knowledge"),
-            type=["txt", "md", "pdf", "docx"],
-            key="welcome_knowledge_upload",
-        )
-        paste_text = st.text_area(
-            t("label.knowledge_paste"),
-            key="welcome_knowledge_paste",
-            height=100,
-        )
-        if uploaded is not None and st.button(
-            t("action.make_knowledge_ready"),
-            key="welcome_knowledge_upload_btn",
-        ):
-            try:
-                dest = add_knowledge_bytes(
-                    settings=settings,
-                    persona_id=persona.id,
-                    filename=uploaded.name,
-                    data=uploaded.getvalue(),
-                )
-                _clear_rag_cache(persona.id)
-                _rebuild_persona_index(persona)
-                st.success(f"{t('status.knowledge_ready_after_save')} ({dest.name})")
-            except Exception as exc:  # noqa: BLE001
-                _render_error(exc)
-        elif paste_text.strip() and st.button(
-            t("action.make_knowledge_ready"),
-            key="welcome_knowledge_paste_btn",
-        ):
-            try:
-                dest = add_knowledge_paste(
-                    settings=settings,
-                    persona_id=persona.id,
-                    text=paste_text,
-                    filename="welcome-notes.md",
-                )
-                _clear_rag_cache(persona.id)
-                _rebuild_persona_index(persona)
-                st.success(f"{t('status.knowledge_ready_after_save')} ({dest.name})")
-            except Exception as exc:  # noqa: BLE001
-                _render_error(exc)
-    elif persona is not None:
-        st.caption(t("status.example_edit_readonly"))
-
-    if st.button(
-        t("action.continue_knowledge_only"),
-        key="welcome_knowledge_only",
-        type="primary",
-    ):
-        _apply_entry_path("knowledge", finish=True)
-        st.rerun()
-    if st.button(t("action.back_welcome"), key="welcome_back_knowledge"):
-        clear_entry_path(settings.data_dir)
-        st.session_state.entry_path = None
-        st.session_state.welcome_stage = "gate"
-        st.session_state.knowledge_only_mode = False
-        st.session_state.wizard_done = False
-        st.rerun()
-    st.caption(t("welcome.change_later"))
-
-
-def _welcome(personas: list) -> None:
-    """Welcome gate → path A (API) or path B (knowledge)."""
-    stage = st.session_state.get("welcome_stage") or "gate"
-    entry = st.session_state.get("entry_path")
-    if entry in {"api", "knowledge"}:
-        stage = entry
-    if stage == "api":
-        _welcome_api_path()
-        return
-    if stage == "knowledge":
-        _welcome_knowledge_path(personas)
-        return
-    _welcome_gate()
-
-
 def _cite_chips(text: str) -> str:
     """Turn ``[n]`` markers into compact soft-blue citation chips (HTML)."""
     return _CITE_MARK_RE.sub(r'<span class="pb-cite">[\1]</span>', text)
@@ -1824,9 +1620,10 @@ def run() -> None:
     ensure_data_version(settings.data_dir)
     setup_logging(settings.log_level, api_key=st.session_state.api_key or settings.groq_api_key)
     _restore_entry_path_from_disk()
+    chat_ready = is_chat_ready()
     init_tour_state(
         settings.data_dir,
-        wizard_done=bool(st.session_state.get("wizard_done")),
+        wizard_done=chat_ready,
     )
 
     try:
@@ -1838,6 +1635,11 @@ def run() -> None:
         st.warning(t("error.persona_load"))
         return
 
+    # Full-screen onboarding: hide sidebar + chat until chat-ready.
+    if not is_chat_ready():
+        render_onboarding(personas)
+        return
+
     _sidebar(personas)
 
     settings = get_settings()
@@ -1845,15 +1647,10 @@ def run() -> None:
         st.info(t("error.hint.password"))
         return
 
-    # Guided tour coach (Next / Skip / Start using) — short beginner overlay.
+    # Guided tour coach — only after chat-ready (sidebar + chat visible).
     render_tour_coach(settings.data_dir)
 
     has_key = bool(st.session_state.api_key or settings.groq_api_key)
-    # Gate until the user finishes path A (key) or path B (Ready).
-    needs_welcome = not bool(st.session_state.wizard_done)
-    if needs_welcome:
-        _welcome(personas)
-        return
     if not has_key:
         st.session_state.knowledge_only_mode = True
 

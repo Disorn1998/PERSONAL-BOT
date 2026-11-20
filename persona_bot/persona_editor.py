@@ -17,15 +17,19 @@ from persona_bot.persona import (
     load_persona_yaml,
     save_persona_yaml,
 )
-from persona_bot.rag.loaders import SUPPORTED_SUFFIXES, iter_knowledge_files
+from persona_bot.rag.loaders import (
+    SUPPORTED_SUFFIXES,
+    iter_knowledge_files,
+    knowledge_subdir_for_suffix,
+)
 from persona_bot.services import is_user_persona, persona_dir_for
 
 _ID_SAFE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 _FILENAME_SAFE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._ -]*$")
 
-# Keep in sync with zip import whitelist (persona_pack_io).
-ALLOWED_KNOWLEDGE_SUFFIXES = {".txt", ".md", ".pdf", ".docx"}
-# In-app text edit (PDF/DOCX: delete + re-upload only).
+# Keep in sync with zip import whitelist (persona_pack_io) + loaders.
+ALLOWED_KNOWLEDGE_SUFFIXES = set(SUPPORTED_SUFFIXES)
+# In-app text edit (binary / OCR sources: delete + re-upload only).
 EDITABLE_KNOWLEDGE_SUFFIXES = {".txt", ".md", ".markdown"}
 
 # Single-file upload cap (bytes) — also bounded by MAX_KNOWLEDGE_MB total.
@@ -286,13 +290,15 @@ def add_knowledge_bytes(
         incoming_bytes=len(data),
         max_knowledge_mb=settings.max_knowledge_mb,
     )
-    dest = kdir / safe_name
+    kind_dir = kdir / knowledge_subdir_for_suffix(Path(safe_name).suffix.lower())
+    kind_dir.mkdir(parents=True, exist_ok=True)
+    dest = kind_dir / safe_name
     if dest.exists():
         stem = dest.stem
         suffix = dest.suffix
         n = 2
         while True:
-            candidate = kdir / f"{stem}-{n}{suffix}"
+            candidate = kind_dir / f"{stem}-{n}{suffix}"
             if not candidate.exists():
                 dest = candidate
                 break

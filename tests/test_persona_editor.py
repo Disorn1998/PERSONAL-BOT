@@ -120,7 +120,7 @@ def test_knowledge_upload_paste_and_limits(tmp_path: Path) -> None:
         data=b"safe basename",
     )
     assert escaped.name == "escape.md"
-    assert escaped.parent == settings.personas_dir / "know-bot" / "knowledge"
+    assert escaped.parent == settings.personas_dir / "know-bot" / "knowledge" / "text"
 
     with pytest.raises(PersonaEditorError):
         add_knowledge_bytes(
@@ -196,34 +196,36 @@ def test_knowledge_list_edit_delete(tmp_path: Path) -> None:
         data=b"bravo",
     )
     listed = list_knowledge_files(settings=settings, persona_id="crud-bot")
-    assert {f.relative_path for f in listed} == {"a.md", "b.txt"}
+    assert {f.relative_path for f in listed} == {"text/a.md", "text/b.txt"}
     assert all(f.editable for f in listed)
-    assert read_knowledge_text(settings=settings, persona_id="crud-bot", relative_path="a.md") == (
-        "alpha note"
-    )
+    assert read_knowledge_text(
+        settings=settings, persona_id="crud-bot", relative_path="text/a.md"
+    ) == ("alpha note")
 
     update_knowledge_text(
         settings=settings,
         persona_id="crud-bot",
-        relative_path="a.md",
+        relative_path="text/a.md",
         text="alpha updated",
     )
     assert (
-        read_knowledge_text(settings=settings, persona_id="crud-bot", relative_path="a.md")
+        read_knowledge_text(settings=settings, persona_id="crud-bot", relative_path="text/a.md")
         == "alpha updated"
     )
     yaml_files = load_persona_yaml(settings.personas_dir / "crud-bot" / "persona.yaml")
     assert any(name.endswith("a.md") for name in yaml_files.knowledge_files)
 
-    delete_knowledge_file(settings=settings, persona_id="crud-bot", relative_path="b.txt")
+    delete_knowledge_file(settings=settings, persona_id="crud-bot", relative_path="text/b.txt")
     remaining = list_knowledge_files(settings=settings, persona_id="crud-bot")
-    assert [f.relative_path for f in remaining] == ["a.md"]
-    assert not (settings.personas_dir / "crud-bot" / "knowledge" / "b.txt").exists()
+    assert [f.relative_path for f in remaining] == ["text/a.md"]
+    assert not (settings.personas_dir / "crud-bot" / "knowledge" / "text" / "b.txt").exists()
 
     with pytest.raises(PersonaEditorError):
         read_knowledge_text(settings=settings, persona_id="crud-bot", relative_path="../x.md")
     with pytest.raises(PersonaEditorError):
-        delete_knowledge_file(settings=settings, persona_id="crud-bot", relative_path="missing.md")
+        delete_knowledge_file(
+            settings=settings, persona_id="crud-bot", relative_path="text/missing.md"
+        )
     with pytest.raises(PersonaEditorError):
         list_knowledge_files(settings=settings, persona_id="study-buddy")
 
@@ -246,10 +248,11 @@ def test_knowledge_binary_not_text_editable(tmp_path: Path) -> None:
     )
     infos = list_knowledge_files(settings=settings, persona_id="bin-bot")
     assert len(infos) == 1
+    assert infos[0].relative_path == "pdf/scan.pdf"
     assert infos[0].editable is False
     with pytest.raises(PersonaEditorError):
-        read_knowledge_text(settings=settings, persona_id="bin-bot", relative_path="scan.pdf")
-    delete_knowledge_file(settings=settings, persona_id="bin-bot", relative_path="scan.pdf")
+        read_knowledge_text(settings=settings, persona_id="bin-bot", relative_path="pdf/scan.pdf")
+    delete_knowledge_file(settings=settings, persona_id="bin-bot", relative_path="pdf/scan.pdf")
     assert list_knowledge_files(settings=settings, persona_id="bin-bot") == []
 
 

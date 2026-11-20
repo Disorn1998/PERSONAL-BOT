@@ -7,6 +7,14 @@ All notable changes are documented here. This project follows
 
 ### Added
 
+- First-run onboarding overhaul: full-screen gate (hide sidebar until chat-ready)
+  with stages ``gate | api | knowledge | role``; paths API→role→chat,
+  upload→role→chat, and **Continue** when a user pack (or ``entry_path``) exists;
+  auto-upsert ``GROQ_API_KEY`` into ``.env`` on wizard key save; Excel
+  (``.xlsx``/``.xls`` via openpyxl) + image OCR (``.png``/``.jpg``/``.webp``,
+  placeholder on OCR fail) under typed ``knowledge/{text,pdf,docx,sheets,images}/``;
+  tour starts only after chat-ready. New ``persona_bot/ui/onboarding.py`` +
+  ``persona_bot/env_store.py``.
 - Persona CRUD UX: soft-3D manage panel, example/user badge, greeting + starter
   questions on create/edit, delete with confirm next to Save (not under Backup).
 - Editable answer-mode prompt rules (user packs): override built-in
