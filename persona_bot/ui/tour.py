@@ -77,7 +77,11 @@ def _coerce_step(raw: object) -> TourStep:
 
 
 def init_tour_state(data_dir: Path, *, wizard_done: bool) -> None:
-    """Hydrate tour flags from ``data/tour_done`` + session."""
+    """Hydrate tour flags from ``data/tour_done`` + session.
+
+    Tour starts only after chat-ready (``wizard_done``). During the full-screen
+    onboarding gate the coach stays inactive.
+    """
     ss = st.session_state
     done = is_tour_done(data_dir)
     ss.setdefault("tour_done", done)
@@ -86,10 +90,15 @@ def init_tour_state(data_dir: Path, *, wizard_done: bool) -> None:
         ss["tour_active"] = False
         ss.setdefault("tour_step", "done")
         return
+    if not wizard_done:
+        # Gate / role steps — do not show tour until chat + sidebar appear.
+        ss["tour_active"] = False
+        ss.setdefault("tour_step", "welcome")
+        return
     ss.setdefault("tour_active", True)
     if "tour_step" not in ss:
-        # Returning users who already finished welcome skip gate steps.
-        ss["tour_step"] = "persona" if wizard_done else "welcome"
+        # After onboarding, skip gate-oriented welcome/path steps.
+        ss["tour_step"] = "persona"
     else:
         ss["tour_step"] = _coerce_step(ss["tour_step"])
     if ss.get("tour_active"):

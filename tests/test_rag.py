@@ -264,6 +264,49 @@ def test_loaders_unsupported_missing_dir_and_docx(tmp_path: Path) -> None:
     assert docx_path.resolve() in [p.resolve() for p in files]
 
 
+def test_loaders_xlsx_and_image_smoke(tmp_path: Path) -> None:
+    """Excel text extract + image OCR fallback placeholder (no tesseract required)."""
+    from openpyxl import Workbook
+    from persona_bot.rag.loaders import OCR_PLACEHOLDER_PREFIX, knowledge_subdir_for_suffix
+
+    assert knowledge_subdir_for_suffix(".xlsx") == "sheets"
+    assert knowledge_subdir_for_suffix(".png") == "images"
+
+    sheets = tmp_path / "sheets"
+    sheets.mkdir()
+    xlsx = sheets / "demo.xlsx"
+    wb = Workbook()
+    ws = wb.active
+    assert ws is not None
+    ws.title = "Notes"
+    ws["A1"] = "Topic"
+    ws["B1"] = "Detail"
+    ws["A2"] = "RAG"
+    ws["B2"] = "local index"
+    wb.save(xlsx)
+    text = load_text_file(xlsx)
+    assert "RAG" in text
+    assert "local index" in text
+
+    images = tmp_path / "images"
+    images.mkdir()
+    # Minimal valid 1x1 PNG.
+    png = images / "pixel.png"
+    png.write_bytes(
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+        b"\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00"
+        b"\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
+    ocr_text = load_text_file(png)
+    # Without working tesseract, placeholder is expected and file stays on disk.
+    assert png.is_file()
+    assert OCR_PLACEHOLDER_PREFIX in ocr_text or ocr_text.strip()
+
+    found = iter_knowledge_files(tmp_path)
+    assert xlsx.resolve() in [p.resolve() for p in found]
+    assert png.resolve() in [p.resolve() for p in found]
+
+
 def test_fake_embedder_empty_and_get_embedder() -> None:
     emb = FakeEmbedder(dim=8, model_name="fake:empty")
     assert emb.dim == 8

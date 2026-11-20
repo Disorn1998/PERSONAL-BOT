@@ -19,7 +19,18 @@ ConflictPolicy = Literal["reject", "rename", "overwrite"]
 # Whitelist — root + knowledge + optional avatar only.
 _PERSONA_YAML = "persona.yaml"
 _KNOWLEDGE_PREFIX = "knowledge/"
-_ALLOWED_KNOWLEDGE_SUFFIX = (".txt", ".md", ".pdf", ".docx")
+_ALLOWED_KNOWLEDGE_SUFFIX = (
+    ".txt",
+    ".md",
+    ".pdf",
+    ".docx",
+    ".xlsx",
+    ".xls",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+)
 _ALLOWED_AVATAR_SUFFIX = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg")
 _AVATAR_NAMES = tuple(f"avatar{ext}" for ext in _ALLOWED_AVATAR_SUFFIX)
 

@@ -25,9 +25,23 @@ _TH: dict[str, str] = {
     "wizard.locked_tools": ("สำรอง/นำเข้าอยู่ใน「ตั้งค่าเพิ่มเติม」หลังมีคีย์ — ความรู้และแชตจากโน้ตใช้ได้แม้ยังไม่มีคีย์"),
     "wizard.knowledge_only_hint": "ตอบจากโน้ตบนเครื่อง (ไม่ใช้ AI ออนไลน์)",
     "welcome.change_later": "เปลี่ยนทีหลังได้ในตั้งค่า",
-    "welcome.env_key_found": "พบคีย์ใน .env แล้ว — เริ่มแชต",
-    "welcome.knowledge_hint": "ใส่ไฟล์หรือวางข้อความ แล้วกดพร้อมใช้",
-    "welcome.api_hint": "วางคีย์ Groq หรือใช้คีย์จาก .env",
+    "welcome.env_key_found": "พบคีย์ใน .env แล้ว — ไปกำหนดบทบาท",
+    "welcome.knowledge_hint": "ใส่ไฟล์หรือวางข้อความ แล้วไปกำหนดบทบาท",
+    "welcome.knowledge_stage_hint": "ยังไม่มีแพ็กของคุณ — ไฟล์จะถูกเก็บชั่วคราวแล้วผูกตอนสร้างบทบาท",
+    "welcome.knowledge_empty_save": "ยังไม่มีไฟล์หรือข้อความให้บันทึก",
+    "welcome.pending_files": "รอผูกกับบทบาท: {n} ไฟล์",
+    "welcome.api_hint": "วางคีย์ Groq หรือใช้คีย์จาก .env (บันทึกลง .env อัตโนมัติ)",
+    "onboarding.role_title": "กำหนดบทบาท",
+    "onboarding.role_hint": "สร้างหรือเลือกเพอร์โซนา แล้วเริ่มแชต",
+    "onboarding.role_mode": "บทบาท",
+    "onboarding.role_create": "สร้างใหม่",
+    "onboarding.role_select": "เลือกที่มีอยู่",
+    "onboarding.tone_default": "เป็นมิตร ชัดเจน สุภาพ",
+    "onboarding.default_persona_name": "เพื่อนช่วยคุย",
+    "label.persona_tone": "โทนเสียง",
+    "label.persona_tone_help": "สั้น ๆ เช่น เป็นทางการ / เป็นมิตร / กระชับ",
+    "action.continue_existing": "ใช้งานต่อ",
+    "action.continue_to_role": "ไปกำหนดบทบาท",
     "action.new_chat": "แชตใหม่",
     "action.clear_chat": "ล้างแชต",
     "action.confirm_clear_chat": "ยืนยันล้างแชต",
@@ -58,7 +72,7 @@ _TH: dict[str, str] = {
     "action.save_knowledge_file": "บันทึกไฟล์",
     "action.delete_knowledge_file": "ลบไฟล์นี้",
     "action.confirm_delete_knowledge": "ยืนยันลบไฟล์",
-    "action.continue_knowledge_only": "พร้อมใช้",
+    "action.continue_knowledge_only": "ไปกำหนดบทบาท",
     "action.use_knowledge_only": "ตอบจากความรู้แทน",
     "action.choose_api": "ใส่คีย์ API",
     "action.choose_knowledge": "อัปโหลดความรู้",
@@ -234,12 +248,14 @@ _TH: dict[str, str] = {
     "error.hint.backup": "ใช้ไฟล์สำรองจากแอปนี้ และอย่าใส่ .env หรือคีย์ลงใน zip",
     "error.hint.add_knowledge": "เพิ่มไฟล์ความรู้ใน Persona Pack หรือเปลี่ยนโหมดคำตอบ",
     "error.hint.password": "ใส่รหัสที่ตั้งไว้ใน APP_PASSWORD",
-    "error.hint.knowledge_file": "รองรับ .txt .md .pdf .docx — ตรวจรหัสอักขระ UTF-8",
+    "error.hint.knowledge_file": (
+        "รองรับ .txt .md .pdf .docx .xlsx .xls .png .jpg .webp — ข้อความควรเป็น UTF-8"
+    ),
     "error.hint.knowledge_size": (
         "ลดขนาดไฟล์หรือลบความรู้เก่า — ดูขนาดใช้ไป/ขีดจำกัดในแผงคลังความรู้ หรือปรับ MAX_KNOWLEDGE_MB ใน .env"
     ),
     "error.hint.persona_editor": (
-        "ใช้รหัสเพอร์โซนา a-z0-9-_ เท่านั้น · ความรู้รองรับ .txt/.md/.pdf/.docx · "
+        "ใช้รหัสเพอร์โซนา a-z0-9-_ เท่านั้น · ความรู้รองรับ text/pdf/docx/sheets/images · "
         "ตัวอย่างอ่านอย่างเดียว — กดทำสำเนาก่อน"
     ),
     "privacy.notice": ("ข้อความแชตถูกเก็บในเครื่องคุณ (data/) — ไม่ส่งไปที่อื่นนอกจาก Groq เมื่อมีการเรียกโมเดล"),
@@ -274,9 +290,25 @@ _EN: dict[str, str] = {
     ),
     "wizard.knowledge_only_hint": "Answers from local notes (no online AI)",
     "welcome.change_later": "You can change this later in Settings",
-    "welcome.env_key_found": "Found a key in .env — start chatting",
-    "welcome.knowledge_hint": "Add a file or paste text, then tap Ready",
-    "welcome.api_hint": "Paste a Groq key or use the key from .env",
+    "welcome.env_key_found": "Found a key in .env — continue to set your role",
+    "welcome.knowledge_hint": "Add a file or paste text, then set your role",
+    "welcome.knowledge_stage_hint": (
+        "No user pack yet — files are staged and attached when you create a role"
+    ),
+    "welcome.knowledge_empty_save": "Nothing to save yet — add a file or paste text",
+    "welcome.pending_files": "Staged for your role: {n} file(s)",
+    "welcome.api_hint": "Paste a Groq key or use the key from .env (auto-saved to .env)",
+    "onboarding.role_title": "Set your role",
+    "onboarding.role_hint": "Create or pick a persona, then start chatting",
+    "onboarding.role_mode": "Role",
+    "onboarding.role_create": "Create new",
+    "onboarding.role_select": "Use existing",
+    "onboarding.tone_default": "Friendly, clear, polite",
+    "onboarding.default_persona_name": "Helpful buddy",
+    "label.persona_tone": "Tone",
+    "label.persona_tone_help": "Short note such as formal / friendly / concise",
+    "action.continue_existing": "Continue",
+    "action.continue_to_role": "Continue to role",
     "action.new_chat": "New chat",
     "action.clear_chat": "Clear chat",
     "action.confirm_clear_chat": "Confirm clear chat",
@@ -307,7 +339,7 @@ _EN: dict[str, str] = {
     "action.save_knowledge_file": "Save file",
     "action.delete_knowledge_file": "Delete this file",
     "action.confirm_delete_knowledge": "Confirm delete file",
-    "action.continue_knowledge_only": "Ready",
+    "action.continue_knowledge_only": "Continue to role",
     "action.use_knowledge_only": "Answer from knowledge instead",
     "action.choose_api": "Add API key",
     "action.choose_knowledge": "Upload knowledge",
@@ -506,13 +538,15 @@ _EN: dict[str, str] = {
     "error.hint.backup": "Use a backup from this app; never put .env or keys in the zip",
     "error.hint.add_knowledge": "Add knowledge files to the Persona Pack or change answer mode",
     "error.hint.password": "Enter the password configured in APP_PASSWORD",
-    "error.hint.knowledge_file": "Supported: .txt .md .pdf .docx — use UTF-8 text",
+    "error.hint.knowledge_file": (
+        "Supported: .txt .md .pdf .docx .xlsx .xls .png .jpg .webp — UTF-8 text when applicable"
+    ),
     "error.hint.knowledge_size": (
         "Remove or shrink knowledge files — see used/limit in the Knowledge panel "
         "or raise MAX_KNOWLEDGE_MB in .env"
     ),
     "error.hint.persona_editor": (
-        "Use persona ids a-z0-9-_ only · knowledge allows .txt/.md/.pdf/.docx · "
+        "Use persona ids a-z0-9-_ only · knowledge allows text/pdf/docx/sheets/images · "
         "examples are read-only — duplicate first"
     ),
     "privacy.notice": (
