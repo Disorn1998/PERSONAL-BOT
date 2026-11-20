@@ -118,7 +118,7 @@ def _init_state() -> None:
     ss.setdefault("import_preview", None)
     ss.setdefault("import_bytes", None)
     ss.setdefault("confirm_delete_all", False)
-    ss.setdefault("confirm_delete_persona", False)
+    ss.setdefault("confirm_delete_persona_id", "")
     ss.setdefault("confirm_delete_knowledge_path", "")
     ss.setdefault("confirm_clear_chat", False)
     ss.setdefault("confirm_overwrite_import", False)
@@ -338,14 +338,73 @@ def _render_answer_rules_editor(persona: PersonaPack, settings: Any) -> None:
                     _render_error(exc)
 
 
+def _starter_questions_text(questions: list[str]) -> str:
+    return "\n".join(q.strip() for q in questions if str(q).strip())
+
+
+def _parse_starter_questions(raw: str) -> list[str]:
+    return [line.strip() for line in str(raw).splitlines() if line.strip()][:8]
+
+
+def _render_persona_delete_controls(persona: PersonaPack, settings: Any) -> None:
+    """Delete user pack with id-scoped confirm (beginner-safe)."""
+    st.caption(t("warn.delete_persona"))
+    if st.button(
+        t("action.delete_persona"),
+        key="delete_persona_btn",
+        use_container_width=True,
+    ):
+        st.session_state.confirm_delete_persona_id = persona.id
+    if st.session_state.get("confirm_delete_persona_id") == persona.id:
+        st.warning(t("warn.delete_persona"))
+        if st.button(
+            t("action.confirm_delete_persona"),
+            key="confirm_delete_persona_btn",
+            use_container_width=True,
+        ):
+            try:
+                pid = persona.id
+                delete_user_persona(personas_dir=settings.personas_dir, persona_id=pid)
+                _wipe_persona_index(pid)
+                st.session_state.persona_id = "study-buddy"
+                st.session_state.thread_id = ""
+                st.session_state.confirm_delete_persona_id = ""
+                st.success(t("status.delete_persona_ok"))
+                st.rerun()
+            except Exception as exc:  # noqa: BLE001
+                _render_error(exc)
+
+
 def _render_persona_editor(persona: PersonaPack | None) -> None:
-    """Create / edit user packs; examples stay read-only with Duplicate.
+    """Create / edit / delete user packs; examples stay read-only with Duplicate.
 
     Uses ``st.expander`` (not ``st.sidebar.expander``) so it nests under
     「ตั้งค่าเพิ่มเติม」 instead of floating as a sibling sidebar block.
     """
     settings = get_settings()
     with st.expander(t("label.persona_editor"), expanded=False):
+        st.markdown(
+            f'<div class="pb-persona-panel">'
+            f'<p class="pb-persona-panel-title">{html.escape(t("label.persona_manage"))}</p>'
+            f'<p class="pb-persona-panel-hint">{html.escape(t("label.persona_manage_hint"))}</p>'
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+
+        user_pack = (
+            is_user_persona(st.session_state.persona_id, settings) if persona is not None else False
+        )
+        if persona is not None:
+            kind_cls = "user" if user_pack else "example"
+            kind_label = (
+                t("label.persona_kind_user") if user_pack else t("label.persona_kind_example")
+            )
+            st.markdown(
+                f'<span class="pb-persona-kind {kind_cls}">'
+                f"{html.escape(kind_label)} · {html.escape(persona.id)}</span>",
+                unsafe_allow_html=True,
+            )
+
         if persona is not None and st.button(
             t("action.duplicate_persona"),
             key="duplicate_persona_btn",
@@ -355,15 +414,13 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
                 pack = duplicate_persona_to_user(settings=settings, source_id=persona.id)
                 st.session_state.persona_id = pack.id
                 st.session_state.thread_id = ""
+                st.session_state.confirm_delete_persona_id = ""
                 _clear_rag_cache(pack.id)
                 st.success(t("status.persona_duplicated"))
                 st.rerun()
             except Exception as exc:  # noqa: BLE001
                 _render_error(exc)
 
-        user_pack = (
-            is_user_persona(st.session_state.persona_id, settings) if persona is not None else False
-        )
         if persona is not None and not user_pack:
             st.caption(t("status.example_edit_readonly"))
 
@@ -379,6 +436,18 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
                 value=persona.description,
                 key=f"edit_desc_{persona.id}",
                 height=68,
+            )
+            greeting = st.text_input(
+                t("label.persona_greeting"),
+                value=persona.greeting or "",
+                key=f"edit_greeting_{persona.id}",
+            )
+            starters_raw = st.text_area(
+                t("label.starter_questions"),
+                value=_starter_questions_text(persona.starter_questions),
+                key=f"edit_starters_{persona.id}",
+                height=80,
+                help=t("label.starter_questions_help"),
             )
             system_prompt = st.text_area(
                 t("label.system_prompt"),
@@ -454,13 +523,20 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
                     ),
                     key=f"edit_chunk_{persona.id}",
                 )
-            if st.button(t("action.save_persona"), key=f"save_persona_{persona.id}"):
+            if st.button(
+                t("action.save_persona"),
+                key=f"save_persona_{persona.id}",
+                use_container_width=True,
+            ):
                 try:
+                    greet = greeting.strip()
                     updated = persona.model_copy(
                         update={
                             "name": name.strip(),
                             "description": description.strip(),
                             "system_prompt": system_prompt.strip(),
+                            "greeting": greet or None,
+                            "starter_questions": _parse_starter_questions(starters_raw),
                             "config": build_persona_config(
                                 answer_mode=cast(Any, answer_mode),
                                 temperature=float(temperature),
@@ -475,19 +551,29 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
                     )
                     save_user_persona(personas_dir=settings.personas_dir, pack=updated)
                     _clear_rag_cache(persona.id)
+                    st.session_state.confirm_delete_persona_id = ""
                     st.success(t("status.persona_saved"))
                     st.rerun()
                 except Exception as exc:  # noqa: BLE001
                     _render_error(exc)
+            _render_persona_delete_controls(persona, settings)
 
         st.divider()
         st.markdown(f"**{t('label.persona_create')}**")
+        st.caption(t("label.persona_id_help"))
         new_id = st.text_input(t("label.persona_id"), key="create_persona_id")
         new_name = st.text_input(t("label.persona_name"), key="create_persona_name")
         new_desc = st.text_area(
             t("label.persona_description"),
             key="create_persona_desc",
             height=68,
+        )
+        new_greeting = st.text_input(t("label.persona_greeting"), key="create_persona_greeting")
+        new_starters = st.text_area(
+            t("label.starter_questions"),
+            key="create_persona_starters",
+            height=68,
+            help=t("label.starter_questions_help"),
         )
         new_prompt = st.text_area(
             t("label.system_prompt"),
@@ -540,14 +626,21 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
                 t("label.min_score"), value="", key="create_persona_min_score"
             )
             new_chunk = st.text_input(t("label.chunk_chars"), value="", key="create_persona_chunk")
-        if st.button(t("action.create_persona"), key="create_persona_btn"):
+        if st.button(
+            t("action.create_persona"),
+            key="create_persona_btn",
+            use_container_width=True,
+        ):
             try:
+                greet = new_greeting.strip()
                 pack = create_user_persona(
                     personas_dir=settings.personas_dir,
                     persona_id=new_id,
                     name=new_name,
                     description=new_desc,
                     system_prompt=new_prompt,
+                    greeting=greet or None,
+                    starter_questions=_parse_starter_questions(new_starters),
                     config=build_persona_config(
                         answer_mode=cast(Any, new_mode),
                         temperature=float(new_temp),
@@ -560,6 +653,7 @@ def _render_persona_editor(persona: PersonaPack | None) -> None:
                 )
                 st.session_state.persona_id = pack.id
                 st.session_state.thread_id = ""
+                st.session_state.confirm_delete_persona_id = ""
                 _clear_rag_cache(pack.id)
                 st.success(t("status.persona_created"))
                 st.rerun()
@@ -891,26 +985,7 @@ def _sidebar_data_tools(settings: Any) -> None:
             except Exception as exc:  # noqa: BLE001
                 _render_error(exc)
 
-    if is_user_persona(st.session_state.persona_id, settings):
-        st.caption(t("warn.delete_persona"))
-        if st.button(t("action.delete_persona"), key="delete_persona_btn"):
-            st.session_state.confirm_delete_persona = True
-        if st.session_state.confirm_delete_persona and st.button(
-            t("action.confirm_delete"), key="confirm_delete_persona_btn"
-        ):
-            try:
-                pid = str(st.session_state.persona_id)
-                delete_user_persona(personas_dir=settings.personas_dir, persona_id=pid)
-                _wipe_persona_index(pid)
-                st.session_state.persona_id = "study-buddy"
-                st.session_state.thread_id = ""
-                st.session_state.confirm_delete_persona = False
-                st.success(t("status.delete_persona_ok"))
-                st.rerun()
-            except Exception as exc:  # noqa: BLE001
-                _render_error(exc)
-    else:
-        st.caption(t("status.example_persona_readonly"))
+    st.caption(t("status.delete_persona_in_editor"))
 
     if st.button(t("action.backup"), key="backup_btn"):
         try:

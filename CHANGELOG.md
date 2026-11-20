@@ -7,6 +7,8 @@ All notable changes are documented here. This project follows
 
 ### Added
 
+- Persona CRUD UX: soft-3D manage panel, example/user badge, greeting + starter
+  questions on create/edit, delete with confirm next to Save (not under Backup).
 - Editable answer-mode prompt rules (user packs): override built-in
   strict / balanced / open rule text under Edit persona; Save or reset to
   defaults; stored in ``config.answer_rules``. Soft-3D rules panel.

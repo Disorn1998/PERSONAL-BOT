@@ -285,6 +285,45 @@ def custom_css() -> str:
     font-size: {tokens.FONT_SIZE_META_PX}px;
     line-height: {tokens.LINE_HEIGHT_META};
   }}
+  /* Persona manage panel — soft-3D intro for create/edit/delete */
+  .pb-persona-panel {{
+    margin: 0 0 {tokens.SPACE_MD_PX}px 0;
+    padding: {tokens.SPACE_SM_PX}px {tokens.SPACE_MD_PX}px;
+    border: 1px solid {tokens.COLOR_BORDER};
+    border-radius: {tokens.RADIUS_MD_PX}px;
+    background: linear-gradient(
+      180deg, {tokens.COLOR_ACCENT_WASH} 0%, {tokens.COLOR_SECONDARY_BACKGROUND} 80%);
+    box-shadow: {tokens.SHADOW_SOFT};
+  }}
+  .pb-persona-panel-title {{
+    margin: 0 0 4px 0;
+    color: {tokens.COLOR_PRIMARY_DEEP};
+    font-size: {tokens.FONT_SIZE_SMALL_PX}px;
+    font-weight: 600;
+    letter-spacing: {tokens.LETTER_SPACING_META};
+  }}
+  .pb-persona-panel-hint {{
+    margin: 0 0 6px 0;
+    color: {tokens.COLOR_MUTED_TEXT};
+    font-size: {tokens.FONT_SIZE_META_PX}px;
+    line-height: {tokens.LINE_HEIGHT_META};
+  }}
+  .pb-persona-kind {{
+    display: inline-block;
+    margin: 0;
+    padding: 1px 8px;
+    border-radius: {tokens.RADIUS_SM_PX}px;
+    border: 1px solid {tokens.COLOR_ACCENT_SOFT};
+    background: {tokens.COLOR_SECONDARY_BACKGROUND};
+    color: {tokens.COLOR_PRIMARY_DEEP};
+    font-size: {tokens.FONT_SIZE_META_PX}px;
+    font-weight: 500;
+    letter-spacing: {tokens.LETTER_SPACING_META};
+  }}
+  .pb-persona-kind.example {{
+    border-color: {tokens.COLOR_BORDER};
+    color: {tokens.COLOR_MUTED_TEXT};
+  }}
   .pb-empty {{
     text-align: center;
     padding: {tokens.SPACE_LG_PX}px {tokens.SPACE_MD_PX}px;
